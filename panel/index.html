@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Panel serwisanta – JL Pro Bike Serwis</title>
 </head>
 <body>
@@ -12,16 +12,20 @@
   <button id="test">Test połączenia z Supabase</button>
   <pre id="output"></pre>
 
-  <script src="./supabaseClient.js"></script>
-  <script>
+  <!-- WAŻNE: ścieżka absolutna -->
+  <script type="module" src="/panel/supabaseClient.js"></script>
+
+  <script type="module">
     document.getElementById("test").addEventListener("click", async () => {
-      const { data, error } = await supabase
+      const { data, error } = await window.supabase
         .from("zlecenia")
         .select("*")
         .limit(1);
 
       document.getElementById("output").textContent =
-        error ? JSON.stringify(error, null, 2) : JSON.stringify(data, null, 2);
+        error
+          ? "❌ Błąd:\n" + JSON.stringify(error, null, 2)
+          : "✅ Sukces:\n" + JSON.stringify(data, null, 2);
     });
   </script>
 
