@@ -101,6 +101,7 @@
     <textarea id="issue_description" required></textarea>
 
     <label>Status</label>
+    <!-- ⬇⬇⬇ KLUCZOWA POPRAWKA -->
     <select id="status" required>
       <option value="nowe">Nowe</option>
       <option value="w_trakcie">W trakcie</option>
@@ -119,7 +120,6 @@
 </div>
 
 <script>
-  // 🔑 SUPABASE – TE SAME DANE CO W index.html
   const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
 
@@ -130,7 +130,6 @@
 
   let currentUser = null;
 
-  // ✅ SPRAWDZENIE SESJI
   async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) {
@@ -140,21 +139,15 @@
     currentUser = session.user;
   }
 
-  // ✅ ZAPIS ZLECENIA (ZGODNY Z BAZĄ)
   document.getElementById("orderForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-
-    if (!currentUser) {
-      alert("Brak sesji użytkownika");
-      return;
-    }
 
     const payload = {
       customer_name: customer_name.value.trim(),
       phone: phone.value.trim() || null,
       bike_type: bike_type.value.trim() || null,
       issue_description: issue_description.value.trim(),
-      status: status.value,              // ⬅ dokładnie ta kolumna
+      status: status.value,          // ✅ TERAZ ISTNIEJE
       cost: cost.value ? Number(cost.value) : null,
       created_by: currentUser.id
     };
