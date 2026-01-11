@@ -5,7 +5,7 @@
   <title>Logowanie – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase JS -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -77,28 +77,28 @@
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Hasło" />
 
-    <button onclick="login()">Zaloguj się</button>
+    <button id="loginBtn">Zaloguj się</button>
 
     <div class="error" id="error"></div>
   </div>
 
   <script>
-    const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
+    const SUPABASE_URL = "https://TWOJ_PROJECT_ID.supabase.co";
+    const SUPABASE_ANON_KEY = "TWOJ_ANON_KEY";
 
-    const supabase = supabaseJs.createClient(
+    const supabaseClient = supabase.createClient(
       SUPABASE_URL,
       SUPABASE_ANON_KEY
     );
 
-    async function login() {
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
       const errorBox = document.getElementById("error");
 
       errorBox.textContent = "";
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabaseClient.auth.signInWithPassword({
         email,
         password
       });
@@ -108,9 +108,8 @@
         return;
       }
 
-      // ✅ sukces → panel
       window.location.href = "index.html";
-    }
+    });
   </script>
 
 </body>
