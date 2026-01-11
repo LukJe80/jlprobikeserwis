@@ -2,144 +2,89 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Panel serwisanta – JL Pro Bike Serwis</title>
+  <title>Panel Serwisanta – JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    body { font-family: Arial, sans-serif; }
-    table { border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #000; padding: 6px 10px; }
-    th { background: #eee; }
-    button { margin-top: 10px; padding: 6px 12px; }
-    select { padding: 4px; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 30px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      background: #ef4444;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #dc2626;
+    }
   </style>
 </head>
 
 <body>
 
-<!-- 🔐 OCHRONA PANELU -->
 <script>
-  if (localStorage.getItem("loggedIn") !== "true") {
-    window.location.href = "/panel/login.html";
-  }
-</script>
+  const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
 
-<h1>🛠 Panel serwisanta</h1>
-<p>System obsługi zleceń</p>
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
-<button id="logout">🚪 Wyloguj</button>
+  async function checkAuth() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
-<hr>
-
-<h2>➕ Nowe zlecenie</h2>
-<form id="addForm">
-  <input id="imie" placeholder="Imię" required />
-  <input id="telefon" placeholder="Telefon" required />
-  <select id="typ_roweru">
-    <option value="">-- typ roweru --</option>
-    <option>Miejski</option>
-    <option>Szosowy</option>
-    <option>MTB</option>
-    <option>Gravel</option>
-    <option>E-bike</option>
-  </select>
-  <textarea id="opis" placeholder="Opis usterki" rows="3"></textarea>
-  <button type="submit">Dodaj zlecenie</button>
-</form>
-
-<hr>
-
-<button id="load">📋 Pobierz zlecenia</button>
-
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Imię</th>
-      <th>Telefon</th>
-      <th>Rower</th>
-      <th>Opis</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody id="output">
-    <tr><td colspan="6">Kliknij „Pobierz zlecenia”</td></tr>
-  </tbody>
-</table>
-
-<!-- SUPABASE -->
-<script type="module" src="/panel/supabaseClient.js"></script>
-
-<script type="module">
-  const tbody = document.getElementById("output");
-  const loadBtn = document.getElementById("load");
-  const form = document.getElementById("addForm");
-  const logoutBtn = document.getElementById("logout");
-
-  // 🚪 WYLOGOWANIE
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem("loggedIn");
-    window.location.href = "/panel/login.html";
-  });
-
-  async function loadZlecenia() {
-    tbody.innerHTML = `<tr><td colspan="6">⏳ Ładowanie...</td></tr>`;
-
-    const { data, error } = await window.supabase
-      .from("zlecenia")
-      .select("*")
-      .order("id", { ascending: false });
-
-    if (error) {
-      tbody.innerHTML = `<tr><td colspan="6">❌ ${error.message}</td></tr>`;
+    if (!session) {
+      // ❌ brak sesji → logowanie
+      window.location.href = "login.html";
       return;
     }
 
-    tbody.innerHTML = "";
-
-    data.forEach(z => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${z.id}</td>
-        <td>${z.imie ?? ""}</td>
-        <td>${z.telefon ?? ""}</td>
-        <td>${z.typ_roweru ?? ""}</td>
-        <td>${z.opis ?? ""}</td>
-        <td>
-          <select data-id="${z.id}">
-            <option ${z.status==="Rower przyjęty do serwisu"?"selected":""}>Rower przyjęty do serwisu</option>
-            <option ${z.status==="W trakcie naprawy"?"selected":""}>W trakcie naprawy</option>
-            <option ${z.status==="Gotowy do odbioru"?"selected":""}>Gotowy do odbioru</option>
-            <option ${z.status==="Wydany klientowi"?"selected":""}>Wydany klientowi</option>
-          </select>
-        </td>
-      `;
-      tbody.appendChild(tr);
-
-      tr.querySelector("select").addEventListener("change", async e => {
-        await window.supabase
-          .from("zlecenia")
-          .update({ status: e.target.value })
-          .eq("id", z.id);
-      });
-    });
+    // ✅ użytkownik zalogowany
+    document.getElementById("userEmail").textContent =
+      session.user.email;
   }
 
-  loadBtn.addEventListener("click", loadZlecenia);
+  async function logout() {
+    await supabaseClient.auth.signOut();
+    window.location.href = "login.html";
+  }
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
-
-    await window.supabase.from("zlecenia").insert({
-      imie: imie.value,
-      telefon: telefon.value,
-      typ_roweru: typ_roweru.value,
-      opis: opis.value,
-      status: "Rower przyjęty do serwisu"
-    });
-
-    form.reset();
-    loadZlecenia();
-  });
+  checkAuth();
 </script>
+
+<header>
+  <h1>Panel Serwisanta</h1>
+  <div>
+    <span id="userEmail"></span>
+    <button onclick="logout()">Wyloguj</button>
+  </div>
+</header>
+
+<main>
+  <h2>Witaj w panelu 🚲</h2>
+  <p>Tu będzie obsługa zleceń serwisowych.</p>
+</main>
 
 </body>
 </html>
