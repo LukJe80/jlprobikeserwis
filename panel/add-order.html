@@ -5,7 +5,7 @@
   <title>Nowe zlecenie – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase CDN (TAKI SAM JAK W index.html) -->
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -89,16 +89,16 @@
 
   <form id="orderForm">
     <label>Imię i nazwisko klienta</label>
-    <input id="client_name" required>
+    <input id="customer_name" required>
 
     <label>Telefon</label>
-    <input id="phone" required>
+    <input id="phone">
 
     <label>Typ roweru</label>
-    <input id="bike_type" required>
+    <input id="bike_type">
 
     <label>Opis usterki</label>
-    <textarea id="description"></textarea>
+    <textarea id="issue_description" required></textarea>
 
     <label>Status</label>
     <select id="status">
@@ -119,7 +119,7 @@
 </div>
 
 <script>
-  // 🔑 DANE SUPABASE – IDENTYCZNE JAK W index.html
+  // 🔑 SUPABASE
   const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
 
@@ -130,7 +130,7 @@
 
   let currentUser = null;
 
-  // ✅ SPRAWDZENIE SESJI (BEZ ALERTU!)
+  // ✅ SPRAWDZENIE SESJI
   async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
 
@@ -153,18 +153,18 @@
 
     const { error } = await supabaseClient
       .from("orders")
-      .insert({
-        client_name: client_name.value,
-        phone: phone.value,
-        bike_type: bike_type.value,
-        description: description.value,
+      .insert([{
+        customer_name: customer_name.value.trim(),
+        phone: phone.value.trim(),
+        bike_type: bike_type.value.trim(),
+        issue_description: issue_description.value.trim(),
         status: status.value,
-        cost: cost.value || null,
+        cost: cost.value ? Number(cost.value) : null,
         created_by: currentUser.id
-      });
+      }]);
 
     if (error) {
-      console.error(error);
+      console.error("❌ Błąd zapisu:", error);
       alert("Błąd zapisu zlecenia");
       return;
     }
