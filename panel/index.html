@@ -3,67 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <title>Panel serwisanta – JL Pro Bike Serwis</title>
-</head>
-<body>
-
-<h1>🔧 Panel serwisanta</h1>
-<p>Tu będzie system obsługi zleceń.</p>
-
-<button id="test">Pobierz zlecenia</button>
-
-<table border="1" cellpadding="6" cellspacing="0" style="margin-top:10px;">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Imię</th>
-      <th>Telefon</th>
-      <th>Rower</th>
-      <th>Opis</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody id="output">
-    <tr>
-      <td colspan="6">Kliknij „Pobierz zlecenia”</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- 1️⃣ Supabase CLIENT -->
-<script src="/panel/supabaseClient.js"></script>
-
-<!-- 2️⃣ LOGIKA PANELU -->
-<script>
-  document.getElementById("test").addEventListener("click", async () => {
-    const tbody = document.getElementById("output");
-    tbody.innerHTML = "<tr><td colspan='6'>⏳ Ładowanie...</td></tr>";
-
-    const { data, error } = await window.supabase
-      .from("zlecenia")
-      .select("*")
-      .order("id", { ascending: false });
-
-    if (error) {
-      tbody.innerHTML = `<tr><td colspan="6">❌ Błąd: ${error.message}</td></tr>`;
-      return;
+  <style>
+    body {
+      font-family: Arial, sans-serif;
     }
 
-    tbody.innerHTML = "";
+    table {
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
 
-    data.forEach(z => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${z.id}</td>
-        <td>${z.imie ?? ""}</td>
-        <td>${z.telefon ?? ""}</td>
-        <td>${z.typ_roweru ?? ""}</td>
-        <td>${z.opis ?? ""}</td>
-        <td>${z.status ?? ""}</td>
+    th, td {
+      border: 1px solid #000;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f0f0f0;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🔧 Panel serwisanta</h1>
+  <p>Tu będzie system obsługi zleceń.</p>
+
+  <button id="test">Pobierz zlecenia</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Imię</th>
+        <th>Telefon</th>
+        <th>Rower</th>
+        <th>Opis</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="output">
+      <tr>
+        <td colspan="6">Kliknij „Pobierz zlecenia”</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- GŁÓWNY SKRYPT -->
+  <script type="module">
+    import { supabase } from "./supabaseClient.js";
+
+    const button = document.getElementById("test");
+    const tbody = document.getElementById("output");
+
+    button.addEventListener("click", async () => {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6">⏳ Ładowanie...</td>
+        </tr>
       `;
-      tbody.appendChild(row);
+
+      const { data, error } = await supabase
+        .from("zlecenia")
+        .select("*")
+        .order("id", { ascending: false });
+
+      if (error) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6">❌ Błąd: ${error.message}</td>
+          </tr>
+        `;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6">Brak zleceń</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = "";
+
+      data.forEach(z => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${z.id}</td>
+          <td>${z.imie ?? ""}</td>
+          <td>${z.telefon ?? ""}</td>
+          <td>${z.typ_roweru ?? ""}</td>
+          <td>${z.opis ?? ""}</td>
+          <td>${z.status ?? ""}</td>
+        `;
+        tbody.appendChild(row);
+      });
     });
-  });
-</script>
+  </script>
+</body>
+</html>
 
 </body>
 </html>
