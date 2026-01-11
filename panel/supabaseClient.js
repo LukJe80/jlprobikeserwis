@@ -1,7 +1,9 @@
-const SUPABASE_URL = "https://mzgvlltlcrvzntswzql.supabase.co";
+// Supabase CDN (global)
+const SUPABASE_URL = "https://mzgxvlltlcrvzntswzql.supabase.co";
 const SUPABASE_ANON_KEY =
-  "sb_publishable_u6iZP_f82VI0pc45esyj4A_fhWmi9Nr";
+  "sb_publishable_ui6ZP_f82VIOpc45esvj4A_fhWmi9Nr";
 
+// Tworzymy globalny klient
 window.supabase = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
