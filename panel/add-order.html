@@ -101,10 +101,10 @@
     <textarea id="issue_description" required></textarea>
 
     <label>Status</label>
-    <select id="status">
-      <option value="nowe">Nowe</option>
-      <option value="w trakcie">W trakcie</option>
-      <option value="gotowe">Gotowe</option>
+    <select id="order_status" required>
+      <option value="Nowe">Nowe</option>
+      <option value="W trakcie">W trakcie</option>
+      <option value="Gotowe">Gotowe</option>
     </select>
 
     <label>Koszt (zł)</label>
@@ -119,7 +119,6 @@
 </div>
 
 <script>
-  // 🔑 SUPABASE
   const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
 
@@ -130,41 +129,36 @@
 
   let currentUser = null;
 
-  // ✅ SPRAWDZENIE SESJI
   async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
-
     if (!session) {
       window.location.href = "login.html";
       return;
     }
-
     currentUser = session.user;
   }
 
-  // ✅ ZAPIS ZLECENIA
   document.getElementById("orderForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!currentUser) {
-      alert("Brak sesji użytkownika");
-      return;
-    }
+    const payload = {
+      customer_name: customer_name.value.trim(),
+      phone: phone.value.trim(),
+      bike_type: bike_type.value.trim(),
+      issue_description: issue_description.value.trim(),
+      status: order_status.value,
+      cost: cost.value ? Number(cost.value) : null,
+      created_by: currentUser.id
+    };
+
+    console.log("📦 INSERT:", payload);
 
     const { error } = await supabaseClient
       .from("orders")
-      .insert([{
-        customer_name: customer_name.value.trim(),
-        phone: phone.value.trim(),
-        bike_type: bike_type.value.trim(),
-        issue_description: issue_description.value.trim(),
-        status: status.value,
-        cost: cost.value ? Number(cost.value) : null,
-        created_by: currentUser.id
-      }]);
+      .insert([payload]);
 
     if (error) {
-      console.error("❌ Błąd zapisu:", error);
+      console.error("❌ Supabase error:", error);
       alert("Błąd zapisu zlecenia");
       return;
     }
@@ -173,7 +167,6 @@
     window.location.href = "index.html";
   });
 
-  // 🚀 START
   checkAuth();
 </script>
 
