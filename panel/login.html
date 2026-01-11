@@ -2,60 +2,116 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Logowanie – Panel serwisanta</title>
+  <title>Logowanie – JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      background: #0f172a;
+      color: #e5e7eb;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
-    .box {
-      background: #fff;
+
+    .login-box {
+      background: #020617;
       padding: 30px;
-      border: 1px solid #ccc;
-      width: 300px;
-      text-align: center;
-    }
-    input, button {
+      border-radius: 12px;
       width: 100%;
-      padding: 8px;
-      margin-top: 10px;
+      max-width: 360px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
     }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 22px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #22c55e;
+      color: #022c22;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #16a34a;
+    }
+
     .error {
-      color: red;
+      color: #f87171;
       margin-top: 10px;
+      text-align: center;
+      font-size: 14px;
     }
   </style>
 </head>
+
 <body>
 
-<div class="box">
-  <h2>🔐 Panel serwisanta</h2>
-  <p>Wpisz PIN</p>
+  <div class="login-box">
+    <h1>Panel Serwisanta</h1>
 
-  <input type="password" id="pin" placeholder="PIN" />
-  <button id="login">Zaloguj</button>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Hasło" />
 
-  <div class="error" id="error"></div>
-</div>
+    <button onclick="login()">Zaloguj się</button>
 
-<script>
-  const PIN = "1234"; // tymczasowy PIN
+    <div class="error" id="error"></div>
+  </div>
 
-  document.getElementById("login").addEventListener("click", () => {
-    const pin = document.getElementById("pin").value;
+  <script>
+    const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
 
-    if (pin === PIN) {
-      localStorage.setItem("loggedIn", "true");
-      window.location.href = "/panel/index.html";
-    } else {
-      document.getElementById("error").textContent = "❌ Błędny PIN";
+    const supabase = supabaseJs.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const errorBox = document.getElementById("error");
+
+      errorBox.textContent = "";
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        errorBox.textContent = error.message;
+        return;
+      }
+
+      // ✅ sukces → panel
+      window.location.href = "index.html";
     }
-  });
-</script>
+  </script>
 
 </body>
 </html>
