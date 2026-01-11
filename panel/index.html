@@ -3,25 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <title>Panel serwisanta – JL Pro Bike Serwis</title>
-
   <style>
-    table {
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-    th, td {
-      border: 1px solid #000;
-      padding: 6px 10px;
-    }
-    select {
-      padding: 4px;
+    body { font-family: Arial, sans-serif; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #000; padding: 6px 10px; }
+    th { background: #eee; }
+    form { margin: 20px 0; }
+    input, select, textarea, button {
+      margin: 4px 0;
+      padding: 6px;
+      width: 300px;
+      display: block;
     }
   </style>
 </head>
 <body>
 
-<h1>🛠 Panel serwisanta</h1>
-<p>Tu będzie system obsługi zleceń.</p>
+<h1>🛠️ Panel serwisanta</h1>
+<p>System obsługi zleceń</p>
+
+<!-- FORMULARZ -->
+<h2>➕ Nowe zlecenie</h2>
+<form id="addForm">
+  <input id="imie" placeholder="Imię" required />
+  <input id="telefon" placeholder="Telefon" required />
+  <select id="typ_roweru">
+    <option value="">-- typ roweru --</option>
+    <option>Miejski</option>
+    <option>Szosowy</option>
+    <option>MTB</option>
+    <option>Gravel</option>
+    <option>E-bike</option>
+  </select>
+  <textarea id="opis" placeholder="Opis usterki" rows="3"></textarea>
+  <button type="submit">Dodaj zlecenie</button>
+</form>
+
+<hr>
 
 <button id="load">Pobierz zlecenia</button>
 
@@ -37,73 +55,77 @@
     </tr>
   </thead>
   <tbody id="output">
-    <tr>
-      <td colspan="6">Kliknij „Pobierz zlecenia”</td>
-    </tr>
+    <tr><td colspan="6">Kliknij „Pobierz zlecenia”</td></tr>
   </tbody>
 </table>
 
-<!-- Supabase -->
+<!-- SUPABASE -->
 <script type="module" src="/panel/supabaseClient.js"></script>
 
 <script type="module">
-const tbody = document.getElementById("output");
-const button = document.getElementById("load");
+  const tbody = document.getElementById("output");
+  const loadBtn = document.getElementById("load");
+  const form = document.getElementById("addForm");
 
-const STATUSY = [
-  "Rower przyjęty do serwisu",
-  "W trakcie naprawy",
-  "Gotowy do odbioru",
-  "Wydany klientowi"
-];
+  async function loadZlecenia() {
+    tbody.innerHTML = `<tr><td colspan="6">⏳ Ładowanie...</td></tr>`;
 
-button.addEventListener("click", async () => {
-  tbody.innerHTML = `<tr><td colspan="6">⏳ Ładowanie...</td></tr>`;
+    const { data, error } = await window.supabase
+      .from("zlecenia")
+      .select("*")
+      .order("id", { ascending: false });
 
-  const { data, error } = await window.supabase
-    .from("zlecenia")
-    .select("*")
-    .order("id", { ascending: false });
+    if (error) {
+      tbody.innerHTML = `<tr><td colspan="6">❌ ${error.message}</td></tr>`;
+      return;
+    }
 
-  if (error) {
-    tbody.innerHTML = `<tr><td colspan="6">❌ ${error.message}</td></tr>`;
-    return;
+    tbody.innerHTML = "";
+
+    data.forEach(z => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${z.id}</td>
+        <td>${z.imie ?? ""}</td>
+        <td>${z.telefon ?? ""}</td>
+        <td>${z.typ_roweru ?? ""}</td>
+        <td>${z.opis ?? ""}</td>
+        <td>
+          <select data-id="${z.id}">
+            <option ${z.status==="Rower przyjęty do serwisu"?"selected":""}>Rower przyjęty do serwisu</option>
+            <option ${z.status==="W trakcie naprawy"?"selected":""}>W trakcie naprawy</option>
+            <option ${z.status==="Gotowy do odbioru"?"selected":""}>Gotowy do odbioru</option>
+            <option ${z.status==="Wydany klientowi"?"selected":""}>Wydany klientowi</option>
+          </select>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      tr.querySelector("select").addEventListener("change", async e => {
+        await window.supabase
+          .from("zlecenia")
+          .update({ status: e.target.value })
+          .eq("id", z.id);
+      });
+    });
   }
 
-  tbody.innerHTML = "";
+  loadBtn.addEventListener("click", loadZlecenia);
 
-  data.forEach(z => {
-    const tr = document.createElement("tr");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
 
-    const select = document.createElement("select");
-    STATUSY.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s;
-      opt.textContent = s;
-      if (s === z.status) opt.selected = true;
-      select.appendChild(opt);
+    await window.supabase.from("zlecenia").insert({
+      imie: imie.value,
+      telefon: telefon.value,
+      typ_roweru: typ_roweru.value,
+      opis: opis.value,
+      status: "Rower przyjęty do serwisu"
     });
 
-    select.addEventListener("change", async () => {
-      await window.supabase
-        .from("zlecenia")
-        .update({ status: select.value })
-        .eq("id", z.id);
-    });
-
-    tr.innerHTML = `
-      <td>${z.id}</td>
-      <td>${z.imie ?? ""}</td>
-      <td>${z.telefon ?? ""}</td>
-      <td>${z.typ_roweru ?? ""}</td>
-      <td>${z.opis ?? ""}</td>
-      <td></td>
-    `;
-
-    tr.children[5].appendChild(select);
-    tbody.appendChild(tr);
+    form.reset();
+    loadZlecenia();
   });
-});
 </script>
 
 </body>
