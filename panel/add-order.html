@@ -141,12 +141,17 @@
   document.getElementById("orderForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    if (!currentUser) {
+      alert("Brak sesji użytkownika");
+      return;
+    }
+
     const payload = {
       customer_name: customer_name.value.trim(),
-      phone: phone.value.trim(),
-      bike_type: bike_type.value.trim(),
+      phone: phone.value.trim() || null,
+      bike_type: bike_type.value.trim() || null,
       issue_description: issue_description.value.trim(),
-      status: order_status.value,
+      order_status: order_status.value,   // ✅ POPRAWIONE
       cost: cost.value ? Number(cost.value) : null,
       created_by: currentUser.id
     };
