@@ -16,6 +16,7 @@
       justify-content: center;
       align-items: center;
     }
+
     .card {
       width: 100%;
       max-width: 600px;
@@ -24,8 +25,18 @@
       padding: 30px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
-    h1 { text-align: center; margin-bottom: 25px; }
-    label { display: block; margin: 14px 0 6px; font-weight: bold; }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-weight: bold;
+    }
+
     input, textarea, select {
       width: 100%;
       padding: 12px;
@@ -33,101 +44,119 @@
       border: none;
       font-size: 15px;
     }
-    textarea { min-height: 100px; }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
     button {
-      width: 100%;
       margin-top: 20px;
+      width: 100%;
       padding: 14px;
-      background: #22c55e;
-      border: none;
-      border-radius: 10px;
       font-size: 16px;
       font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      background: #22c55e;
+      color: #000;
       cursor: pointer;
     }
-    button:hover { background: #16a34a; }
-    .back { margin-top: 16px; text-align: center; }
-    .back a { color: #60a5fa; text-decoration: none; }
+
+    button:hover {
+      background: #16a34a;
+    }
+
+    .back {
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    .back a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
   </style>
 </head>
-
 <body>
 
-<div class="card">
-  <h1>➕ Nowe zlecenie</h1>
+  <div class="card">
+    <h1>➕ Nowe zlecenie</h1>
 
-  <form id="orderForm">
-    <label>Imię i nazwisko klienta</label>
-    <input id="client_name" required />
+    <form id="orderForm">
+      <label>Imię i nazwisko klienta</label>
+      <input id="client_name" required />
 
-    <label>Telefon</label>
-    <input id="phone" />
+      <label>Telefon</label>
+      <input id="phone" />
 
-    <label>Typ roweru</label>
-    <input id="bike_type" />
+      <label>Typ roweru</label>
+      <input id="bike_type" />
 
-    <label>Opis usterki</label>
-    <textarea id="description"></textarea>
+      <label>Opis usterki</label>
+      <textarea id="description"></textarea>
 
-    <label>Status</label>
-    <select id="status">
-      <option value="nowe">Nowe</option>
-      <option value="w trakcie">W trakcie</option>
-      <option value="gotowe">Gotowe</option>
-      <option value="wydane">Wydane</option>
-    </select>
+      <label>Status</label>
+      <select id="status">
+        <option value="nowe">Nowe</option>
+        <option value="w trakcie">W trakcie</option>
+        <option value="gotowe">Gotowe</option>
+      </select>
 
-    <label>Koszt (zł)</label>
-    <input id="cost" type="number" step="0.01" />
+      <label>Koszt (zł)</label>
+      <input id="cost" type="number" step="0.01" />
 
-    <button type="submit">Zapisz zlecenie</button>
-  </form>
+      <button type="submit">Zapisz zlecenie</button>
+    </form>
 
-  <div class="back">
-    <a href="index.html">← Powrót do panelu</a>
+    <div class="back">
+      <a href="index.html">← Powrót do panelu</a>
+    </div>
   </div>
-</div>
 
-<!-- SUPABASE CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 🔹 SUPABASE CLIENT (TWORZY window.supabase) -->
+  <script src="supabaseClient.js"></script>
 
-<!-- TWÓJ KLIENT -->
-<script src="./supabaseClient.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      // 🔐 SPRAWDZENIE LOGOWANIA
+      const { data: { session } } = await window.supabase.auth.getSession();
 
-<script>
-  // ✅ UŻYWAMY INNEJ NAZWY
-  const sb = window.supabase;
+      if (!session) {
+        alert("Musisz być zalogowany");
+        window.location.href = "login.html";
+        return;
+      }
 
-  document.getElementById("orderForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
+      const form = document.getElementById("orderForm");
 
-    const { data: { user } } = await sb.auth.getUser();
-    if (!user) {
-      alert("Musisz być zalogowany");
-      return;
-    }
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    const order = {
-      client_name: document.getElementById("client_name").value,
-      phone: document.getElementById("phone").value,
-      bike_type: document.getElementById("bike_type").value,
-      description: document.getElementById("description").value,
-      status: document.getElementById("status").value,
-      cost: document.getElementById("cost").value || null,
-      created_by: user.id
-    };
+        const order = {
+          client_name: document.getElementById("client_name").value,
+          phone: document.getElementById("phone").value,
+          bike_type: document.getElementById("bike_type").value,
+          description: document.getElementById("description").value,
+          status: document.getElementById("status").value,
+          cost: document.getElementById("cost").value || null,
+          created_by: session.user.id
+        };
 
-    const { error } = await sb.from("orders").insert(order);
+        const { error } = await window.supabase
+          .from("orders")
+          .insert(order);
 
-    if (error) {
-      console.error(error);
-      alert("❌ Błąd zapisu");
-    } else {
-      alert("✅ Zlecenie zapisane");
-      window.location.href = "index.html";
-    }
-  });
-</script>
+        if (error) {
+          alert("❌ Błąd zapisu: " + error.message);
+          return;
+        }
+
+        alert("✅ Zlecenie zapisane");
+        window.location.href = "index.html";
+      });
+    });
+  </script>
 
 </body>
 </html>
