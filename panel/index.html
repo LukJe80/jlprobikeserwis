@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Panel serwisanta – JL Pro Bike Serwis</title>
 </head>
 <body>
@@ -11,9 +11,7 @@
 
 <button id="test">Pobierz zlecenia</button>
 
-<br><br>
-
-<table border="1" cellpadding="8" cellspacing="0">
+<table border="1" cellpadding="6" cellspacing="0" style="margin-top:10px;">
   <thead>
     <tr>
       <th>ID</th>
@@ -31,46 +29,26 @@
   </tbody>
 </table>
 
-<!-- Supabase client (JEDNO ŹRÓDŁO PRAWDY) -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<!-- 1️⃣ Supabase CLIENT -->
+<script src="/panel/supabaseClient.js"></script>
 
+<!-- 2️⃣ LOGIKA PANELU -->
 <script>
-  // 🔑 Supabase config
-  const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
-
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
-  // 📦 Pobieranie zleceń
   document.getElementById("test").addEventListener("click", async () => {
-    const { data, error } = await supabase
+    const tbody = document.getElementById("output");
+    tbody.innerHTML = "<tr><td colspan='6'>⏳ Ładowanie...</td></tr>";
+
+    const { data, error } = await window.supabase
       .from("zlecenia")
       .select("*")
       .order("id", { ascending: false });
 
-    const tbody = document.getElementById("output");
-    tbody.innerHTML = "";
-
     if (error) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6">❌ Błąd: ${error.message}</td>
-        </tr>
-      `;
+      tbody.innerHTML = `<tr><td colspan="6">❌ Błąd: ${error.message}</td></tr>`;
       return;
     }
 
-    if (data.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6">Brak zleceń</td>
-        </tr>
-      `;
-      return;
-    }
+    tbody.innerHTML = "";
 
     data.forEach(z => {
       const row = document.createElement("tr");
