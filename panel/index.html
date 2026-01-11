@@ -3,41 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>Panel serwisanta – JL Pro Bike Serwis</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-
-    table {
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-
-    th, td {
-      border: 1px solid #000;
-      padding: 6px 10px;
-      text-align: left;
-    }
-
-    th {
-      background: #f0f0f0;
-    }
-
-    button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-  </style>
 </head>
-
 <body>
+
   <h1>🔧 Panel serwisanta</h1>
   <p>Tu będzie system obsługi zleceń.</p>
 
   <button id="test">Pobierz zlecenia</button>
 
-  <table>
+  <table border="1" cellpadding="6" cellspacing="0" style="margin-top:15px;">
     <thead>
       <tr>
         <th>ID</th>
@@ -55,10 +29,11 @@
     </tbody>
   </table>
 
-  <!-- GŁÓWNY SKRYPT -->
-  <script type="module">
-    import { supabase } from "./supabaseClient.js";
+  <!-- 1️⃣ Supabase client (globalny window.supabase) -->
+  <script type="module" src="./supabaseClient.js"></script>
 
+  <!-- 2️⃣ Logika panelu -->
+  <script type="module">
     const button = document.getElementById("test");
     const tbody = document.getElementById("output");
 
@@ -69,7 +44,7 @@
         </tr>
       `;
 
-      const { data, error } = await supabase
+      const { data, error } = await window.supabase
         .from("zlecenia")
         .select("*")
         .order("id", { ascending: false });
@@ -77,13 +52,15 @@
       if (error) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="6">❌ Błąd: ${error.message}</td>
+            <td colspan="6">❌ ${error.message}</td>
           </tr>
         `;
         return;
       }
 
-      if (!data || data.length === 0) {
+      tbody.innerHTML = "";
+
+      if (data.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="6">Brak zleceń</td>
@@ -91,8 +68,6 @@
         `;
         return;
       }
-
-      tbody.innerHTML = "";
 
       data.forEach(z => {
         const row = document.createElement("tr");
@@ -108,8 +83,6 @@
       });
     });
   </script>
-</body>
-</html>
 
 </body>
 </html>
