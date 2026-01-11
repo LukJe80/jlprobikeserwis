@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Logowanie – Panel serwisanta</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      background: #fff;
+      padding: 30px;
+      border: 1px solid #ccc;
+      width: 300px;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>🔐 Panel serwisanta</h2>
+  <p>Wpisz PIN</p>
+
+  <input type="password" id="pin" placeholder="PIN" />
+  <button id="login">Zaloguj</button>
+
+  <div class="error" id="error"></div>
+</div>
+
+<script>
+  const PIN = "1234"; // tymczasowy PIN
+
+  document.getElementById("login").addEventListener("click", () => {
+    const pin = document.getElementById("pin").value;
+
+    if (pin === PIN) {
+      localStorage.setItem("loggedIn", "true");
+      window.location.href = "/panel/index.html";
+    } else {
+      document.getElementById("error").textContent = "❌ Błędny PIN";
+    }
+  });
+</script>
+
+</body>
+</html>
