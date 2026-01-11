@@ -32,6 +32,7 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
+      margin-left: 10px;
     }
 
     button:hover {
@@ -41,37 +42,6 @@
 </head>
 
 <body>
-
-<script>
-  const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
-
-  const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
-  async function checkAuth() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-
-    if (!session) {
-      // ❌ brak sesji → logowanie
-      window.location.href = "login.html";
-      return;
-    }
-
-    // ✅ użytkownik zalogowany
-    document.getElementById("userEmail").textContent =
-      session.user.email;
-  }
-
-  async function logout() {
-    await supabaseClient.auth.signOut();
-    window.location.href = "login.html";
-  }
-
-  checkAuth();
-</script>
 
 <header>
   <h1>Panel Serwisanta</h1>
@@ -85,6 +55,67 @@
   <h2>Witaj w panelu 🚲</h2>
   <p>Tu będzie obsługa zleceń serwisowych.</p>
 </main>
+
+<script>
+  // 🔑 DANE SUPABASE (TE SAME CO W login.html)
+  const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  async function checkAuth() {
+    console.log("🔍 Sprawdzam sesję...");
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      console.log("❌ Brak sesji → redirect do login.html");
+      window.location.href = "login.html";
+      return;
+    }
+
+    console.log("✅ Sesja OK:", session);
+
+    // email w headerze
+    document.getElementById("userEmail").textContent =
+      session.user.email;
+
+    console.log("🔍 Pobieram profil użytkownika...");
+
+    const { data: profile, error } = await supabaseClient
+      .from("profiles")
+      .select("id, email, role")
+      .eq("id", session.user.id)
+      .single();
+
+    if (error) {
+      console.error("❌ Błąd pobierania profilu:", error);
+      alert("Błąd profilu użytkownika (RLS lub brak rekordu)");
+      return;
+    }
+
+    console.log("📦 PROFILE:", profile);
+    console.log("🔐 ROLE:", profile.role);
+
+    if (profile.role === "admin") {
+      console.log("✅ Zalogowany jako ADMIN");
+    } else {
+      console.log("👤 Zalogowany jako SERWISANT");
+    }
+  }
+
+  async function logout() {
+    console.log("🚪 Wylogowanie...");
+    await supabaseClient.auth.signOut();
+    window.location.href = "login.html";
+  }
+
+  // 🚀 START
+  checkAuth();
+</script>
 
 </body>
 </html>
