@@ -5,14 +5,14 @@
   <title>Panel Serwisanta – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase -->
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #0f172a;
+      background: radial-gradient(circle at top, #0f172a, #020617);
       color: #e5e7eb;
       padding: 30px;
     }
@@ -21,7 +21,16 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      margin: 0;
+    }
+
+    #userEmail {
+      margin-right: 10px;
+      font-weight: bold;
     }
 
     button {
@@ -32,11 +41,31 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
-      margin-left: 10px;
     }
 
     button:hover {
       background: #dc2626;
+    }
+
+    main {
+      max-width: 600px;
+    }
+
+    .btn-add {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 16px 28px;
+      background: #22c55e;
+      color: #000;
+      font-weight: bold;
+      border-radius: 14px;
+      text-decoration: none;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    .btn-add:hover {
+      background: #16a34a;
     }
   </style>
 </head>
@@ -54,6 +83,11 @@
 <main>
   <h2>Witaj w panelu 🚲</h2>
   <p>Tu będzie obsługa zleceń serwisowych.</p>
+
+  <!-- ➕ DODAJ ZLECENIE -->
+  <a href="add-order.html" class="btn-add">
+    ➕ Dodaj zlecenie
+  </a>
 </main>
 
 <script>
