@@ -1,33 +1,91 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Panel serwisanta – JL Pro Bike Serwis</title>
 </head>
 <body>
 
-  <h1>🔧 Panel serwisanta</h1>
-  <p>Tu będzie system obsługi zleceń.</p>
+<h1>🔧 Panel serwisanta</h1>
+<p>Tu będzie system obsługi zleceń.</p>
 
-  <button id="test">Test połączenia z Supabase</button>
-  <pre id="output"></pre>
+<button id="test">Pobierz zlecenia</button>
 
-  <!-- WAŻNE: ścieżka absolutna -->
-  <script type="module" src="/panel/supabaseClient.js"></script>
+<br><br>
 
-  <script type="module">
-    document.getElementById("test").addEventListener("click", async () => {
-      const { data, error } = await window.supabase
-        .from("zlecenia")
-        .select("*")
-        .limit(1);
+<table border="1" cellpadding="8" cellspacing="0">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Imię</th>
+      <th>Telefon</th>
+      <th>Rower</th>
+      <th>Opis</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="output">
+    <tr>
+      <td colspan="6">Kliknij „Pobierz zlecenia”</td>
+    </tr>
+  </tbody>
+</table>
 
-      document.getElementById("output").textContent =
-        error
-          ? "❌ Błąd:\n" + JSON.stringify(error, null, 2)
-          : "✅ Sukces:\n" + JSON.stringify(data, null, 2);
+<!-- Supabase client (JEDNO ŹRÓDŁO PRAWDY) -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<script>
+  // 🔑 Supabase config
+  const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  // 📦 Pobieranie zleceń
+  document.getElementById("test").addEventListener("click", async () => {
+    const { data, error } = await supabase
+      .from("zlecenia")
+      .select("*")
+      .order("id", { ascending: false });
+
+    const tbody = document.getElementById("output");
+    tbody.innerHTML = "";
+
+    if (error) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6">❌ Błąd: ${error.message}</td>
+        </tr>
+      `;
+      return;
+    }
+
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6">Brak zleceń</td>
+        </tr>
+      `;
+      return;
+    }
+
+    data.forEach(z => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${z.id}</td>
+        <td>${z.imie ?? ""}</td>
+        <td>${z.telefon ?? ""}</td>
+        <td>${z.typ_roweru ?? ""}</td>
+        <td>${z.opis ?? ""}</td>
+        <td>${z.status ?? ""}</td>
+      `;
+      tbody.appendChild(row);
     });
-  </script>
+  });
+</script>
 
 </body>
 </html>
