@@ -1,29 +1,10 @@
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-document.getElementById("test").addEventListener("click", async () => {
-  const { data, error } = await supabase
-    .from("zlecenia")
-    .select("*")
-    .order("id", { ascending: false });
+  const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
 
-  const tbody = document.getElementById("output");
-  tbody.innerHTML = "";
-
-  if (error) {
-    tbody.innerHTML = `<tr><td colspan="6">❌ Błąd: ${error.message}</td></tr>`;
-    return;
-  }
-
-  data.forEach(z => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${z.id}</td>
-      <td>${z.imie ?? ""}</td>
-      <td>${z.telefon ?? ""}</td>
-      <td>${z.typ_roweru ?? ""}</td>
-      <td>${z.opis ?? ""}</td>
-      <td>${z.status ?? ""}</td>
-    `;
-    tbody.appendChild(row);
-  });
-});
+  window.supabase = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 </script>
