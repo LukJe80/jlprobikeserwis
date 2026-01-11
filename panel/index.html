@@ -7,87 +7,104 @@
   <style>
     table {
       border-collapse: collapse;
-      margin-top: 10px;
+      margin-top: 15px;
     }
     th, td {
       border: 1px solid #000;
       padding: 6px 10px;
     }
-    button {
-      margin-top: 10px;
+    select {
+      padding: 4px;
     }
   </style>
 </head>
 <body>
 
-  <h1>🔧 Panel serwisanta</h1>
-  <p>Tu będzie system obsługi zleceń.</p>
+<h1>🛠 Panel serwisanta</h1>
+<p>Tu będzie system obsługi zleceń.</p>
 
-  <button id="load">Pobierz zlecenia</button>
+<button id="load">Pobierz zlecenia</button>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Imię</th>
-        <th>Telefon</th>
-        <th>Rower</th>
-        <th>Opis</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody id="output">
-      <tr>
-        <td colspan="6">Kliknij „Pobierz zlecenia”</td>
-      </tr>
-    </tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Imię</th>
+      <th>Telefon</th>
+      <th>Rower</th>
+      <th>Opis</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody id="output">
+    <tr>
+      <td colspan="6">Kliknij „Pobierz zlecenia”</td>
+    </tr>
+  </tbody>
+</table>
 
-  <!-- 1️⃣ Supabase client -->
-  <script type="module" src="/panel/supabaseClient.js"></script>
+<!-- Supabase -->
+<script type="module" src="/panel/supabaseClient.js"></script>
 
-  <!-- 2️⃣ Logika panelu -->
-  <script type="module">
-    const button = document.getElementById("load");
-    const tbody = document.getElementById("output");
+<script type="module">
+const tbody = document.getElementById("output");
+const button = document.getElementById("load");
 
-    button.addEventListener("click", async () => {
-      tbody.innerHTML = `<tr><td colspan="6">⏳ Ładowanie...</td></tr>`;
+const STATUSY = [
+  "Rower przyjęty do serwisu",
+  "W trakcie naprawy",
+  "Gotowy do odbioru",
+  "Wydany klientowi"
+];
 
-      const { data, error } = await window.supabase
-        .from("zlecenia")
-        .select("*")
-        .order("id", { ascending: false });
+button.addEventListener("click", async () => {
+  tbody.innerHTML = `<tr><td colspan="6">⏳ Ładowanie...</td></tr>`;
 
-      if (error) {
-        tbody.innerHTML = `<tr><td colspan="6">❌ Błąd: ${error.message}</td></tr>`;
-        return;
-      }
+  const { data, error } = await window.supabase
+    .from("zlecenia")
+    .select("*")
+    .order("id", { ascending: false });
 
-      if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="6">Brak zleceń</td></tr>`;
-        return;
-      }
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="6">❌ ${error.message}</td></tr>`;
+    return;
+  }
 
-      tbody.innerHTML = "";
+  tbody.innerHTML = "";
 
-      data.forEach(z => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${z.id}</td>
-          <td>${z.imie ?? ""}</td>
-          <td>${z.telefon ?? ""}</td>
-          <td>${z.typ_roweru ?? ""}</td>
-          <td>${z.opis ?? ""}</td>
-          <td>${z.status ?? ""}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+  data.forEach(z => {
+    const tr = document.createElement("tr");
+
+    const select = document.createElement("select");
+    STATUSY.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = s;
+      if (s === z.status) opt.selected = true;
+      select.appendChild(opt);
     });
-  </script>
 
-</body>
-</html>
+    select.addEventListener("change", async () => {
+      await window.supabase
+        .from("zlecenia")
+        .update({ status: select.value })
+        .eq("id", z.id);
+    });
+
+    tr.innerHTML = `
+      <td>${z.id}</td>
+      <td>${z.imie ?? ""}</td>
+      <td>${z.telefon ?? ""}</td>
+      <td>${z.typ_roweru ?? ""}</td>
+      <td>${z.opis ?? ""}</td>
+      <td></td>
+    `;
+
+    tr.children[5].appendChild(select);
+    tbody.appendChild(tr);
+  });
+});
+</script>
 
 </body>
 </html>
