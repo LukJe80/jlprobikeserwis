@@ -42,7 +42,7 @@
       padding: 12px;
       border-radius: 8px;
       border: none;
-      font-size: 15px;
+      font-size: 16px;
     }
 
     textarea {
@@ -54,27 +54,28 @@
       margin-top: 20px;
       width: 100%;
       padding: 14px;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
-      border: none;
       border-radius: 10px;
+      border: none;
+      cursor: pointer;
       background: #22c55e;
       color: #000;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #16a34a;
     }
 
     .back {
+      display: block;
       margin-top: 16px;
       text-align: center;
+      color: #93c5fd;
+      text-decoration: none;
     }
 
-    .back a {
-      color: #60a5fa;
-      text-decoration: none;
+    .error {
+      margin-top: 12px;
+      color: #f87171;
+      font-weight: bold;
+      text-align: center;
     }
   </style>
 </head>
@@ -101,6 +102,7 @@
         <option value="nowe">Nowe</option>
         <option value="w trakcie">W trakcie</option>
         <option value="gotowe">Gotowe</option>
+        <option value="wydane">Wydane</option>
       </select>
 
       <label>Koszt (zł)</label>
@@ -109,52 +111,48 @@
       <button type="submit">Zapisz zlecenie</button>
     </form>
 
-    <div class="back">
-      <a href="index.html">← Powrót do panelu</a>
-    </div>
+    <div class="error" id="errorBox"></div>
+
+    <a class="back" href="/panel/index.html">← Powrót do panelu</a>
   </div>
 
-  <!-- 🔹 SUPABASE CLIENT (TWORZY window.supabase) -->
-  <script src="supabaseClient.js"></script>
+  <!-- 🔴 KOLEJNOŚĆ MA ZNACZENIE -->
+  <script src="/panel/supabaseClient.js"></script>
 
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      // 🔐 SPRAWDZENIE LOGOWANIA
-      const { data: { session } } = await window.supabase.auth.getSession();
+    document.getElementById("orderForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
+      const errorBox = document.getElementById("errorBox");
+      errorBox.textContent = "";
+
+      // 🔐 SPRAWDZENIE SESJI
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        alert("Musisz być zalogowany");
-        window.location.href = "login.html";
+        errorBox.textContent = "❌ Musisz być zalogowany";
         return;
       }
 
-      const form = document.getElementById("orderForm");
+      const order = {
+        client_name: document.getElementById("client_name").value,
+        phone: document.getElementById("phone").value,
+        bike_type: document.getElementById("bike_type").value,
+        description: document.getElementById("description").value,
+        status: document.getElementById("status").value,
+        cost: document.getElementById("cost").value || null,
+        created_by: session.user.id
+      };
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+      const { error } = await supabase
+        .from("orders")
+        .insert(order);
 
-        const order = {
-          client_name: document.getElementById("client_name").value,
-          phone: document.getElementById("phone").value,
-          bike_type: document.getElementById("bike_type").value,
-          description: document.getElementById("description").value,
-          status: document.getElementById("status").value,
-          cost: document.getElementById("cost").value || null,
-          created_by: session.user.id
-        };
+      if (error) {
+        errorBox.textContent = "❌ Błąd zapisu: " + error.message;
+        return;
+      }
 
-        const { error } = await window.supabase
-          .from("orders")
-          .insert(order);
-
-        if (error) {
-          alert("❌ Błąd zapisu: " + error.message);
-          return;
-        }
-
-        alert("✅ Zlecenie zapisane");
-        window.location.href = "index.html";
-      });
+      window.location.href = "/panel/index.html";
     });
   </script>
 
