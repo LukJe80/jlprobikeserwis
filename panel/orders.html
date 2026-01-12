@@ -2,175 +2,122 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Edycja zlecenia – JL Pro Bike Serwis</title>
+  <title>Lista zleceń</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Twój klient Supabase -->
+  <!-- GLOBALNY KLIENT -->
   <script src="supabaseClient.js"></script>
 
   <style>
     body {
       margin: 0;
+      padding: 24px;
       font-family: Arial, sans-serif;
       background: radial-gradient(circle at top, #0f172a, #020617);
       color: #e5e7eb;
-      min-height: 100vh;
-      padding: 24px;
-      max-width: 600px;
     }
 
-    h1 {
-      margin-bottom: 16px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #020617;
     }
 
-    label {
-      display: block;
-      margin-top: 12px;
-      margin-bottom: 4px;
-      font-size: 14px;
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #1e293b;
+      text-align: left;
+    }
+
+    th {
+      text-transform: uppercase;
+      font-size: 12px;
       color: #94a3b8;
     }
 
-    input, select, textarea {
-      width: 100%;
-      padding: 8px;
-      background: #020617;
-      color: #e5e7eb;
-      border: 1px solid #1e293b;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px 16px;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
+    .btn {
+      color: #60a5fa;
       cursor: pointer;
-    }
-
-    button.secondary {
-      background: #334155;
-      margin-left: 8px;
-    }
-
-    .row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .row > div {
-      flex: 1;
+      text-decoration: underline;
     }
   </style>
 </head>
+
 <body>
 
-<h1>Edycja zlecenia</h1>
+<h1>Lista zleceń</h1>
 
-<form id="edit-form">
-  <label>Klient</label>
-  <input id="customer_name" required />
-
-  <label>Telefon</label>
-  <input id="phone" />
-
-  <label>Rower</label>
-  <input id="bike_type" />
-
-  <label>Status</label>
-  <select id="status">
-    <option value="new">Nowe</option>
-    <option value="in_progress">W trakcie</option>
-    <option value="waiting_parts">Czeka na części</option>
-    <option value="done">Zakończone</option>
-    <option value="cancelled">Anulowane</option>
-  </select>
-
-  <label>Opis / notatki</label>
-  <textarea id="description" rows="4"></textarea>
-
-  <div class="row">
-    <button type="submit">Zapisz zmiany</button>
-    <button type="button" class="secondary" onclick="goBack()">Anuluj</button>
-  </div>
-</form>
+<table>
+  <thead>
+    <tr>
+      <th>Klient</th>
+      <th>Telefon</th>
+      <th>Rower</th>
+      <th>Status</th>
+      <th>Data</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody id="orders-body">
+    <tr>
+      <td colspan="6">Ładowanie…</td>
+    </tr>
+  </tbody>
+</table>
 
 <script>
-  const params = new URLSearchParams(window.location.search)
-  const orderId = params.get('id')
+  async function loadOrders() {
+    const tbody = document.getElementById("orders-body");
 
-  if (!orderId) {
-    alert('Brak ID zlecenia')
-    location.href = 'orders.html'
-  }
-
-  const form = document.getElementById('edit-form')
-
-  const fields = {
-    customer_name: document.getElementById('customer_name'),
-    phone: document.getElementById('phone'),
-    bike_type: document.getElementById('bike_type'),
-    status: document.getElementById('status'),
-    description: document.getElementById('description')
-  }
-
-  // 1️⃣ Wczytanie zlecenia
-  async function loadOrder() {
     const { data, error } = await window.supabaseClient
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .single()
+      .from("orders")
+      .select("id, customer_name, phone, bike_type, status, created_at")
+      .order("created_at", { ascending: false });
 
-    if (error || !data) {
-      alert('Nie znaleziono zlecenia')
-      location.href = 'orders.html'
-      return
-    }
-
-    fields.customer_name.value = data.customer_name ?? ''
-    fields.phone.value = data.phone ?? ''
-    fields.bike_type.value = data.bike_type ?? ''
-    fields.status.value = data.status ?? 'new'
-    fields.description.value = data.description ?? ''
-  }
-
-  // 2️⃣ Zapis zmian
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault()
-
-    const { error } = await window.supabaseClient
-      .from('orders')
-      .update({
-        customer_name: fields.customer_name.value,
-        phone: fields.phone.value,
-        bike_type: fields.bike_type.value,
-        status: fields.status.value,
-        description: fields.description.value
-      })
-      .eq('id', orderId)
+    tbody.innerHTML = "";
 
     if (error) {
-      alert('Błąd zapisu')
-      console.error(error)
-      return
+      console.error(error);
+      tbody.innerHTML = "<tr><td colspan='6'>Błąd</td></tr>";
+      return;
     }
 
-    location.href = 'orders.html'
-  })
+    if (!data || data.length === 0) {
+      tbody.innerHTML = "<tr><td colspan='6'>Brak zleceń</td></tr>";
+      return;
+    }
 
-  function goBack() {
-    location.href = 'orders.html'
+    data.forEach(order => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${order.customer_name}</td>
+        <td>${order.phone}</td>
+        <td>${order.bike_type ?? ""}</td>
+        <td>${order.status}</td>
+        <td>${new Date(order.created_at).toLocaleDateString()}</td>
+      `;
+
+      const actionTd = document.createElement("td");
+      const editBtn = document.createElement("span");
+
+      editBtn.className = "btn";
+      editBtn.textContent = "Edytuj";
+      editBtn.onclick = () => {
+        window.location.href = "edit-order.html?id=" + order.id;
+      };
+
+      actionTd.appendChild(editBtn);
+      tr.appendChild(actionTd);
+
+      tbody.appendChild(tr);
+    });
   }
 
-  loadOrder()
+  loadOrders();
 </script>
 
 </body>
