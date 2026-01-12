@@ -8,7 +8,7 @@
   <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Twój klient Supabase -->
+  <!-- GLOBALNY klient Supabase (TWÓJ PLIK) -->
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -67,90 +67,94 @@
 </head>
 <body>
 
-<h1>Lista zleceń</h1>
+  <h1>Lista zleceń</h1>
 
-<table>
-  <thead>
-    <tr>
-      <th>Klient</th>
-      <th>Telefon</th>
-      <th>Rower</th>
-      <th>Status</th>
-      <th>Data</th>
-      <th>Akcje</th>
-    </tr>
-  </thead>
-  <tbody id="orders-body">
-    <tr>
-      <td colspan="6">Ładowanie...</td>
-    </tr>
-  </tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>Klient</th>
+        <th>Telefon</th>
+        <th>Rower</th>
+        <th>Status</th>
+        <th>Data</th>
+        <th>Akcje</th>
+      </tr>
+    </thead>
+    <tbody id="orders-body">
+      <tr>
+        <td colspan="6">Ładowanie...</td>
+      </tr>
+    </tbody>
+  </table>
 
-<script>
-  // ❗❗❗ JEDYNA deklaracja supabase – WIĘCEJ NIE WOLNO
-  const supabase = window.supabaseClient
+  <script>
+    /* ❗❗❗
+      NIE deklarujemy: const supabase = ...
+      Korzystamy WYŁĄCZNIE z window.supabaseClient
+    */
 
-  const statusLabels = {
-    new: 'Nowe',
-    in_progress: 'W trakcie',
-    waiting_parts: 'Czeka na części',
-    done: 'Zakończone',
-    cancelled: 'Anulowane'
-  }
-
-  async function loadOrders() {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('id, customer_name, phone, bike_type, status, created_at')
-      .order('created_at', { ascending: false })
-
-    const tbody = document.getElementById('orders-body')
-    tbody.innerHTML = ''
-
-    if (error) {
-      console.error('SUPABASE ERROR:', error)
-      tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
-      return
+    const statusLabels = {
+      new: 'Nowe',
+      in_progress: 'W trakcie',
+      waiting_parts: 'Czeka na części',
+      done: 'Zakończone',
+      cancelled: 'Anulowane'
     }
 
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
-      return
-    }
+    async function loadOrders() {
+      const tbody = document.getElementById('orders-body')
+      tbody.innerHTML = '<tr><td colspan="6">Ładowanie...</td></tr>'
 
-    data.forEach(order => {
-      const tr = document.createElement('tr')
+      const { data, error } = await window.supabaseClient
+        .from('orders')
+        .select('id, customer_name, phone, bike_type, status, created_at')
+        .order('created_at', { ascending: false })
 
-      tr.innerHTML = `
-        <td>${order.customer_name}</td>
-        <td>${order.phone}</td>
-        <td>${order.bike_type ?? ''}</td>
-        <td>
-          <span class="badge ${order.status}">
-            ${statusLabels[order.status] ?? order.status}
-          </span>
-        </td>
-        <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
-      `
+      tbody.innerHTML = ''
 
-      const editBtn = document.createElement('span')
-      editBtn.className = 'btn'
-      editBtn.textContent = 'Edytuj'
-      editBtn.onclick = () => {
-        window.location.href = `edit-order.html?id=${order.id}`
+      if (error) {
+        console.error('SUPABASE ERROR:', error)
+        tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
+        return
       }
 
-      const actionsTd = document.createElement('td')
-      actionsTd.appendChild(editBtn)
-      tr.appendChild(actionsTd)
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
+        return
+      }
 
-      tbody.appendChild(tr)
-    })
-  }
+      data.forEach(order => {
+        const tr = document.createElement('tr')
 
-  loadOrders()
-</script>
+        tr.innerHTML = `
+          <td>${order.customer_name}</td>
+          <td>${order.phone}</td>
+          <td>${order.bike_type ?? ''}</td>
+          <td>
+            <span class="badge ${order.status}">
+              ${statusLabels[order.status] ?? order.status}
+            </span>
+          </td>
+          <td>${new Date(order.created_at).toLocaleDateString()}</td>
+        `
+
+        const editBtn = document.createElement('span')
+        editBtn.className = 'btn'
+        editBtn.textContent = 'Edytuj'
+        editBtn.onclick = () => {
+          window.location.href = `edit-order.html?id=${order.id}`
+        }
+
+        const actionsTd = document.createElement('td')
+        actionsTd.appendChild(editBtn)
+        tr.appendChild(actionsTd)
+
+        tbody.appendChild(tr)
+      })
+    }
+
+    loadOrders()
+  </script>
 
 </body>
 </html>
