@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edycja zlecenia – JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: #020617;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.5);
+    }
+
+    h1 {
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: #94a3b8;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 14px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      color: #e5e7eb;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .back {
+      display: block;
+      margin-top: 12px;
+      text-align: center;
+      color: #60a5fa;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>Edycja zlecenia</h1>
+
+    <form id="order-form">
+      <label>Klient</label>
+      <input type="text" id="customer_name" disabled />
+
+      <label>Telefon</label>
+      <input type="text" id="phone" disabled />
+
+      <label>Rower</label>
+      <input type="text" id="bike_type" disabled />
+
+      <label>Status</label>
+      <select id="status">
+        <option value="new">Nowe</option>
+        <option value="in_progress">W trakcie</option>
+        <option value="waiting_parts">Czeka na części</option>
+        <option value="done">Zakończone</option>
+        <option value="cancelled">Anulowane</option>
+      </select>
+
+      <label>Opis</label>
+      <textarea id="description"></textarea>
+
+      <label>Wycena (zł)</label>
+      <input type="number" id="price_estimate" step="0.01" />
+
+      <button type="submit">Zapisz zmiany</button>
+    </form>
+
+    <span class="back" onclick="goBack()">← Powrót do listy</span>
+  </div>
+
+  <script>
+    const supabase = window.supabaseClient
+    const params = new URLSearchParams(window.location.search)
+    const orderId = params.get('id')
+
+    if (!orderId) {
+      alert('Brak ID zlecenia')
+      window.location.href = 'orders.html'
+    }
+
+    async function loadOrder() {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single()
+
+      if (error || !data) {
+        alert('Nie znaleziono zlecenia')
+        window.location.href = 'orders.html'
+        return
+      }
+
+      document.getElementById('customer_name').value = data.customer_name
+      document.getElementById('phone').value = data.phone
+      document.getElementById('bike_type').value = data.bike_type ?? ''
+      document.getElementById('status').value = data.status
+      document.getElementById('description').value = data.description ?? ''
+      document.getElementById('price_estimate').value = data.price_estimate ?? ''
+    }
+
+    document.getElementById('order-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+
+      const status = document.getElementById('status').value
+
+      const updateData = {
+        status,
+        description: document.getElementById('description').value,
+        price_estimate: document.getElementById('price_estimate').value || null,
+        completed_at: status === 'done' ? new Date().toISOString() : null
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', orderId)
+
+      if (error) {
+        alert('Błąd zapisu')
+        console.error(error)
+        return
+      }
+
+      alert('Zapisano zmiany')
+      window.location.href = 'orders.html'
+    })
+
+    function goBack() {
+      window.location.href = 'orders.html'
+    }
+
+    loadOrder()
+  </script>
+
+</body>
+</html>
