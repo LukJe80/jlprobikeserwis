@@ -2,13 +2,13 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Zlecenia – JL Pro Bike Serwis</title>
+  <title>Lista zleceń – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase CDN -->
+  <!-- Supabase CDN (TYLKO RAZ) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- GLOBALNY klient Supabase (TWÓJ PLIK) -->
+  <!-- Twój globalny klient Supabase -->
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -21,9 +21,7 @@
       padding: 24px;
     }
 
-    h1 {
-      margin-bottom: 16px;
-    }
+    h1 { margin-bottom: 16px; }
 
     table {
       width: 100%;
@@ -67,94 +65,96 @@
 </head>
 <body>
 
-  <h1>Lista zleceń</h1>
+<h1>Lista zleceń</h1>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Klient</th>
-        <th>Telefon</th>
-        <th>Rower</th>
-        <th>Status</th>
-        <th>Data</th>
-        <th>Akcje</th>
-      </tr>
-    </thead>
-    <tbody id="orders-body">
-      <tr>
-        <td colspan="6">Ładowanie...</td>
-      </tr>
-    </tbody>
-  </table>
+<table>
+  <thead>
+    <tr>
+      <th>Klient</th>
+      <th>Telefon</th>
+      <th>Rower</th>
+      <th>Status</th>
+      <th>Data</th>
+      <th>Akcje</th>
+    </tr>
+  </thead>
+  <tbody id="orders-body">
+    <tr>
+      <td colspan="6">Ładowanie…</td>
+    </tr>
+  </tbody>
+</table>
 
-  <script>
-    /* ❗❗❗
-      NIE deklarujemy: const supabase = ...
-      Korzystamy WYŁĄCZNIE z window.supabaseClient
-    */
+<script>
+  // ❗ NIE deklarujemy: const supabase = ...
+  // ❗ Korzystamy TYLKO z window.supabaseClient
 
-    const statusLabels = {
-      new: 'Nowe',
-      in_progress: 'W trakcie',
-      waiting_parts: 'Czeka na części',
-      done: 'Zakończone',
-      cancelled: 'Anulowane'
+  const statusLabels = {
+    new: 'Nowe',
+    in_progress: 'W trakcie',
+    waiting_parts: 'Czeka na części',
+    done: 'Zakończone',
+    cancelled: 'Anulowane'
+  }
+
+  async function loadOrders() {
+    const tbody = document.getElementById('orders-body')
+    tbody.innerHTML = '<tr><td colspan="6">Ładowanie…</td></tr>'
+
+    // DEBUG – sprawdzamy czy klient istnieje
+    console.log('SUPABASE CLIENT:', window.supabaseClient)
+
+    const { data, error } = await window.supabaseClient
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    tbody.innerHTML = ''
+
+    if (error) {
+      console.error('SUPABASE ERROR:', error)
+      tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
+      return
     }
 
-    async function loadOrders() {
-      const tbody = document.getElementById('orders-body')
-      tbody.innerHTML = '<tr><td colspan="6">Ładowanie...</td></tr>'
-
-      const { data, error } = await window.supabaseClient
-        .from('orders')
-        .select('id, customer_name, phone, bike_type, status, created_at')
-        .order('created_at', { ascending: false })
-
-      tbody.innerHTML = ''
-
-      if (error) {
-        console.error('SUPABASE ERROR:', error)
-        tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
-        return
-      }
-
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
-        return
-      }
-
-      data.forEach(order => {
-        const tr = document.createElement('tr')
-
-        tr.innerHTML = `
-          <td>${order.customer_name}</td>
-          <td>${order.phone}</td>
-          <td>${order.bike_type ?? ''}</td>
-          <td>
-            <span class="badge ${order.status}">
-              ${statusLabels[order.status] ?? order.status}
-            </span>
-          </td>
-          <td>${new Date(order.created_at).toLocaleDateString()}</td>
-        `
-
-        const editBtn = document.createElement('span')
-        editBtn.className = 'btn'
-        editBtn.textContent = 'Edytuj'
-        editBtn.onclick = () => {
-          window.location.href = `edit-order.html?id=${order.id}`
-        }
-
-        const actionsTd = document.createElement('td')
-        actionsTd.appendChild(editBtn)
-        tr.appendChild(actionsTd)
-
-        tbody.appendChild(tr)
-      })
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
+      return
     }
 
-    loadOrders()
-  </script>
+    data.forEach(order => {
+      console.log('ORDER:', order) // DEBUG – MUSI być id
+
+      const tr = document.createElement('tr')
+
+      tr.innerHTML = `
+        <td>${order.customer_name}</td>
+        <td>${order.phone}</td>
+        <td>${order.bike_type ?? ''}</td>
+        <td>
+          <span class="badge ${order.status}">
+            ${statusLabels[order.status] ?? order.status}
+          </span>
+        </td>
+        <td>${new Date(order.created_at).toLocaleDateString()}</td>
+        <td>
+          <span class="btn" onclick="editOrder('${order.id}')">
+            Edytuj
+          </span>
+        </td>
+      `
+
+      tbody.appendChild(tr)
+    })
+  }
+
+  function editOrder(id) {
+    console.log('EDIT ID:', id) // DEBUG
+    window.location.href = `edit-order.html?id=${id}`
+  }
+
+  loadOrders()
+</script>
 
 </body>
 </html>
