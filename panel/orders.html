@@ -5,10 +5,10 @@
   <title>Zlecenia – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- CDN Supabase (TYLKO biblioteka) -->
+  <!-- TYLKO biblioteka -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Twój globalny klient Supabase -->
+  <!-- Twój klient -->
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -21,46 +21,17 @@
       padding: 24px;
     }
 
-    h1 { margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #1e293b; }
+    th { color: #94a3b8; font-size: 12px; text-transform: uppercase; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #020617;
-    }
+    .btn { color: #60a5fa; cursor: pointer; text-decoration: underline; }
 
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #1e293b;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    th {
-      color: #94a3b8;
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .new { background: #1e3a8a; color: #bfdbfe; }
-    .in_progress { background: #78350f; color: #fde68a; }
-    .waiting_parts { background: #7c2d12; color: #fed7aa; }
-    .done { background: #14532d; color: #bbf7d0; }
-    .cancelled { background: #7f1d1d; color: #fecaca; }
-
-    .btn {
-      color: #60a5fa;
-      cursor: pointer;
-      text-decoration: underline;
-    }
+    .new { background:#1e3a8a;color:#bfdbfe }
+    .in_progress { background:#78350f;color:#fde68a }
+    .waiting_parts { background:#7c2d12;color:#fed7aa }
+    .done { background:#14532d;color:#bbf7d0 }
+    .cancelled { background:#7f1d1d;color:#fecaca }
   </style>
 </head>
 <body>
@@ -79,14 +50,12 @@
     </tr>
   </thead>
   <tbody id="orders-body">
-    <tr>
-      <td colspan="6">Ładowanie…</td>
-    </tr>
+    <tr><td colspan="6">Ładowanie…</td></tr>
   </tbody>
 </table>
 
 <script>
-  // ✅ JEDYNE miejsce, gdzie używamy klienta
+  // ✅ JEDYNA deklaracja
   const supabase = window.supabaseClient
 
   const statusLabels = {
@@ -107,41 +76,32 @@
     tbody.innerHTML = ''
 
     if (error) {
-      console.error('SUPABASE ERROR:', error)
-      tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
+      console.error(error)
+      tbody.innerHTML = '<tr><td colspan="6">Błąd</td></tr>'
       return
     }
 
-    if (!data || data.length === 0) {
+    if (!data.length) {
       tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
       return
     }
 
-    data.forEach(order => {
+    data.forEach(o => {
       const tr = document.createElement('tr')
-
       tr.innerHTML = `
-        <td>${order.customer_name}</td>
-        <td>${order.phone}</td>
-        <td>${order.bike_type ?? ''}</td>
-        <td>
-          <span class="badge ${order.status}">
-            ${statusLabels[order.status] ?? order.status}
-          </span>
-        </td>
-        <td>${new Date(order.created_at).toLocaleDateString()}</td>
+        <td>${o.customer_name}</td>
+        <td>${o.phone}</td>
+        <td>${o.bike_type ?? ''}</td>
+        <td><span class="${o.status}">${statusLabels[o.status]}</span></td>
+        <td>${new Date(o.created_at).toLocaleDateString()}</td>
       `
-
-      const actionsTd = document.createElement('td')
-      const editBtn = document.createElement('span')
-      editBtn.className = 'btn'
-      editBtn.textContent = 'Edytuj'
-      editBtn.onclick = () => {
-        window.location.href = `edit-order.html?id=${order.id}`
-      }
-
-      actionsTd.appendChild(editBtn)
-      tr.appendChild(actionsTd)
+      const td = document.createElement('td')
+      const btn = document.createElement('span')
+      btn.className = 'btn'
+      btn.textContent = 'Edytuj'
+      btn.onclick = () => location.href = `edit-order.html?id=${o.id}`
+      td.appendChild(btn)
+      tr.appendChild(td)
       tbody.appendChild(tr)
     })
   }
