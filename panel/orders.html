@@ -5,8 +5,11 @@
   <title>Zlecenia – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase -->
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Twój globalny klient Supabase -->
+  <script src="supabaseClient.js"></script>
 
   <style>
     body {
@@ -90,10 +93,8 @@
   </table>
 
   <script>
-    const supabase = window.supabase.createClient(
-      'TWOJ_SUPABASE_URL',
-      'TWOJ_SUPABASE_ANON_KEY'
-    )
+    // ✅ UŻYWAMY ISTNIEJĄCEGO KLIENTA
+    const supabase = window.supabaseClient
 
     const statusLabels = {
       new: 'Nowe',
@@ -113,11 +114,12 @@
       tbody.innerHTML = ''
 
       if (error) {
+        console.error(error)
         tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
         return
       }
 
-      if (!data.length) {
+      if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
         return
       }
@@ -131,10 +133,10 @@
           <td>${order.bike_type ?? ''}</td>
           <td>
             <span class="badge ${order.status}">
-              ${statusLabels[order.status]}
+              ${statusLabels[order.status] ?? order.status}
             </span>
           </td>
-          <td>${new Date(order.created_at).toLocaleDateString()}</td>
+          <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
           <td>
             <span class="btn" onclick="editOrder('${order.id}')">Edytuj</span>
           </td>
