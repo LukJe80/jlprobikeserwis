@@ -8,6 +8,9 @@
   <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- GLOBALNY KLIENT SUPABASE -->
+  <script src="supabaseClient.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -24,15 +27,6 @@
       margin-bottom: 40px;
     }
 
-    header h1 {
-      margin: 0;
-    }
-
-    #userEmail {
-      margin-right: 10px;
-      font-weight: bold;
-    }
-
     button {
       padding: 10px 16px;
       border: none;
@@ -41,10 +35,6 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
-    }
-
-    button:hover {
-      background: #dc2626;
     }
 
     main {
@@ -60,12 +50,6 @@
       font-weight: bold;
       border-radius: 14px;
       text-decoration: none;
-      font-size: 16px;
-      transition: 0.2s;
-    }
-
-    .btn-add:hover {
-      background: #16a34a;
     }
   </style>
 </head>
@@ -84,70 +68,43 @@
   <h2>Witaj w panelu 🚲</h2>
   <p>Tu będzie obsługa zleceń serwisowych.</p>
 
-  <!-- ➕ DODAJ ZLECENIE -->
-  <a href="add-order.html" class="btn-add">
-    ➕ Dodaj zlecenie
+  <a href="orders.html" class="btn-add">
+    📋 Lista zleceń
   </a>
 </main>
 
 <script>
-  // 🔑 DANE SUPABASE (TE SAME CO W login.html)
-  const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
-
-  const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
   async function checkAuth() {
-    console.log("🔍 Sprawdzam sesję...");
-
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { session } } =
+      await window.supabaseClient.auth.getSession();
 
     if (!session) {
-      console.log("❌ Brak sesji → redirect do login.html");
       window.location.href = "login.html";
       return;
     }
 
-    console.log("✅ Sesja OK:", session);
-
-    // email w headerze
     document.getElementById("userEmail").textContent =
       session.user.email;
 
-    console.log("🔍 Pobieram profil użytkownika...");
-
-    const { data: profile, error } = await supabaseClient
+    const { data: profile, error } = await window.supabaseClient
       .from("profiles")
-      .select("id, email, role")
+      .select("role")
       .eq("id", session.user.id)
       .single();
 
     if (error) {
-      console.error("❌ Błąd pobierania profilu:", error);
-      alert("Błąd profilu użytkownika (RLS lub brak rekordu)");
+      alert("Błąd profilu użytkownika");
       return;
     }
 
-    console.log("📦 PROFILE:", profile);
-    console.log("🔐 ROLE:", profile.role);
-
-    if (profile.role === "admin") {
-      console.log("✅ Zalogowany jako ADMIN");
-    } else {
-      console.log("👤 Zalogowany jako SERWISANT");
-    }
+    console.log("Zalogowany jako:", profile.role);
   }
 
   async function logout() {
-    console.log("🚪 Wylogowanie...");
-    await supabaseClient.auth.signOut();
+    await window.supabaseClient.auth.signOut();
     window.location.href = "login.html";
   }
 
-  // 🚀 START
   checkAuth();
 </script>
 
