@@ -101,14 +101,15 @@
     async function loadOrders() {
       const { data, error } = await supabase
         .from('orders')
-        .select('*')
+        // ⬇️ JAWNIE POBIERAMY id (KLUCZOWE)
+        .select('id, customer_name, phone, bike_type, status, created_at')
         .order('created_at', { ascending: false })
 
       const tbody = document.getElementById('orders-body')
       tbody.innerHTML = ''
 
       if (error) {
-        console.error(error)
+        console.error('SUPABASE ERROR:', error)
         tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
         return
       }
@@ -119,6 +120,8 @@
       }
 
       data.forEach(order => {
+        console.log('ORDER:', order) // 🔍 DEBUG (możesz potem usunąć)
+
         const tr = document.createElement('tr')
 
         tr.innerHTML = `
@@ -137,7 +140,6 @@
           </td>
         `
 
-        // 👉 przycisk Edytuj (POPRAWNIE)
         const editBtn = document.createElement('span')
         editBtn.className = 'btn'
         editBtn.textContent = 'Edytuj'
@@ -154,6 +156,7 @@
     }
 
     function editOrder(id) {
+      console.log('EDIT ID:', id) // 🔍 DEBUG
       window.location.href = `edit-order.html?id=${id}`
     }
 
