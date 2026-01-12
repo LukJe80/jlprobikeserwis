@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zlecenia – JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      color: #e5e7eb;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    h1 {
+      margin-bottom: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #020617;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #1e293b;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #020617;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    tr:hover {
+      background: #020617;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .new { background: #1e3a8a; color: #bfdbfe; }
+    .in_progress { background: #78350f; color: #fde68a; }
+    .waiting_parts { background: #7c2d12; color: #fed7aa; }
+    .done { background: #14532d; color: #bbf7d0; }
+    .cancelled { background: #7f1d1d; color: #fecaca; }
+
+    .btn {
+      color: #60a5fa;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Lista zleceń</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Klient</th>
+        <th>Telefon</th>
+        <th>Rower</th>
+        <th>Status</th>
+        <th>Data</th>
+        <th>Akcje</th>
+      </tr>
+    </thead>
+    <tbody id="orders-body">
+      <tr>
+        <td colspan="6">Ładowanie...</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      'TWOJ_SUPABASE_URL',
+      'TWOJ_SUPABASE_ANON_KEY'
+    )
+
+    const statusLabels = {
+      new: 'Nowe',
+      in_progress: 'W trakcie',
+      waiting_parts: 'Czeka na części',
+      done: 'Zakończone',
+      cancelled: 'Anulowane'
+    }
+
+    async function loadOrders() {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      const tbody = document.getElementById('orders-body')
+      tbody.innerHTML = ''
+
+      if (error) {
+        tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
+        return
+      }
+
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
+        return
+      }
+
+      data.forEach(order => {
+        const tr = document.createElement('tr')
+
+        tr.innerHTML = `
+          <td>${order.customer_name}</td>
+          <td>${order.phone}</td>
+          <td>${order.bike_type ?? ''}</td>
+          <td>
+            <span class="badge ${order.status}">
+              ${statusLabels[order.status]}
+            </span>
+          </td>
+          <td>${new Date(order.created_at).toLocaleDateString()}</td>
+          <td>
+            <span class="btn" onclick="editOrder('${order.id}')">Edytuj</span>
+          </td>
+        `
+
+        tbody.appendChild(tr)
+      })
+    }
+
+    function editOrder(id) {
+      window.location.href = `edit-order.html?id=${id}`
+    }
+
+    loadOrders()
+  </script>
+
+</body>
+</html>
