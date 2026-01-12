@@ -2,14 +2,14 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Lista zleceń – JL Pro Bike Serwis</title>
+  <title>Zlecenia – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase CDN (TYLKO RAZ) -->
+  <!-- Supabase CDN – TYLKO RAZ -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Twój globalny klient Supabase -->
-  <script src="supabaseClient.js"></script>
+  <!-- Twój klient Supabase -->
+  <script src="./supabaseClient.js"></script>
 
   <style>
     body {
@@ -20,47 +20,10 @@
       min-height: 100vh;
       padding: 24px;
     }
-
-    h1 { margin-bottom: 16px; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #020617;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #1e293b;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    th {
-      color: #94a3b8;
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .new { background: #1e3a8a; color: #bfdbfe; }
-    .in_progress { background: #78350f; color: #fde68a; }
-    .waiting_parts { background: #7c2d12; color: #fed7aa; }
-    .done { background: #14532d; color: #bbf7d0; }
-    .cancelled { background: #7f1d1d; color: #fecaca; }
-
-    .btn {
-      color: #60a5fa;
-      cursor: pointer;
-      text-decoration: underline;
-    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px; border-bottom: 1px solid #1e293b; }
+    th { color: #94a3b8; font-size: 12px; text-transform: uppercase; }
+    .btn { color: #60a5fa; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -79,16 +42,11 @@
     </tr>
   </thead>
   <tbody id="orders-body">
-    <tr>
-      <td colspan="6">Ładowanie…</td>
-    </tr>
+    <tr><td colspan="6">Ładowanie...</td></tr>
   </tbody>
 </table>
 
 <script>
-  // ❗ NIE deklarujemy: const supabase = ...
-  // ❗ Korzystamy TYLKO z window.supabaseClient
-
   const statusLabels = {
     new: 'Nowe',
     in_progress: 'W trakcie',
@@ -99,10 +57,6 @@
 
   async function loadOrders() {
     const tbody = document.getElementById('orders-body')
-    tbody.innerHTML = '<tr><td colspan="6">Ładowanie…</td></tr>'
-
-    // DEBUG – sprawdzamy czy klient istnieje
-    console.log('SUPABASE CLIENT:', window.supabaseClient)
 
     const { data, error } = await window.supabaseClient
       .from('orders')
@@ -112,45 +66,32 @@
     tbody.innerHTML = ''
 
     if (error) {
-      console.error('SUPABASE ERROR:', error)
-      tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
+      console.error(error)
+      tbody.innerHTML = '<tr><td colspan="6">Błąd</td></tr>'
       return
     }
 
-    if (!data || data.length === 0) {
+    if (!data.length) {
       tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
       return
     }
 
     data.forEach(order => {
-      console.log('ORDER:', order) // DEBUG – MUSI być id
-
       const tr = document.createElement('tr')
-
       tr.innerHTML = `
         <td>${order.customer_name}</td>
         <td>${order.phone}</td>
         <td>${order.bike_type ?? ''}</td>
-        <td>
-          <span class="badge ${order.status}">
-            ${statusLabels[order.status] ?? order.status}
-          </span>
-        </td>
+        <td>${statusLabels[order.status] ?? order.status}</td>
         <td>${new Date(order.created_at).toLocaleDateString()}</td>
-        <td>
-          <span class="btn" onclick="editOrder('${order.id}')">
-            Edytuj
-          </span>
-        </td>
+        <td><span class="btn" onclick="edit(${order.id})">Edytuj</span></td>
       `
-
       tbody.appendChild(tr)
     })
   }
 
-  function editOrder(id) {
-    console.log('EDIT ID:', id) // DEBUG
-    window.location.href = `edit-order.html?id=${id}`
+  function edit(id) {
+    location.href = `edit-order.html?id=${id}`
   }
 
   loadOrders()
