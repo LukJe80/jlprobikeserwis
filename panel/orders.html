@@ -2,13 +2,11 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Zlecenia – JL Pro Bike Serwis</title>
+  <title>Edycja zlecenia – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase CDN -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Globalny klient Supabase -->
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -18,47 +16,50 @@
       background: radial-gradient(circle at top, #0f172a, #020617);
       color: #e5e7eb;
       min-height: 100vh;
-      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    h1 {
-      margin-bottom: 16px;
-    }
-
-    table {
+    .card {
       width: 100%;
-      border-collapse: collapse;
+      max-width: 520px;
       background: #020617;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,.5);
     }
 
-    th, td {
+    label {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    input, select, textarea {
+      width: 100%;
       padding: 10px;
-      border-bottom: 1px solid #1e293b;
-      text-align: left;
+      margin-bottom: 14px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      color: #e5e7eb;
+      border-radius: 6px;
       font-size: 14px;
     }
 
-    th {
-      color: #94a3b8;
-      text-transform: uppercase;
-      font-size: 12px;
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
     }
 
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .new { background: #1e3a8a; color: #bfdbfe; }
-    .in_progress { background: #78350f; color: #fde68a; }
-    .waiting_parts { background: #7c2d12; color: #fed7aa; }
-    .done { background: #14532d; color: #bbf7d0; }
-    .cancelled { background: #7f1d1d; color: #fecaca; }
-
-    .btn {
+    .back {
+      display: block;
+      margin-top: 12px;
+      text-align: center;
       color: #60a5fa;
       cursor: pointer;
       text-decoration: underline;
@@ -67,101 +68,118 @@
 </head>
 <body>
 
-  <h1>Lista zleceń</h1>
+<div class="card">
+  <h2>Edycja zlecenia</h2>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Klient</th>
-        <th>Telefon</th>
-        <th>Rower</th>
-        <th>Status</th>
-        <th>Data</th>
-        <th>Akcje</th>
-      </tr>
-    </thead>
-    <tbody id="orders-body">
-      <tr>
-        <td colspan="6">Ładowanie...</td>
-      </tr>
-    </tbody>
-  </table>
+  <form id="order-form">
+    <label>Klient</label>
+    <input id="customer_name" disabled>
 
-  <script>
-    const supabase = window.supabaseClient
+    <label>Telefon</label>
+    <input id="phone" disabled>
 
-    const statusLabels = {
-      new: 'Nowe',
-      in_progress: 'W trakcie',
-      waiting_parts: 'Czeka na części',
-      done: 'Zakończone',
-      cancelled: 'Anulowane'
+    <label>Rower</label>
+    <input id="bike_type" disabled>
+
+    <label>Status</label>
+    <select id="status">
+      <option value="new">Nowe</option>
+      <option value="in_progress">W trakcie</option>
+      <option value="waiting_parts">Czeka na części</option>
+      <option value="done">Zakończone</option>
+      <option value="cancelled">Anulowane</option>
+    </select>
+
+    <label>Opis usterki</label>
+    <textarea id="issue_description"></textarea>
+
+    <label>Wycena (zł)</label>
+    <input id="price_estimate" type="number" step="0.01">
+
+    <button type="submit">Zapisz</button>
+  </form>
+
+  <span class="back" onclick="goBack()">← Powrót</span>
+</div>
+
+<script>
+  const supabase = window.supabaseClient
+  const params = new URLSearchParams(window.location.search)
+  const orderId = params.get('id')
+
+  console.log('ORDER ID FROM URL:', orderId)
+
+  if (!orderId) {
+    alert('Brak ID')
+    location.href = 'orders.html'
+  }
+
+  async function loadOrder() {
+    const { data, error } = await supabase
+      .from('orders')
+      // ⬇️ JAWNIE WYMIENIONE KOLUMNY (KLUCZOWE)
+      .select(`
+        id,
+        customer_name,
+        phone,
+        bike_type,
+        status,
+        issue_description,
+        price_estimate
+      `)
+      .eq('id', orderId)
+      .single()
+
+    console.log('ORDER DATA:', data)
+
+    if (error || !data) {
+      console.error(error)
+      alert('Nie znaleziono zlecenia')
+      location.href = 'orders.html'
+      return
     }
 
-    async function loadOrders() {
-      const { data, error } = await supabase
-        .from('orders')
-        // ⬇️ JAWNIE POBIERAMY id (KLUCZOWE)
-        .select('id, customer_name, phone, bike_type, status, created_at')
-        .order('created_at', { ascending: false })
+    customer_name.value = data.customer_name ?? ''
+    phone.value = data.phone ?? ''
+    bike_type.value = data.bike_type ?? ''
+    status.value = data.status ?? 'new'
+    issue_description.value = data.issue_description ?? ''
+    price_estimate.value = data.price_estimate ?? ''
+  }
 
-      const tbody = document.getElementById('orders-body')
-      tbody.innerHTML = ''
+  document.getElementById('order-form').addEventListener('submit', async e => {
+    e.preventDefault()
 
-      if (error) {
-        console.error('SUPABASE ERROR:', error)
-        tbody.innerHTML = '<tr><td colspan="6">Błąd ładowania</td></tr>'
-        return
-      }
+    const newStatus = status.value
 
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">Brak zleceń</td></tr>'
-        return
-      }
-
-      data.forEach(order => {
-        console.log('ORDER:', order) // 🔍 DEBUG (możesz potem usunąć)
-
-        const tr = document.createElement('tr')
-
-        tr.innerHTML = `
-          <td>${order.customer_name}</td>
-          <td>${order.phone}</td>
-          <td>${order.bike_type ?? ''}</td>
-          <td>
-            <span class="badge ${order.status}">
-              ${statusLabels[order.status] ?? order.status}
-            </span>
-          </td>
-          <td>
-            ${order.created_at
-              ? new Date(order.created_at).toLocaleDateString()
-              : ''}
-          </td>
-        `
-
-        const editBtn = document.createElement('span')
-        editBtn.className = 'btn'
-        editBtn.textContent = 'Edytuj'
-        editBtn.addEventListener('click', () => {
-          editOrder(order.id)
-        })
-
-        const actionsTd = document.createElement('td')
-        actionsTd.appendChild(editBtn)
-        tr.appendChild(actionsTd)
-
-        tbody.appendChild(tr)
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        status: newStatus,
+        issue_description: issue_description.value,
+        price_estimate: price_estimate.value || null,
+        completed_at: newStatus === 'done'
+          ? new Date().toISOString()
+          : null
       })
+      .eq('id', orderId)
+
+    if (error) {
+      console.error(error)
+      alert('Błąd zapisu')
+      return
     }
 
-    function editOrder(id) {
-      console.log('EDIT ID:', id) // 🔍 DEBUG
-      window.location.href = `edit-order.html?id=${id}`
-    }
+    alert('Zapisano')
+    location.href = 'orders.html'
+  })
 
-    loadOrders()
-  </script>
+  function goBack() {
+    location.href = 'orders.html'
+  }
+
+  loadOrder()
+</script>
 
 </body>
 </html>
