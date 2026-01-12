@@ -8,7 +8,7 @@
   <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Twój globalny klient Supabase -->
+  <!-- Globalny klient Supabase -->
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -39,14 +39,9 @@
     }
 
     th {
-      background: #020617;
       color: #94a3b8;
       text-transform: uppercase;
       font-size: 12px;
-    }
-
-    tr:hover {
-      background: #020617;
     }
 
     .badge {
@@ -93,7 +88,6 @@
   </table>
 
   <script>
-    // ✅ UŻYWAMY ISTNIEJĄCEGO KLIENTA
     const supabase = window.supabaseClient
 
     const statusLabels = {
@@ -136,11 +130,24 @@
               ${statusLabels[order.status] ?? order.status}
             </span>
           </td>
-          <td>${order.created_at ? new Date(order.created_at).toLocaleDateString() : ''}</td>
           <td>
-            <span class="btn" onclick="editOrder('${order.id}')">Edytuj</span>
+            ${order.created_at
+              ? new Date(order.created_at).toLocaleDateString()
+              : ''}
           </td>
         `
+
+        // 👉 przycisk Edytuj (POPRAWNIE)
+        const editBtn = document.createElement('span')
+        editBtn.className = 'btn'
+        editBtn.textContent = 'Edytuj'
+        editBtn.addEventListener('click', () => {
+          editOrder(order.id)
+        })
+
+        const actionsTd = document.createElement('td')
+        actionsTd.appendChild(editBtn)
+        tr.appendChild(actionsTd)
 
         tbody.appendChild(tr)
       })
