@@ -5,8 +5,10 @@
   <title>Edycja zlecenia – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase -->
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Globalny klient Supabase -->
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -107,8 +109,8 @@
         <option value="cancelled">Anulowane</option>
       </select>
 
-      <label>Opis</label>
-      <textarea id="description"></textarea>
+      <label>Opis usterki</label>
+      <textarea id="issue_description"></textarea>
 
       <label>Wycena (zł)</label>
       <input type="number" id="price_estimate" step="0.01" />
@@ -129,6 +131,7 @@
       window.location.href = 'orders.html'
     }
 
+    // 🔹 ŁADOWANIE ZLECENIA
     async function loadOrder() {
       const { data, error } = await supabase
         .from('orders')
@@ -142,14 +145,17 @@
         return
       }
 
-      document.getElementById('customer_name').value = data.customer_name
-      document.getElementById('phone').value = data.phone
+      document.getElementById('customer_name').value = data.customer_name ?? ''
+      document.getElementById('phone').value = data.phone ?? ''
       document.getElementById('bike_type').value = data.bike_type ?? ''
-      document.getElementById('status').value = data.status
-      document.getElementById('description').value = data.description ?? ''
-      document.getElementById('price_estimate').value = data.price_estimate ?? ''
+      document.getElementById('status').value = data.status ?? 'new'
+      document.getElementById('issue_description').value =
+        data.issue_description ?? ''
+      document.getElementById('price_estimate').value =
+        data.price_estimate ?? ''
     }
 
+    // 🔹 ZAPIS ZMIAN
     document.getElementById('order-form').addEventListener('submit', async (e) => {
       e.preventDefault()
 
@@ -157,9 +163,13 @@
 
       const updateData = {
         status,
-        description: document.getElementById('description').value,
-        price_estimate: document.getElementById('price_estimate').value || null,
-        completed_at: status === 'done' ? new Date().toISOString() : null
+        issue_description:
+          document.getElementById('issue_description').value,
+        price_estimate:
+          document.getElementById('price_estimate').value || null,
+        completed_at: status === 'done'
+          ? new Date().toISOString()
+          : null
       }
 
       const { error } = await supabase
@@ -168,8 +178,8 @@
         .eq('id', orderId)
 
       if (error) {
-        alert('Błąd zapisu')
         console.error(error)
+        alert('Błąd zapisu')
         return
       }
 
