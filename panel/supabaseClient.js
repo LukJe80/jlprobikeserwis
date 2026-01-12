@@ -1,8 +1,9 @@
-// Globalny klient Supabase
-const SUPABASE_URL = 'https://mzgvxlltlcrvzmtswzql.supabase.co'
-const SUPABASE_ANON_KEY = 'sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr'
+// panel/supabaseClient.js
 
-// ⚠️ NAZWA: supabaseClient (NIE supabase!)
+const SUPABASE_URL = 'https://TWOJ_PROJECT_ID.supabase.co'
+const SUPABASE_ANON_KEY = 'TWOJ_ANON_KEY'
+
+// ⛔️ NIE UŻYWAMY nazwy "supabase"
 window.supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
