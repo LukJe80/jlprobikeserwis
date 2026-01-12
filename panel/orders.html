@@ -5,9 +5,10 @@
   <title>Zlecenia – JL Pro Bike Serwis</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- ❌ USUNIĘTY CDN SUPABASE -->
+  <!-- CDN Supabase (TYLKO biblioteka) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- ✅ JEDYNY klient Supabase -->
+  <!-- Twój globalny klient Supabase -->
   <script src="supabaseClient.js"></script>
 
   <style>
@@ -46,6 +47,7 @@
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
+      display: inline-block;
     }
 
     .new { background: #1e3a8a; color: #bfdbfe; }
@@ -77,12 +79,14 @@
     </tr>
   </thead>
   <tbody id="orders-body">
-    <tr><td colspan="6">Ładowanie…</td></tr>
+    <tr>
+      <td colspan="6">Ładowanie…</td>
+    </tr>
   </tbody>
 </table>
 
 <script>
-  // ✅ bierzemy klienta z supabaseClient.js
+  // ✅ JEDYNE miejsce, gdzie używamy klienta
   const supabase = window.supabaseClient
 
   const statusLabels = {
