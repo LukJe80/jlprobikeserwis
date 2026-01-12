@@ -2,115 +2,74 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Logowanie – JL Pro Bike Serwis</title>
+  <title>Logowanie – Panel Serwisanta</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
+      background: #020617;
+      color: #fff;
+      font-family: Arial;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
 
-    .login-box {
-      background: #020617;
+    form {
+      background: #0f172a;
       padding: 30px;
       border-radius: 12px;
-      width: 100%;
-      max-width: 360px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      width: 300px;
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      font-size: 22px;
-    }
-
-    input {
+    input, button {
       width: 100%;
-      padding: 12px;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      border: none;
-      font-size: 14px;
+      padding: 10px;
+      margin-top: 10px;
     }
 
     button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
       background: #22c55e;
-      color: #022c22;
+      border: none;
       font-weight: bold;
-      font-size: 15px;
       cursor: pointer;
-    }
-
-    button:hover {
-      background: #16a34a;
-    }
-
-    .error {
-      color: #f87171;
-      margin-top: 10px;
-      text-align: center;
-      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="login-box">
-    <h1>Panel Serwisanta</h1>
+<form id="loginForm">
+  <h2>Logowanie</h2>
+  <input type="email" id="email" placeholder="Email" required />
+  <input type="password" id="password" placeholder="Hasło" required />
+  <button>Zaloguj</button>
+</form>
 
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Hasło" />
+<script>
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-    <button id="loginBtn">Zaloguj się</button>
+    const email = email.value;
+    const password = password.value;
 
-    <div class="error" id="error"></div>
-  </div>
-
-  <script>
-    const SUPABASE_URL = "https://mzgvxlltlcrvzmtswzql.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr";
-
-    const supabaseClient = supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
-
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const errorBox = document.getElementById("error");
-
-      errorBox.textContent = "";
-
-      const { error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        errorBox.textContent = error.message;
-        return;
-      }
-
-      window.location.href = "index.html";
+    const { error } = await window.supabaseClient.auth.signInWithPassword({
+      email,
+      password
     });
-  </script>
+
+    if (error) {
+      alert("Błąd logowania");
+      return;
+    }
+
+    window.location.href = "index.html";
+  });
+</script>
 
 </body>
 </html>
