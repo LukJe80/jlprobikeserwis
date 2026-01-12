@@ -29,11 +29,6 @@
       box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 25px;
-    }
-
     label {
       display: block;
       margin: 14px 0 6px;
@@ -48,11 +43,6 @@
       font-size: 15px;
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
-
     button {
       margin-top: 25px;
       width: 100%;
@@ -64,20 +54,6 @@
       border: none;
       border-radius: 12px;
       cursor: pointer;
-    }
-
-    button:hover {
-      background: #16a34a;
-    }
-
-    .back {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .back a {
-      color: #93c5fd;
-      text-decoration: none;
     }
   </style>
 </head>
@@ -101,7 +77,6 @@
     <textarea id="issue_description" required></textarea>
 
     <label>Status</label>
-    <!-- ⬇⬇⬇ KLUCZOWA POPRAWKA -->
     <select id="status" required>
       <option value="nowe">Nowe</option>
       <option value="w_trakcie">W trakcie</option>
@@ -113,10 +88,6 @@
 
     <button type="submit">Zapisz zlecenie</button>
   </form>
-
-  <div class="back">
-    <a href="index.html">← Powrót do panelu</a>
-  </div>
 </div>
 
 <script>
@@ -147,7 +118,7 @@
       phone: phone.value.trim() || null,
       bike_type: bike_type.value.trim() || null,
       issue_description: issue_description.value.trim(),
-      status: status.value,          // ✅ TERAZ ISTNIEJE
+      status: status.value,              // ← KLUCZOWE
       cost: cost.value ? Number(cost.value) : null,
       created_by: currentUser.id
     };
@@ -156,7 +127,7 @@
 
     const { error } = await supabaseClient
       .from("orders")
-      .insert([payload]);
+      .insert(payload);
 
     if (error) {
       console.error("❌ Supabase error:", error);
