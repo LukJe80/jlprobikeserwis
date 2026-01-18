@@ -235,12 +235,10 @@ textarea{ min-height:120px; resize:vertical; }
       <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
     </button>
 
-    
-
   </div>
 </div>
 
-<!-- ✅ PONIŻEJ: TWÓJ ORYGINALNY JS – 1:1, BEZ ZMIAN -->
+<!-- ✅ PONIŻEJ: TWÓJ ORYGINALNY JS – MINIMALNA ZMIANA: SMS TYLKO PRZY "gotowe" -->
 <script>
 document.addEventListener("DOMContentLoaded", ()=>{
 
@@ -258,6 +256,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   let currentTotal = 0;
 
+  // ✅ do SMS: zapamiętujemy poprzedni status i kod publiczny (jeśli jest)
+  let previousStatus = null;
+  let publicCode = "";
+
   function escapeHtml(str){
     return (str ?? "")
       .toString()
@@ -272,12 +274,47 @@ document.addEventListener("DOMContentLoaded", ()=>{
     let s = 0;
     (costText.value || "").split("\n").forEach(l=>{
       const m = l.match(/(\d+(?:[.,]\d+)?)/);
-      if(m) s += parseFloat(m[1].replace(",",".")); 
+      if(m) s += parseFloat(m[1].replace(",","."));
     });
     currentTotal = s;
     sumEl.textContent = s.toFixed(2);
   }
   costText.addEventListener("input", calcSum);
+
+  // ✅ normalizacja telefonu do formatu 48XXXXXXXXX
+  function normalizePhoneToPL48(raw){
+    const digits = String(raw || "").replace(/\D/g, "");
+    if(!digits) return "";
+
+    if(digits.startsWith("48") && digits.length === 11) return digits;
+    if(digits.length === 9) return "48" + digits;
+
+    // fallback: jeśli ktoś wpisał np. 0048..., +48..., itp.
+    if(digits.endsWith(digits.slice(-9)) && digits.length > 11){
+      return "48" + digits.slice(-9);
+    }
+    return digits;
+  }
+
+  // ✅ SMS tylko przy statusie "gotowe"
+  async function sendSmsGotowe(){
+    const to = normalizePhoneToPL48(phone.value);
+    if(!to) return { ok:false, skipped:true, reason:"no_phone" };
+
+    // jasny przekaz bez wycen
+    const msg = publicCode
+      ? `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior. Kod: ${publicCode}`
+      : `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior.`;
+
+    const r = await fetch("/api/sms/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, message: msg })
+    });
+
+    const j = await r.json().catch(()=>({ ok:false, error:"Invalid JSON response" }));
+    return j;
+  }
 
   async function load(){
     const { data, error } = await supabaseClient
@@ -303,14 +340,20 @@ document.addEventListener("DOMContentLoaded", ()=>{
       costText.value = "";
     }
 
+    // ✅ zapamiętujemy stan wyjściowy do anty-dublowania SMS
+    previousStatus = status.value;
+    publicCode = data.public_code ?? "";
+
     calcSum();
   }
 
   async function save(){
     calcSum();
 
+    const newStatus = status.value;
+
     const payload = {
-      status: status.value,
+      status: newStatus,
       customer_name: customer.value,
       phone: phone.value,
       bike_type: bike.value,
@@ -343,10 +386,33 @@ document.addEventListener("DOMContentLoaded", ()=>{
       }else{
         alert("Zapisano sumy ✅, ale błąd zapisu listy pozycji: " + costErr.message);
       }
+      // ✅ aktualizujemy previousStatus mimo wszystko (status został zapisany)
+      previousStatus = newStatus;
       return;
     }
 
-    alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)");
+    // ✅ SMS tylko gdy przechodzimy NA "gotowe" (i wcześniej nie było "gotowe")
+    let smsNote = "";
+    const shouldSendSms = (newStatus === "gotowe" && previousStatus !== "gotowe");
+    if(shouldSendSms){
+      try{
+        const smsRes = await sendSmsGotowe();
+        if(smsRes && smsRes.ok){
+          smsNote = "\nSMS: wysłano ✅";
+        }else{
+          smsNote = "\nSMS: nie wysłano (sprawdź konfigurację/test-mode) ⚠️";
+          console.warn("SMSAPI response:", smsRes);
+        }
+      }catch(e){
+        smsNote = "\nSMS: błąd wysyłki ⚠️";
+        console.warn("SMSAPI error:", e);
+      }
+    }
+
+    // po zapisie aktualizujemy previousStatus, żeby nie dublować SMS po kolejnym "Zapisz"
+    previousStatus = newStatus;
+
+    alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)" + smsNote);
   }
 
   function printIn(){
