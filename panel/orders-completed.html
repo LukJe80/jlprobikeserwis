@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Panel serwisanta – Zakończone zlecenia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+  --muted: rgba(229,231,235,0.7);
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== HEADER (spójny z panelem) ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color: var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.toplink{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+  opacity:.92;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.toplink:hover{ color: var(--accent); }
+
+button.toplink{
+  font-family:inherit;
+  appearance:none;
+  -webkit-appearance:none;
+}
+
+/* ===== CONTENT ===== */
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:120px 30px 80px;
+}
+
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.page-title{
+  margin:0 0 6px;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.hint{
+  font-size:13px;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+/* ===== TABLE ===== */
+.table-wrap{
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  overflow:hidden;
+  background: rgba(0,0,0,0.22);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  padding:12px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  text-align:left;
+  vertical-align:top;
+  font-size:14px;
+}
+
+th{
+  color:#93c5fd;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  background: rgba(255,255,255,0.03);
+}
+
+tr:hover{ background: rgba(255,255,255,0.04); }
+
+.text{
+  white-space:pre-line;
+  font-size:13px;
+  color:#cbd5f5;
+}
+
+.date{
+  font-size:12px;
+  color:#94a3b8;
+  white-space:nowrap;
+}
+
+@media(max-width:720px){
+  main{ padding:110px 16px 60px; }
+  th:nth-child(2), td:nth-child(2){ display:none; } /* ukryj telefon */
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-box-archive"></i> Historia zleceń</h1>
+
+  <div class="header-right">
+    <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Aktywne</a>
+    <a class="toplink" href="stats.html"><i class="fa-solid fa-chart-simple"></i> Statystyki</a>
+    <a class="toplink" href="add-order.html"><i class="fa-solid fa-circle-plus"></i> Dodaj zlecenie</a>
+    <button class="toplink" type="button" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Wyloguj</button>
+  </div>
+</header>
+
+<main>
+  <div class="box">
+    <div class="page-title">Zakończone zlecenia</div>
+    <div class="hint">Lista zleceń ze statusem „wydano”.</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Klient</th>
+            <th>Telefon</th>
+            <th>Rower</th>
+            <th>Opis / wykonane czynności</th>
+            <th>Zakończone</th>
+          </tr>
+        </thead>
+        <tbody id="ordersTable"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+async function loadCompletedOrders(){
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select(`
+      customer_name,
+      phone,
+      bike_type,
+      description,
+      completed_at
+    `)
+    .eq("status","wydano")
+    .order("completed_at",{ascending:false});
+
+  if(error){
+    alert("Błąd pobierania archiwum: " + error.message);
+    return;
+  }
+
+  const tbody = document.getElementById("ordersTable");
+  tbody.innerHTML = "";
+
+  if(!data || data.length === 0){
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5">Brak zakończonych zleceń</td>
+      </tr>`;
+    return;
+  }
+
+  data.forEach(o=>{
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${o.customer_name ?? ""}</td>
+      <td>${o.phone ?? ""}</td>
+      <td>${o.bike_type ?? ""}</td>
+      <td class="text">${o.description ?? ""}</td>
+      <td class="date">
+        ${o.completed_at
+          ? new Date(o.completed_at).toLocaleString("pl-PL")
+          : ""}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function logout(){
+  await supabaseClient.auth.signOut();
+  window.location.href = "login.html";
+}
+
+loadCompletedOrders();
+</script>
+
+</body>
+</html>

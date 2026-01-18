@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Statystyki – JL Pro Bike Serwis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== HEADER ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color: var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+nav{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+nav a{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color: var(--text);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+nav a:hover{ color: var(--accent); }
+
+.nav-icon{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.nav-icon:hover{ border-color: rgba(37,99,235,0.6); }
+
+@media(max-width:900px){
+  nav a span{ display:none; }
+}
+
+/* ===== CONTENT ===== */
+main{
+  max-width: 1100px;
+  margin:auto;
+  padding: 120px 30px 80px;
+}
+
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+h2{ margin:0 0 8px; font-size: 28px; }
+.sub{ margin:0 0 18px; opacity:.85; line-height:1.4; }
+
+.cards{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.card{
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.card .label{
+  font-size: 12px;
+  opacity: .85;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.card .value{
+  font-size: 28px;
+  font-weight: 900;
+  margin-top: 10px;
+}
+
+.note{
+  margin-top: 14px;
+  opacity:.8;
+  font-size: 13px;
+  line-height:1.4;
+}
+
+.err{
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.10);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-bicycle"></i> Statystyki serwisu  </h1>
+  <nav>
+    <a href="orders.html"><i class="fa-solid fa-list-check"></i><span>Zlecenia</span></a>
+    <a href="orders-completed.html"><i class="fa-solid fa-box-archive"></i><span>Historia</span></a>
+    <a href="stats.html"><i class="fa-solid fa-chart-simple"></i><span>Statystyki</span></a>
+
+    <a class="nav-icon" href="index.html" title="Strona główna"><i class="fa-solid fa-house"></i></a>
+    <a class="nav-icon" href="login.html" title="Konto / logowanie"><i class="fa-solid fa-user-gear"></i></a>
+  </nav>
+</header>
+
+<main>
+  <div class="box">
+    <h2>Statystyki serwisu</h2>
+    <p class="sub">Podsumowanie na podstawie danych w tabeli <b>orders</b>.</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="label"><i class="fa-solid fa-calendar-day"></i> Zlecenia dziś</div>
+        <div class="value" id="todayCount">0</div>
+      </div>
+
+      <div class="card">
+        <div class="label"><i class="fa-solid fa-calendar"></i> Zlecenia w miesiącu</div>
+        <div class="value" id="monthCount">0</div>
+      </div>
+
+      <div class="card">
+        <div class="label"><i class="fa-solid fa-circle-check"></i> Zakończone</div>
+        <div class="value" id="completedCount">0</div>
+      </div>
+
+      <div class="card">
+        <div class="label"><i class="fa-solid fa-clock"></i> Śr. czas realizacji</div>
+        <div class="value" id="avgTime">—</div>
+      </div>
+
+      <div class="card">
+        <div class="label"><i class="fa-solid fa-screwdriver-wrench"></i> Robocizna</div>
+        <div class="value" id="laborSum">0 zł</div>
+      </div>
+
+      <div class="card">
+        <div class="label"><i class="fa-solid fa-gears"></i> Części</div>
+        <div class="value" id="partsSum">0 zł</div>
+      </div>
+
+      <div class="card">
+        <div class="label"><i class="fa-solid fa-receipt"></i> Łącznie</div>
+        <div class="value" id="totalSum">0 zł</div>
+      </div>
+    </div>
+
+    <div id="msg"></div>
+
+    <p class="note">
+      Jeśli widzisz zera mimo danych, to zwykle oznacza brak uprawnień RLS (nie jesteś zalogowany).
+    </p>
+  </div>
+</main>
+
+<script>
+async function requireAuth(){
+  const { data } = await supabaseClient.auth.getSession();
+  if (!data?.session) {
+    location.href = "login.html";
+    return false;
+  }
+  return true;
+}
+
+function money(n){
+  const v = Number(n || 0);
+  return v.toFixed(2) + " zł";
+}
+
+async function loadStats(){
+  const ok = await requireAuth();
+  if (!ok) return;
+
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("accepted_at, completed_at, labor_cost, parts_cost, total_cost, status");
+
+  if (error || !data) {
+    console.error(error);
+    document.getElementById("msg").innerHTML = `
+      <div class="err"><b>Błąd pobierania statystyk</b><br>${(error?.message || "Brak danych")}</div>
+    `;
+    return;
+  }
+
+  const now = new Date();
+  const today = now.toISOString().slice(0,10);
+  const month = today.slice(0,7);
+
+  let todayCount = 0;
+  let monthCount = 0;
+  let completedCount = 0;
+
+  let laborSum = 0;
+  let partsSum = 0;
+  let totalSum = 0;
+
+  let totalTime = 0;
+  let timeCount = 0;
+
+  data.forEach(o => {
+    if (!o.accepted_at) return;
+
+    const acceptedDate = String(o.accepted_at).slice(0,10);
+
+    if (acceptedDate === today) todayCount++;
+    if (acceptedDate.startsWith(month)) monthCount++;
+
+    if (o.status === "gotowe") {
+      completedCount++;
+      laborSum += o.labor_cost || 0;
+      partsSum += o.parts_cost || 0;
+      totalSum += o.total_cost || 0;
+
+      if (o.completed_at) {
+        const start = new Date(o.accepted_at);
+        const end = new Date(o.completed_at);
+        const diff = (end - start);
+        if (!Number.isNaN(diff) && diff > 0) {
+          totalTime += diff;
+          timeCount++;
+        }
+      }
+    }
+  });
+
+  document.getElementById("todayCount").innerText = todayCount;
+  document.getElementById("monthCount").innerText = monthCount;
+  document.getElementById("completedCount").innerText = completedCount;
+
+  document.getElementById("laborSum").innerText = money(laborSum);
+  document.getElementById("partsSum").innerText = money(partsSum);
+  document.getElementById("totalSum").innerText = money(totalSum);
+
+  if (timeCount > 0) {
+    const avgMs = totalTime / timeCount;
+    const hours = Math.floor(avgMs / 3600000);
+    const minutes = Math.floor((avgMs % 3600000) / 60000);
+    document.getElementById("avgTime").innerText = `${hours}h ${minutes}min`;
+  } else {
+    document.getElementById("avgTime").innerText = "—";
+  }
+}
+
+loadStats();
+</script>
+
+</body>
+</html>

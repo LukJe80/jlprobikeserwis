@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Galeria – JL Pro Bike Serwis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== HEADER (spójny z resztą) ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color: var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+nav{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+nav a{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color: var(--text);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+nav a:hover{ color: var(--accent); }
+
+.nav-icon{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.nav-icon:hover{ border-color: rgba(37,99,235,0.6); }
+
+@media(max-width:900px){
+  nav a span{ display:none; }
+}
+
+/* ===== CONTENT ===== */
+main{
+  max-width: 1200px;
+  margin:auto;
+  padding: 120px 30px 80px;
+}
+
+.title{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.title h2{ margin:0 0 8px; font-size: 30px; }
+.title p{ margin:0; opacity:.85; line-height:1.4; }
+
+/* ===== GALLERY GRID ===== */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+figure.card{
+  margin:0;
+  border-radius: 16px;
+  overflow:hidden;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  transition: transform .12s ease, border-color .12s ease;
+}
+
+figure.card:hover{
+  transform: translateY(-2px);
+  border-color: rgba(37,99,235,0.6);
+}
+
+.thumb{
+  display:block;
+  position:relative;
+  cursor:pointer;
+  outline:none;
+}
+
+.thumb img{
+  width:100%;
+  height: 160px;
+  object-fit: cover;
+  display:block;
+  filter: saturate(1.05);
+}
+
+.thumb .overlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  transition: opacity .12s ease;
+  background: linear-gradient(to top, rgba(0,0,0,0.45), rgba(0,0,0,0.10));
+}
+
+figure.card:hover .overlay{ opacity:1; }
+
+.overlay .zoom{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.35);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+figcaption{
+  padding: 12px 12px 14px;
+  font-size: 13px;
+  opacity:.92;
+  line-height:1.35;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ===== LIGHTBOX ===== */
+.lightbox{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.82);
+  padding: 18px;
+}
+
+.lightbox.open{ display:flex; }
+
+.lb-card{
+  width: min(1200px, 96vw);
+  max-height: 92vh;
+  border-radius: 18px;
+  overflow:hidden;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(2,6,23,0.95);
+}
+
+.lb-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.lb-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+  font-size: 14px;
+  opacity:.95;
+}
+
+.lb-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.lb-btn{
+  border:none;
+  cursor:pointer;
+  color:#fff;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-weight:800;
+}
+.lb-btn:hover{
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(37,99,235,0.6);
+}
+
+.lb-img-wrap{
+  background: rgba(0,0,0,0.25);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.lb-img{
+  width:100%;
+  max-height: 78vh;
+  object-fit: contain;
+  display:block;
+}
+
+.lb-caption{
+  padding: 12px 14px;
+  opacity:.85;
+  font-size: 13px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.small{opacity:.8}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-bicycle"></i> JL Pro Bike Serwis</h1>
+  <nav>
+    <a href="index.html"><i class="fa-solid fa-house"></i><span>Strona główna</span></a>
+    <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
+    <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
+    <a href="pricing.html"><i class="fa-solid fa-tags"></i><span>Cennik</span></a>
+    <a href="gallery.html"><i class="fa-solid fa-image"></i><span>Galeria</span></a>
+    <a href="contact.html"><i class="fa-solid fa-phone"></i><span>Kontakt</span></a>
+
+    <!-- Facebook – podmień na swój -->
+    <a class="nav-icon" href="https://facebook.com/twoja-strona" target="_blank" rel="noopener" title="Facebook">
+      <i class="fa-brands fa-facebook-f"></i>
+    </a>
+
+    <a class="nav-icon" href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
+  </nav>
+</header>
+
+<main>
+  <section class="title">
+    <h2>Galeria</h2>
+    <p>
+      Kliknij miniaturę, aby otworzyć zdjęcie w dużym formacie.
+      W podglądzie użyj przycisków lub klawiszy <b>←</b> / <b>→</b>.
+      Zamknięcie: <b>Esc</b> lub klik w tło.
+    </p>
+  </section>
+
+  <!-- ✅ GRID generowany z listy w JS -->
+  <section class="grid" id="galleryGrid"></section>
+</main>
+
+<!-- ✅ LIGHTBOX -->
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <div class="lb-card" role="dialog" aria-modal="true" aria-label="Podgląd zdjęcia">
+    <div class="lb-top">
+      <div class="lb-title"><i class="fa-solid fa-image"></i> Podgląd zdjęcia</div>
+
+      <div class="lb-actions">
+        <button class="lb-btn" id="lbPrev" type="button" title="Poprzednie (←)">
+          <i class="fa-solid fa-chevron-left"></i> Prev
+        </button>
+        <button class="lb-btn" id="lbNext" type="button" title="Następne (→)">
+          Next <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        <button class="lb-btn" id="lbClose" type="button" title="Zamknij (Esc)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="lb-img-wrap">
+      <img class="lb-img" id="lbImg" src="" alt="">
+    </div>
+
+    <div class="lb-caption">
+      <div id="lbCaption"></div>
+      <div class="small" id="lbCounter"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/*
+  ✅ JAK DODAWAĆ ZDJĘCIA (NAJPROŚCIEJ):
+  Dopisujesz nową linię w tej liście:
+  { src: "assets/gallery/serwis-37.jpg", caption: "Twój opis..." },
+
+  I wrzucasz plik do folderu:
+  panel/assets/gallery/serwis-37.jpg
+
+  To wszystko. Nie ruszasz HTML.
+*/
+const GALLERY_ITEMS = [
+  { src: "assets/gallery/serwis-01.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-02.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-03.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-04.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-05.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-06.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-07.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-08.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-09.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-10.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-11.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-12.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-13.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-14.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-15.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-16.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-17.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-18.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-19.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-20.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-21.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-22.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-23.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-24.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-25.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-26.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-27.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-28.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-29.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-30.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-31.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-32.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-33.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-34.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-35.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" },
+  { src: "assets/gallery/serwis-36.jpg", caption: "Serwis rowerowy JL Pro Bike Serwis" }
+];
+
+(function(){
+  const grid = document.getElementById("galleryGrid");
+
+  // Render kart
+  grid.innerHTML = GALLERY_ITEMS.map((item, idx) => {
+    const n = idx + 1;
+    const alt = item.caption || ("Zdjęcie serwisu " + n);
+    return `
+      <figure class="card">
+        <a class="thumb" href="#" data-idx="${idx}">
+          <img src="${item.src}" alt="${escapeHtml(alt)}">
+          <span class="overlay">
+            <span class="zoom"><i class="fa-solid fa-magnifying-glass-plus"></i> Powiększ</span>
+          </span>
+        </a>
+        <figcaption>${escapeHtml(item.caption || "Serwis rowerowy JL Pro Bike Serwis")}</figcaption>
+      </figure>
+    `;
+  }).join("");
+
+  // Lightbox elements
+  const lightbox = document.getElementById("lightbox");
+  const lbImg = document.getElementById("lbImg");
+  const lbCaption = document.getElementById("lbCaption");
+  const lbCounter = document.getElementById("lbCounter");
+  const lbClose = document.getElementById("lbClose");
+  const lbPrev = document.getElementById("lbPrev");
+  const lbNext = document.getElementById("lbNext");
+
+  let currentIndex = 0;
+
+  function openAt(index){
+    currentIndex = clamp(index, 0, GALLERY_ITEMS.length - 1);
+    const item = GALLERY_ITEMS[currentIndex];
+
+    lbImg.src = item.src;
+    lbImg.alt = item.caption || "Zdjęcie serwisu";
+    lbCaption.textContent = item.caption || "";
+    lbCounter.textContent = `${currentIndex + 1} / ${GALLERY_ITEMS.length}`;
+
+    lightbox.classList.add("open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function close(){
+    lightbox.classList.remove("open");
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    lbImg.src = "";
+    lbImg.alt = "";
+    lbCaption.textContent = "";
+    lbCounter.textContent = "";
+  }
+
+  function prev(){ openAt((currentIndex - 1 + GALLERY_ITEMS.length) % GALLERY_ITEMS.length); }
+  function next(){ openAt((currentIndex + 1) % GALLERY_ITEMS.length); }
+
+  // Klik w miniaturę
+  grid.addEventListener("click", (e) => {
+    const a = e.target.closest("a.thumb");
+    if (!a) return;
+    e.preventDefault();
+    const idx = Number(a.getAttribute("data-idx"));
+    if (Number.isNaN(idx)) return;
+    openAt(idx);
+  });
+
+  // Buttons
+  lbClose.addEventListener("click", close);
+  lbPrev.addEventListener("click", prev);
+  lbNext.addEventListener("click", next);
+
+  // Click outside
+  lightbox.addEventListener("click", (e) => {
+    if (e.target === lightbox) close();
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if (!lightbox.classList.contains("open")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") prev();
+    if (e.key === "ArrowRight") next();
+  });
+
+  // Basic helpers
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+  function escapeHtml(str){
+    return (str ?? "").toString().replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[m]));
+  }
+})();
+</script>
+
+</body>
+</html>

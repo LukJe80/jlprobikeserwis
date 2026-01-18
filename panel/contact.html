@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Kontakt – JL Pro Bike Serwis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Kontakt do JL Pro Bike Serwis – telefon, e-mail, adres oraz mapa dojazdu.">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --accentText:#ffffff;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --border:#1e293b;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* HEADER */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter:blur(6px);
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+nav{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+nav a{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:var(--text);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+nav a:hover{color:var(--accent)}
+
+@media(max-width:900px){
+  nav a span{display:none}
+}
+
+/* CONTENT */
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:120px 30px 80px;
+}
+
+h2{
+  font-size:40px;
+  margin:0 0 12px;
+}
+
+.subtitle{
+  opacity:.85;
+  margin-bottom:30px;
+  max-width:760px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr;}
+}
+
+/* CARDS */
+.card{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px;
+  background:rgba(255,255,255,0.03);
+}
+
+.card h3{
+  margin:0 0 14px;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.item{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  padding:12px 0;
+  border-top:1px solid rgba(255,255,255,0.06);
+}
+.item:first-of-type{border-top:none; padding-top:0;}
+
+.icon{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(255,255,255,0.08);
+  color:var(--accent);
+  flex:0 0 auto;
+}
+
+.item b{display:block; margin-bottom:3px;}
+.item a{color:#60a5fa; text-decoration:none; font-weight:bold;}
+.item a:hover{color:var(--accent)}
+
+/* BUTTONS */
+.actions{
+  margin-top:16px;
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  padding:12px 18px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:bold;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  font-size:14px;
+}
+
+.btn-main{
+  background:var(--accent);
+  color:var(--accentText);
+}
+.btn-main:hover{background:var(--accentHover)}
+
+.btn-outline{
+  border:2px solid var(--accent);
+  color:var(--accent);
+}
+.btn-outline:hover{
+  background:var(--accent);
+  color:var(--accentText);
+}
+
+/* MAP */
+.mapWrap{
+  overflow:hidden;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.03);
+}
+.mapWrap iframe{
+  width:100%;
+  height:340px;
+  border:0;
+  display:block;
+}
+
+.note{
+  margin-top:14px;
+  opacity:.85;
+  font-size:13px;
+}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);
+  padding:40px 30px;
+  text-align:center;
+  font-size:14px;
+  opacity:.8;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-bicycle"></i> JL Pro Bike Serwis</h1>
+  <nav>
+    <a href="index.html"><i class="fa-solid fa-house"></i><span>Strona główna</span></a>
+    <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
+    <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
+    <a href="pricing.html"><i class="fa-solid fa-tags"></i><span>Cennik</span></a>
+    <a href="contact.html"><i class="fa-solid fa-phone"></i><span>Kontakt</span></a>
+    <a href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
+  </nav>
+</header>
+
+<main>
+  <h2>Kontakt</h2>
+  <p class="subtitle">
+    Zadzwoń, napisz e-mail lub wpadnij na miejsce. Możesz też zgłosić rower online i sprawdzić status naprawy.
+  </p>
+
+  <div class="grid">
+
+    <!-- DANE -->
+    <section class="card">
+      <h3><i class="fa-solid fa-address-card"></i> Dane kontaktowe</h3>
+
+      <div class="item">
+        <div class="icon"><i class="fa-solid fa-phone"></i></div>
+        <div>
+          <b>Telefon</b>
+          <a href="tel:+48500877306">500 877 306</a>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="icon"><i class="fa-solid fa-envelope"></i></div>
+        <div>
+          <b>E-mail</b>
+          <a href="mailto:probikeserwis@poczta.fm">probikeserwis@poczta.fm</a>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="icon"><i class="fa-solid fa-location-dot"></i></div>
+        <div>
+          <b>Adres</b>
+          ul. Świętokrzyska 32, 63-200 Jarocin
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="icon"><i class="fa-solid fa-clock"></i></div>
+        <div>
+          <b>Godziny otwarcia</b>
+          10:00 – 17:00
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-main" href="order-online.html">
+          <i class="fa-solid fa-bicycle"></i> Zgłoś rower online
+        </a>
+
+        <!-- Otwórz mapę (nawigacja) -->
+        <a class="btn btn-outline"
+           href="https://www.google.com/maps/search/?api=1&query=ul.%20%C5%9Awi%C4%99tokrzyska%2032%2C%2063-200%20Jarocin"
+           target="_blank" rel="noopener">
+          <i class="fa-solid fa-map-location-dot"></i> Otwórz mapę
+        </a>
+      </div>
+
+      <div class="note">
+        Jeśli chcesz, dodamy tu też np. link do Facebook/Instagram lub przycisk „Zadzwoń teraz”.
+      </div>
+    </section>
+
+    <!-- MAPA (EMBED) -->
+    <section class="card">
+      <h3><i class="fa-solid fa-map"></i> Mapa dojazdu</h3>
+
+      <div class="mapWrap">
+        <iframe
+          src="https://www.google.com/maps?q=ul.%20%C5%9Awi%C4%99tokrzyska%2032%2C%2063-200%20Jarocin&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Mapa dojazdu – ul. Świętokrzyska 32, 63-200 Jarocin">
+        </iframe>
+      </div>
+
+      <div class="note">
+        Mapa jest osadzona jako embed — wygląda profesjonalnie i jest najprostsza w utrzymaniu.
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  © 2026 JL Pro Bike Serwis
+</footer>
+
+</body>
+</html>

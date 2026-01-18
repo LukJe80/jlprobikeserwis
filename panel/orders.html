@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Panel serwisanta – Lista zleceń</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+
+  <style>
+    :root{
+      --accent:#2563eb;
+      --accentHover:#1d4ed8;
+      --bg:#020617;
+      --text:#e5e7eb;
+      --panel: rgba(255,255,255,0.05);
+      --panelBorder: rgba(255,255,255,0.10);
+      --muted: rgba(229,231,235,0.7);
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ===== HEADER ===== */
+    header{
+      position:fixed;
+      top:0;
+      width:100%;
+      z-index:10;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      padding:14px 24px;
+      background:rgba(2,6,23,.7);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+
+    .header-left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    header h1{
+      margin:0;
+      font-size:18px;
+      color:var(--accent);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .user-email{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:600;
+      padding-left:26px;
+    }
+
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .toplink{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      text-decoration:none;
+      font-weight:800;
+      font-size:14px;
+      opacity:.92;
+      padding:6px 4px;
+      background:transparent;
+      border:none;
+      cursor:pointer;
+    }
+
+    .toplink:hover{ color:var(--accent); }
+
+    button.toplink{
+      font-family:inherit;
+      appearance:none;
+      -webkit-appearance:none;
+    }
+
+    @media(max-width:900px){
+      header h1 span{display:none;}
+      .user-email{display:none;}
+    }
+
+    /* ===== CONTENT ===== */
+    main{
+      max-width:1100px;
+      margin:auto;
+      padding:120px 30px 80px;
+    }
+
+    .box{
+      background:var(--panel);
+      border:1px solid var(--panelBorder);
+      border-radius:14px;
+      padding:22px;
+    }
+
+    .page-title{
+      margin:0 0 6px;
+      font-size:28px;
+      font-weight:900;
+    }
+
+    .hint{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:18px;
+    }
+
+    /* ===== DASHBOARD (STATUSY) ===== */
+    .dashboard{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:14px;
+      margin-bottom:22px;
+    }
+
+    .card{
+      padding:16px 18px;
+      border-radius:16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      cursor:pointer;
+      user-select:none;
+      background:linear-gradient(
+        180deg,
+        rgba(255,255,255,0.06),
+        rgba(255,255,255,0.02)
+      );
+      border:1px solid rgba(255,255,255,0.10);
+      transition:.15s ease;
+    }
+
+    .card:hover{
+      transform:translateY(-2px);
+      border-color:rgba(37,99,235,0.45);
+    }
+
+    .card.active{
+      border-color:rgba(37,99,235,0.75);
+      box-shadow:0 0 0 3px rgba(37,99,235,0.18);
+    }
+
+    .card .left{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .card .label{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      opacity:.85;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .card .num{
+      font-size:26px;
+      font-weight:900;
+    }
+
+    .pill{
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(0,0,0,0.35);
+      white-space:nowrap;
+    }
+
+    /* ===== KOLORY STATUSÓW ===== */
+    .card.oczekujące{ --c:#94a3b8; }
+    .card.nowe{ --c:#60a5fa; }
+    .card.wtrakcie{ --c:#fbbf24; }
+    .card.gotowe{ --c:#4ade80; }
+    .card.wydano{ --c:#cbd5e1; }
+
+    .card .num,
+    .card .label i{
+      color:var(--c);
+    }
+
+    .card.wydano .pill{ opacity:.75; }
+
+    /* ===== TABLE ===== */
+    .table-wrap{
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:14px;
+      overflow:hidden;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    th,td{
+      padding:12px;
+      border-bottom:1px solid rgba(255,255,255,0.08);
+      font-size:14px;
+    }
+
+    th{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      color:#93c5fd;
+    }
+
+    tr:hover{ background:rgba(255,255,255,0.04); }
+
+    .status{
+      padding:6px 12px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.03);
+    }
+
+    .status.oczekujące{background:rgba(100,116,139,.18);color:#cbd5e1;}
+    .status.nowe{background:rgba(37,99,235,.18);color:#bfdbfe;}
+    .status.wtrakcie{background:rgba(245,158,11,.18);color:#fde68a;}
+    .status.gotowe{background:rgba(34,197,94,.18);color:#a7f3d0;}
+    .status.wydano{background:rgba(148,163,184,.18);color:#e5e7eb;}
+
+    a{color:#60a5fa;font-weight:900;text-decoration:none;}
+    a:hover{color:var(--accent);}
+
+    @media(max-width:720px){
+      main{padding:110px 16px 60px;}
+      th:nth-child(2),td:nth-child(2){display:none;}
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-left">
+    <h1><i class="fa-solid fa-user-gear"></i> <span>Panel serwisanta</span></h1>
+    <div class="user-email" id="userEmail"></div>
+  </div>
+
+  <div class="header-right">
+    <a class="toplink" href="orders-completed.html">
+      <i class="fa-solid fa-box-archive"></i> Historia
+    </a>
+    <a class="toplink" href="stats.html">
+      <i class="fa-solid fa-chart-simple"></i> Statystyki
+    </a>
+    <a class="toplink" href="add-order.html">
+      <i class="fa-solid fa-circle-plus"></i> Dodaj zlecenie
+    </a>
+    <button class="toplink" onclick="logout()">
+      <i class="fa-solid fa-right-from-bracket"></i> Wyloguj
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="box">
+    <div class="page-title">Lista zleceń</div>
+    <div class="hint">Kliknij kafelek statusu, aby filtrować. „Wydano” jest w archiwum.</div>
+
+    <div class="dashboard" id="dashboard">
+      <div class="card oczekujące" data-filter="oczekujące">
+        <div class="left">
+          <div class="label"><i class="fa-solid fa-hourglass-start"></i> Oczekujące</div>
+          <div class="num"><span id="cO">0</span></div>
+        </div>
+        <span class="pill">filtr</span>
+      </div>
+
+      <div class="card nowe" data-filter="nowe">
+        <div class="left">
+          <div class="label"><i class="fa-solid fa-circle-plus"></i> Nowe</div>
+          <div class="num"><span id="cN">0</span></div>
+        </div>
+        <span class="pill">filtr</span>
+      </div>
+
+      <div class="card wtrakcie" data-filter="w trakcie">
+        <div class="left">
+          <div class="label"><i class="fa-solid fa-screwdriver-wrench"></i> W trakcie</div>
+          <div class="num"><span id="cW">0</span></div>
+        </div>
+        <span class="pill">filtr</span>
+      </div>
+
+      <div class="card gotowe" data-filter="gotowe">
+        <div class="left">
+          <div class="label"><i class="fa-solid fa-circle-check"></i> Gotowe</div>
+          <div class="num"><span id="cG">0</span></div>
+        </div>
+        <span class="pill">filtr</span>
+      </div>
+
+      <div class="card wydano" onclick="location.href='orders-completed.html'">
+        <div class="left">
+          <div class="label"><i class="fa-solid fa-box-archive"></i> Wydano</div>
+          <div class="num"><span id="cD">0</span></div>
+        </div>
+        <span class="pill">zbiór</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Klient</th>
+            <th>Telefon</th>
+            <th>Rower</th>
+            <th>Status</th>
+            <th>Akcja</th>
+          </tr>
+        </thead>
+        <tbody id="list"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+  const sb = window.supabaseClient;
+
+  let allOrders = [];
+  let activeFilter = null;
+
+  async function checkAuth(){
+    const { data:{session} } = await sb.auth.getSession();
+    if(!session){ location.href="login.html"; return; }
+    document.getElementById("userEmail").textContent = session.user.email;
+  }
+
+  async function logout(){
+    await sb.auth.signOut();
+    location.href="login.html";
+  }
+
+  function statusToClass(s){ return s==="w trakcie"?"wtrakcie":s; }
+
+  function updateCounters(data){
+    cO.textContent=data.filter(o=>o.status==="oczekujące").length;
+    cN.textContent=data.filter(o=>o.status==="nowe").length;
+    cW.textContent=data.filter(o=>o.status==="w trakcie").length;
+    cG.textContent=data.filter(o=>o.status==="gotowe").length;
+    cD.textContent=data.filter(o=>o.status==="wydano").length;
+  }
+
+  function renderList(){
+    list.innerHTML="";
+    let rows=allOrders.filter(o=>o.status!=="wydano");
+    if(activeFilter) rows=rows.filter(o=>o.status===activeFilter);
+    rows.forEach(o=>{
+      list.innerHTML+=`
+        <tr>
+          <td>${o.customer_name??""}</td>
+          <td>${o.phone??""}</td>
+          <td>${o.bike_type??""}</td>
+          <td><span class="status ${statusToClass(o.status)}">${o.status}</span></td>
+          <td><a href="edit-order.html?id=${o.id}">Edytuj</a></td>
+        </tr>`;
+    });
+  }
+
+  function setupDashboardClicks(){
+    document.querySelectorAll(".card[data-filter]").forEach(card=>{
+      card.onclick=()=>{
+        activeFilter = activeFilter===card.dataset.filter ? null : card.dataset.filter;
+        document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));
+        if(activeFilter) card.classList.add("active");
+        renderList();
+      };
+    });
+  }
+
+  async function loadOrders(){
+    const {data,error}=await sb.from("orders").select("*").order("created_at",{ascending:false});
+    if(error){ alert("Błąd pobierania"); return; }
+    allOrders=data||[];
+    updateCounters(allOrders);
+    renderList();
+  }
+
+  (async()=>{
+    await checkAuth();
+    setupDashboardClicks();
+    await loadOrders();
+  })();
+</script>
+
+</body>
+</html>

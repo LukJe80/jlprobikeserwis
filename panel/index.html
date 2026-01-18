@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>JL Pro Bike Serwis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Profesjonalny serwis rowerowy – szybkie naprawy, regulacje i pełna kontrola statusu naprawy online.">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+:root{
+  --accent: #2563eb;
+  --accentHover: #1d4ed8;
+  --accentText: #ffffff;
+
+  --bg: #020617;
+  --text: #e5e7eb;
+  --border: #1e293b;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* HEADER */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter:blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+/* NAV */
+nav{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+nav a{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:var(--text);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+nav a:hover{color:var(--accent)}
+
+.nav-icon{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.nav-icon:hover{
+  border-color: rgba(37,99,235,0.6);
+}
+
+@media(max-width:900px){
+  nav a span{display:none}
+}
+
+/* HERO */
+.hero{
+  min-height:100vh;
+  background:
+    linear-gradient(rgba(2,6,23,.65),rgba(2,6,23,.85)),
+    url("assets/hero-bike.jpg") center/cover no-repeat;
+  display:flex;
+  align-items:center;
+  padding:120px 30px 80px;
+}
+
+.hero-content{max-width:900px}
+
+.hero h2{
+  font-size:48px;
+  margin-bottom:20px;
+  text-shadow:0 6px 20px rgba(0,0,0,.6);
+}
+
+.hero p{
+  font-size:18px;
+  max-width:600px;
+  opacity:.95;
+  text-shadow:0 6px 20px rgba(0,0,0,.6);
+}
+
+/* BUTTONS */
+.actions{
+  margin-top:40px;
+  display:flex;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  padding:16px 28px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:bold;
+  font-size:16px;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+
+.btn-main{
+  background:var(--accent);
+  color:var(--accentText);
+}
+
+.btn-main:hover{background:var(--accentHover)}
+
+.btn-outline{
+  border:2px solid var(--accent);
+  color:var(--accent);
+}
+
+.btn-outline:hover{
+  background:var(--accent);
+  color:var(--accentText);
+}
+
+/* FEATURES */
+.features{padding:80px 30px}
+
+.features h3{
+  text-align:center;
+  font-size:32px;
+  margin-bottom:50px;
+}
+
+.features-grid{
+  max-width:1000px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:30px;
+}
+
+.feature{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:30px;
+  text-align:center;
+}
+
+.feature span{
+  font-size:34px;
+  color:var(--accent);
+  margin-bottom:15px;
+  display:block;
+}
+
+.feature h4{
+  margin:0 0 10px;
+  color:var(--accent);
+}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);
+  padding:40px 30px;
+  text-align:center;
+  font-size:14px;
+  opacity:.8;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-bicycle"></i> JL Pro Bike Serwis</h1>
+  <nav>
+    <a href="index.html"><i class="fa-solid fa-house"></i><span>Strona główna</span></a>
+    <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
+    <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
+    <a href="pricing.html"><i class="fa-solid fa-tags"></i><span>Cennik</span></a>
+    <a href="gallery.html"><i class="fa-solid fa-image"></i><span>Galeria</span></a>
+    <a href="contact.html"><i class="fa-solid fa-phone"></i><span>Kontakt</span></a>
+
+    <!-- ✅ Facebook: PODMIEŃ LINK NA SWÓJ -->
+    <a class="nav-icon" href="https://www.facebook.com/JlLukasz/" target="_blank" rel="noopener" title="Facebook">
+      <i class="fa-brands fa-facebook-f"></i>
+    </a>
+
+    <a class="nav-icon" href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-content">
+    <h2>Profesjonalny serwis rowerowy</h2>
+    <p>Regulacje, naprawy i serwis napędu. Rzetelnie, szybko i z pełną kontrolą online.</p>
+
+    <div class="actions">
+      <a class="btn btn-main" href="order-online.html">
+        <i class="fa-solid fa-bicycle"></i> Zgłoś rower online
+      </a>
+      <a class="btn btn-outline" href="client.html">
+        <i class="fa-solid fa-magnifying-glass"></i> Sprawdź status
+      </a>
+      <a class="btn btn-outline" href="gallery.html">
+        <i class="fa-solid fa-image"></i> Zobacz galerię
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <h3>Dlaczego JL Pro Bike Serwis?</h3>
+  <div class="features-grid">
+    <div class="feature">
+      <span><i class="fa-solid fa-screwdriver-wrench"></i></span>
+      <h4>Fachowa obsługa</h4>
+      <p>Doświadczenie i precyzja.</p>
+    </div>
+    <div class="feature">
+      <span><i class="fa-solid fa-stopwatch"></i></span>
+      <h4>Szybki serwis</h4>
+      <p>Bez kolejek i formalności.</p>
+    </div>
+    <div class="feature">
+      <span><i class="fa-solid fa-mobile-screen-button"></i></span>
+      <h4>Status online</h4>
+      <p>Pełna kontrola naprawy.</p>
+    </div>
+    <div class="feature">
+      <span><i class="fa-solid fa-shield-halved"></i></span>
+      <h4>Bezpieczne dane</h4>
+      <p>Ochrona informacji.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  © 2026 JL Pro Bike Serwis
+</footer>
+
+</body>
+</html>

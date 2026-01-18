@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Edycja zlecenia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+  --muted: rgba(229,231,235,0.7);
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* ===== HEADER (jak panel) ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:14px;
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.toplink{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+  opacity:.92;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+}
+.toplink:hover{ color:var(--accent); }
+
+/* ===== LAYOUT (zamiast flex center) ===== */
+.wrapper{
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 120px 24px 80px; /* miejsce na header */
+}
+
+/* ===== BOX ===== */
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 16px;
+  padding: 26px;
+}
+
+h1.page-title{
+  margin:0 0 14px;
+  font-size:26px;
+  font-weight:900;
+}
+
+/* ===== FORM ===== */
+label{
+  display:block;
+  font-weight:800;
+  color:#93c5fd;
+  margin-top:14px;
+}
+
+/* ✅ CZCIONKA W POLACH MA BYĆ CZARNA */
+input,select,textarea{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color:#000;
+  font-size:16px;
+  margin-top:6px;
+}
+
+textarea{ min-height:120px; resize:vertical; }
+
+.sum{
+  text-align:right;
+  font-size:22px;
+  font-weight:900;
+  margin:14px 0 22px;
+}
+
+/* ===== BUTTONS (spójne z projektem, bez zmiany onclick) ===== */
+.btn{
+  width:100%;
+  padding:16px;
+  font-size:16px;
+  font-weight:900;
+  border-radius:999px;
+  cursor:pointer;
+  margin-bottom:12px;
+
+  border:2px solid var(--accent);
+  background:transparent;
+  color:var(--accent);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.btn:hover{
+  background:var(--accent);
+  color:#fff;
+}
+
+.btn.save{
+  background:var(--accent);
+  color:#fff;
+}
+.btn.save:hover{ background:var(--accentHover); }
+
+/* przyciski druku w stylu panelu (bez “starych” kolorów) */
+.btn.pdf-in, .btn.pdf-out{
+  border-color: rgba(255,255,255,0.18);
+  color:#fff;
+}
+.btn.pdf-in:hover, .btn.pdf-out:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
+  color:#fff;
+}
+
+.back{
+  margin-top:20px;
+  color:#60a5fa;
+  cursor:pointer;
+  text-align:center;
+  font-weight:800;
+}
+.back:hover{ color:var(--accent); }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-pen-to-square"></i> Edycja zlecenia</h1>
+  <div class="header-right">
+    <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
+  </div>
+</header>
+
+<div class="wrapper">
+  <div class="box">
+
+    <!-- ✅ NIE ZMIENIAMY ID, onclick, kolejności pól -->
+    <h1 class="page-title">Edycja zlecenia</h1>
+
+    <label>Status</label>
+    <select id="status">
+      <option>oczekujące</option>
+      <option>nowe</option>
+      <option>w trakcie</option>
+      <option>gotowe</option>
+      <option>wydano</option>
+    </select>
+
+    <label>Klient</label>
+    <input id="customer">
+
+    <label>Telefon</label>
+    <input id="phone">
+
+    <label>Rower</label>
+    <input id="bike">
+
+    <label>Opis zgłoszenia klienta</label>
+    <textarea id="note"></textarea>
+
+    <label>Koszt (roboczy – do wydania roweru)</label>
+    <textarea id="costText" placeholder="np. detka 25&#10;regulacja przerzutek 40"></textarea>
+
+    <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
+
+    <button class="btn save" onclick="save()">
+      <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
+    </button>
+
+    <button class="btn pdf-in" onclick="printIn()">
+      <i class="fa-solid fa-print"></i> Drukuj kartę przyjęcia
+    </button>
+
+    <button class="btn pdf-out" onclick="printOut()">
+      <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
+    </button>
+
+    
+
+  </div>
+</div>
+
+<!-- ✅ PONIŻEJ: TWÓJ ORYGINALNY JS – 1:1, BEZ ZMIAN -->
+<script>
+document.addEventListener("DOMContentLoaded", ()=>{
+
+  const id = new URLSearchParams(location.search).get("id");
+
+  const status   = document.getElementById("status");
+  const customer = document.getElementById("customer");
+  const phone    = document.getElementById("phone");
+  const bike     = document.getElementById("bike");
+  const note     = document.getElementById("note");
+  const costText = document.getElementById("costText");
+  const sumEl    = document.getElementById("sum");
+
+  const COST_TEXT_COLUMN = "costs_text";
+
+  let currentTotal = 0;
+
+  function escapeHtml(str){
+    return (str ?? "")
+      .toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function calcSum(){
+    let s = 0;
+    (costText.value || "").split("\n").forEach(l=>{
+      const m = l.match(/(\d+(?:[.,]\d+)?)/);
+      if(m) s += parseFloat(m[1].replace(",",".")); 
+    });
+    currentTotal = s;
+    sumEl.textContent = s.toFixed(2);
+  }
+  costText.addEventListener("input", calcSum);
+
+  async function load(){
+    const { data, error } = await supabaseClient
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if(error){
+      alert("Błąd pobierania danych: " + error.message);
+      return;
+    }
+
+    status.value   = data.status ?? "oczekujące";
+    customer.value = data.customer_name ?? "";
+    phone.value    = data.phone ?? "";
+    bike.value     = data.bike_type ?? "";
+    note.value     = data.description ?? "";
+
+    if(Object.prototype.hasOwnProperty.call(data, COST_TEXT_COLUMN)){
+      costText.value = data[COST_TEXT_COLUMN] ?? "";
+    }else{
+      costText.value = "";
+    }
+
+    calcSum();
+  }
+
+  async function save(){
+    calcSum();
+
+    const payload = {
+      status: status.value,
+      customer_name: customer.value,
+      phone: phone.value,
+      bike_type: bike.value,
+      description: note.value,
+
+      labor_cost: currentTotal,
+      parts_cost: 0,
+      total_cost: currentTotal
+    };
+
+    const { error } = await supabaseClient
+      .from("orders")
+      .update(payload)
+      .eq("id", id);
+
+    if(error){
+      alert("Błąd zapisu: " + error.message);
+      return;
+    }
+
+    const { error: costErr } = await supabaseClient
+      .from("orders")
+      .update({ [COST_TEXT_COLUMN]: costText.value })
+      .eq("id", id);
+
+    if(costErr){
+      const msg = (costErr.message || "").toLowerCase();
+      if(msg.includes("could not find") || msg.includes("schema cache")){
+        alert("Zapisano poprawnie ✅ (status + dane + sumy). Lista pozycji nie zapisana, bo brak kolumny tekstowej w bazie.");
+      }else{
+        alert("Zapisano sumy ✅, ale błąd zapisu listy pozycji: " + costErr.message);
+      }
+      return;
+    }
+
+    alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)");
+  }
+
+  function printIn(){
+    const win = window.open("","_blank");
+    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(id)}`;
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Karta przyjęcia</title>
+<style>
+@page{ size:A4; margin:0; }
+html, body{
+  width:210mm;
+  height:297mm;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+}
+*{ box-sizing:border-box; }
+body{ font-family:Arial; color:#000; }
+
+.page{
+  width:210mm;
+  height:297mm;
+  padding:15mm;
+  box-sizing:border-box;
+}
+
+.main{ height:165mm; }
+
+h2{
+  margin:0 0 8mm;
+  text-align:center;
+  width:100%;
+  font-size:20px;
+}
+
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10mm;
+}
+
+.left-info{
+  font-size:12px;
+  line-height:1.35;
+}
+
+.qrbox img{
+  width:40mm;
+  height:40mm;
+  display:block;
+}
+
+.sep{
+  border-top:2px dashed #000;
+  margin:8mm 0 6mm;
+}
+
+.tag-wrap{
+  height:90mm;
+  display:flex;
+  justify-content:flex-start;
+  align-items:flex-start;
+  margin-top:-0mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.tag{
+  width:180mm;
+  height:85mm;
+  border:2px solid #000;
+  position:relative;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.hole{
+  position:absolute;
+  left:10mm;
+  top:50%;
+  transform:translateY(-50%);
+  width:18px;
+  height:18px;
+  border:2px solid #000;
+  border-radius:50%;
+}
+
+.tag-content{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) rotate(-90deg);
+  transform-origin:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.tag-text{
+  font-size:12px;
+  line-height:1.25;
+  text-align:center;
+  white-space:pre-line;
+  font-weight:700;
+}
+.tag-text small{ font-weight:400; }
+
+.tag-content img{
+  width:40mm;
+  height:40mm;
+  display:block;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="main">
+
+    <h2>KARTA PRZYJĘCIA – SERWIS ROWEROWY</h2>
+
+    <div class="header">
+      <div class="left-info">
+        <b>Klient:</b> ${escapeHtml(customer.value)}<br>
+        <b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+        <b>Rower:</b> ${escapeHtml(bike.value)}<br>
+        <b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+      </div>
+      <div class="qrbox">
+        <img src="${qr}" alt="QR">
+      </div>
+    </div>
+
+    <div style="margin-top:10mm; font-size:12px;">
+      <b>Opis zgłoszenia:</b><br><br>
+      <div style="white-space:pre-line;">${escapeHtml(note.value)}</div>
+    </div>
+
+    <div style="margin-top:18mm; font-size:12px;">
+      <b>Podpis klienta:</b> _____________________
+    </div>
+
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="tag-wrap">
+    <div class="tag">
+      <div class="hole"></div>
+
+      <div class="tag-content">
+        <div class="tag-text">
+          ZAWIESZKA – SERWIS<br>
+          <small>
+            Klient: ${escapeHtml(customer.value)}<br>
+            Tel: ${escapeHtml(phone.value)}<br>
+            Rower: ${escapeHtml(bike.value)}<br>
+            Data: ${new Date().toLocaleDateString("pl-PL")}
+          </small>
+        </div>
+
+        <img src="${qr}" alt="QR">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  window.onload = () => { window.focus(); window.print(); };
+<\/script>
+
+</body>
+</html>
+    `);
+
+    win.document.close();
+  }
+
+  function printOut(){
+    let rows="";
+    let i=1;
+
+    (costText.value || "").split("\n").forEach(l=>{
+      const m=l.match(/(\d+(?:[.,]\d+)?)/);
+      if(!m) return;
+      const price = parseFloat(m[1].replace(",",".")) || 0;
+      const desc = l.replace(m[1],"").trim();
+
+      rows += `<tr>
+        <td>${i++}</td>
+        <td>${escapeHtml(desc)}</td>
+        <td style="text-align:right">${price.toFixed(2)} zł</td>
+      </tr>`;
+    });
+
+    const win=window.open("","_blank");
+    win.document.write(`
+<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">
+<title>Wydanie roweru</title>
+<style>
+body{font-family:Arial;padding:30px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #000;padding:6px}
+th{background:#eee}
+.sum{text-align:right;font-weight:bold;margin-top:10px}
+</style></head><body>
+
+<h2 style="text-align:center">WYDANIE ROWERU – ROZLICZENIE</h2>
+<p>
+<b>Klient:</b> ${escapeHtml(customer.value)}<br>
+<b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+<b>Rower:</b> ${escapeHtml(bike.value)}<br>
+<b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+</p>
+
+<table>
+<tr><th>Lp</th><th>Czynność</th><th>Cena</th></tr>
+${rows}
+</table>
+
+<div class="sum">DO ZAPŁATY: ${currentTotal.toFixed(2)} zł</div>
+<p>Podpis klienta: _____________________</p>
+
+<script>
+  window.onload = () => { window.focus(); window.print(); };
+<\/script>
+
+</body></html>`);
+    win.document.close();
+  }
+
+  window.save = save;
+  window.printIn = printIn;
+  window.printOut = printOut;
+
+  load();
+});
+</script>
+
+</body>
+</html>

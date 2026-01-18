@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Zgłoszenie serwisowe online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --border:#1e293b;
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+  --link:#60a5fa;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== HEADER jak na stronie głównej ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color: var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+nav{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+
+nav a{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color: var(--text);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+nav a:hover{ color: var(--accent); }
+
+@media(max-width:900px){
+  nav a span{ display:none; }
+}
+
+/* ===== CONTENT ===== */
+main{
+  max-width: 860px;
+  margin: auto;
+  padding: 120px 30px 80px;
+}
+
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+h2{ margin:0 0 10px; font-size: 28px; }
+.sub{ opacity:.85; margin:0 0 18px; line-height:1.4; }
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media(max-width:800px){
+  .grid{ grid-template-columns: 1fr; }
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+label{
+  font-size: 13px;
+  opacity:.9;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+input, textarea{
+  width:100%;
+  padding:14px;
+  border-radius:10px;
+  border:none;
+  font-size:15px;
+  outline:none;
+}
+
+textarea{ min-height: 150px; resize: vertical; }
+
+.actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top: 10px;
+}
+
+.btn{
+  padding:14px 16px;
+  border-radius:10px;
+  border:none;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  text-decoration:none;
+}
+
+.btn-main{
+  background: var(--accent);
+  color:#fff;
+  flex: 1 1 240px;
+}
+.btn-main:hover{ background: var(--accentHover); }
+
+.btn-outline{
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  flex: 1 1 240px;
+}
+.btn-outline:hover{
+  background: var(--accent);
+  color:#fff;
+}
+
+.hint{
+  margin-top: 12px;
+  opacity:.85;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.success{
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.25);
+}
+
+.codeRow{
+  margin-top: 10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.code{
+  font-weight: 900;
+  letter-spacing: 2px;
+  font-size: 18px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+}
+
+.smallBtn{
+  padding:10px 12px;
+  border-radius:10px;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: transparent;
+  cursor:pointer;
+  font-weight: 800;
+}
+.smallBtn:hover{
+  background: var(--accent);
+  color:#fff;
+}
+
+.err{
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.10);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-bicycle"></i> JL Pro Bike Serwis</h1>
+  <nav>
+    <a href="index.html"><i class="fa-solid fa-house"></i><span>Strona główna</span></a>
+    <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
+    <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
+    <a href="pricing.html"><i class="fa-solid fa-tags"></i><span>Cennik</span></a>
+    <a href="contact.html"><i class="fa-solid fa-phone"></i><span>Kontakt</span></a>
+    <a href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
+  </nav>
+</header>
+
+<main>
+  <div class="box">
+    <h2>Zgłoszenie serwisowe online</h2>
+    <p class="sub">
+      Wypełnij formularz, a otrzymasz <b>kod zgłoszenia</b> (public_code). Kod pozwala sprawdzić status naprawy
+      po numerze telefonu lub bezpośrednio po kodzie.
+    </p>
+
+    <div class="grid">
+      <div class="field">
+        <label for="customer_name"><i class="fa-solid fa-user"></i> Imię i nazwisko</label>
+        <input id="customer_name" placeholder="np. Jan Kowalski" autocomplete="name">
+      </div>
+
+      <div class="field">
+        <label for="phone"><i class="fa-solid fa-phone"></i> Telefon</label>
+        <input id="phone" placeholder="np. 500 123 321" autocomplete="tel">
+      </div>
+
+      <div class="field">
+        <label for="bike_type"><i class="fa-solid fa-bicycle"></i> Rower</label>
+        <input id="bike_type" placeholder="np. MTB / Szosa / E-bike">
+      </div>
+
+      <div class="field">
+        <label for="issue_description"><i class="fa-solid fa-screwdriver-wrench"></i> Opis usterki (wymagane)</label>
+        <textarea id="issue_description" placeholder="Opisz problem, objawy, od kiedy występuje..."></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-main" id="sendBtn">
+        <i class="fa-solid fa-paper-plane"></i> Wyślij zgłoszenie
+      </button>
+
+      <a class="btn btn-outline" href="client.html">
+        <i class="fa-solid fa-magnifying-glass"></i> Sprawdź status
+      </a>
+    </div>
+
+    <p class="hint">
+      Po wysłaniu zachowaj kod zgłoszenia. Przyda się w kontakcie z serwisem i do sprawdzania statusu.
+    </p>
+
+    <div id="out"></div>
+  </div>
+</main>
+
+<script>
+function digitsOnly(s){ return (s ?? "").toString().replace(/\D/g, ""); }
+function esc(s){
+  return (s ?? "").toString().replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
+}
+
+document.getElementById("sendBtn").addEventListener("click", submitOrder);
+
+async function submitOrder(){
+  const customer_name = document.getElementById("customer_name").value.trim();
+  const phone = digitsOnly(document.getElementById("phone").value.trim());
+  const bike_type = document.getElementById("bike_type").value.trim();
+  const issue_description = document.getElementById("issue_description").value.trim();
+  const out = document.getElementById("out");
+  out.innerHTML = "";
+
+  if (!customer_name) return alert("Podaj imię i nazwisko.");
+  if (!phone) return alert("Podaj numer telefonu.");
+  if (!bike_type) return alert("Podaj typ roweru.");
+  if (!issue_description) return alert("Opis usterki jest wymagany.");
+
+  // ✅ PUBLICZNE zgłoszenie przez RPC
+  const { data, error } = await supabaseClient.rpc("create_order_public", {
+    p_customer_name: customer_name,
+    p_phone: phone,
+    p_bike_type: bike_type,
+    p_description: issue_description
+  });
+
+  if (error){
+    console.error(error);
+    out.innerHTML = `
+      <div class="err">
+        <b>Błąd wysyłania zgłoszenia</b><br>
+        ${esc(error.message || "Nieznany błąd")}
+      </div>
+    `;
+    return;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  const code = row?.public_code || "—";
+
+  out.innerHTML = `
+    <div class="success">
+      <b>Zgłoszenie przyjęte ✅</b><br>
+      Twój kod zgłoszenia:
+      <div class="codeRow">
+        <div class="code" id="codeBox">${esc(code)}</div>
+        <button class="smallBtn" id="copyBtn" type="button">
+          <i class="fa-solid fa-copy"></i> Kopiuj
+        </button>
+        <a class="smallBtn" style="text-decoration:none; display:inline-flex; align-items:center; gap:8px;"
+           href="client.html">
+          <i class="fa-solid fa-magnifying-glass"></i> Status
+        </a>
+      </div>
+      <div class="hint" style="margin-top:10px;">
+        Możesz sprawdzić status po telefonie lub bezpośrednio po kodzie.
+      </div>
+    </div>
+  `;
+
+  const copyBtn = document.getElementById("copyBtn");
+  copyBtn.addEventListener("click", async () => {
+    try{
+      await navigator.clipboard.writeText(code);
+      copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Skopiowano';
+    }catch(e){
+      alert("Nie udało się skopiować. Zaznacz kod i skopiuj ręcznie.");
+    }
+  });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Status zlecenia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+body {
+  background:#020617;
+  color:#e5e7eb;
+  font-family: Arial, sans-serif;
+  padding:30px;
+  text-align:center;
+}
+.box {
+  max-width:500px;
+  margin:auto;
+  background:rgba(255,255,255,0.05);
+  padding:24px;
+  border-radius:12px;
+}
+.status { font-size:22px; font-weight:bold; margin:20px 0; }
+.oczekujące { color:#94a3b8; }
+.nowe { color:#60a5fa; }
+.wtrakcie { color:#f59e0b; }
+.gotowe { color:#22c55e; }
+.wydano { color:#9ca3af; }
+.error { color:#f87171; font-weight:bold; }
+</style>
+</head>
+
+<body>
+
+<div class="box" id="box" style="display:none">
+  <h2>Status naprawy</h2>
+  <div id="bike"></div>
+  <div class="status" id="status"></div>
+  <div id="message"></div>
+</div>
+
+<div class="error" id="error">Nie znaleziono zlecenia</div>
+
+<script>
+const code = new URLSearchParams(location.search).get("code");
+
+function statusText(s) {
+  return {
+    "oczekujące": "Zgłoszenie online",
+    "nowe": "Rower przyjęty",
+    "w trakcie": "Naprawa w toku",
+    "gotowe": "Gotowe do odbioru",
+    "wydano": "Rower wydany"
+  }[s] || s;
+}
+
+function statusMessage(s) {
+  return {
+    "oczekujące": "Zgłoszenie zostało wysłane. Przyjedź do serwisu z rowerem.",
+    "nowe": "Rower został przyjęty do serwisu.",
+    "w trakcie": "Pracujemy nad Twoim rowerem.",
+    "gotowe": "Rower jest gotowy do odbioru.",
+    "wydano": "Zlecenie zakończone."
+  }[s] || "";
+}
+
+async function load() {
+  if (!code) return;
+
+  const { data } = await supabaseClient
+    .from("orders")
+    .select("bike_type,status")
+    .eq("public_code", code)
+    .single();
+
+  if (!data) return;
+
+  box.style.display = "block";
+  error.style.display = "none";
+
+  bike.innerText = "Rower: " + (data.bike_type || "-");
+  status.innerText = statusText(data.status);
+  status.className = "status " + data.status;
+  message.innerText = statusMessage(data.status);
+}
+
+load();
+</script>
+</body>
+</html>

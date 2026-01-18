@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Cennik – JL Pro Bike Serwis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --accentText:#ffffff;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --border:#1e293b;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* HEADER */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  padding:14px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:rgba(2,6,23,.7);
+  backdrop-filter:blur(6px);
+  z-index:10;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color:var(--accent);
+  display:flex;
+  gap:8px;
+}
+
+nav{
+  display:flex;
+  gap:16px;
+}
+
+nav a{
+  color:var(--text);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+}
+
+nav a:hover{color:var(--accent)}
+
+/* MAIN */
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:120px 30px 80px;
+}
+
+h2{font-size:40px;margin-bottom:10px}
+.subtitle{opacity:.85;margin-bottom:30px}
+
+/* BUTTONS */
+.actions{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+  margin-bottom:30px;
+}
+
+.btn{
+  padding:14px 22px;
+  border-radius:999px;
+  font-weight:bold;
+  text-decoration:none;
+  display:inline-flex;
+  gap:10px;
+  align-items:center;
+}
+
+.btn-main{
+  background:var(--accent);
+  color:var(--accentText);
+}
+.btn-main:hover{background:var(--accentHover)}
+
+.btn-outline{
+  border:2px solid var(--accent);
+  color:var(--accent);
+}
+.btn-outline:hover{
+  background:var(--accent);
+  color:var(--accentText);
+}
+
+/* PRICING */
+.pricing{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:24px;
+  margin-bottom:60px;
+}
+
+.card{
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:26px;
+}
+
+.card h3{
+  margin:0 0 10px;
+  color:var(--accent);
+  display:flex;
+  gap:10px;
+}
+
+.price{
+  font-size:28px;
+  font-weight:bold;
+  margin:10px 0 16px;
+}
+
+ul{padding-left:18px}
+
+/* PDF */
+.pdfs{
+  border-top:1px solid var(--border);
+  padding-top:40px;
+}
+
+.pdf-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+  margin-top:20px;
+}
+
+/* FOOTER */
+footer{
+  border-top:1px solid var(--border);
+  padding:40px 30px;
+  text-align:center;
+  font-size:14px;
+  opacity:.8;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-bicycle"></i> JL Pro Bike Serwis</h1>
+  <nav>
+    <a href="index.html">Strona główna</a>
+    <a href="order-online.html">Zgłoś rower</a>
+    <a href="client.html">Status</a>
+    <a href="pricing.html">Cennik</a>
+    <a href="contact.html">Kontakt</a>
+  </nav>
+</header>
+
+<main>
+  <h2>Cennik usług</h2>
+  <p class="subtitle">
+    Ceny dotyczą robocizny. Części rozliczane osobno. Ostateczna wycena po oględzinach roweru.
+  </p>
+
+  <div class="actions">
+    <a class="btn btn-main" href="order-online.html">
+      <i class="fa-solid fa-bicycle"></i> Zgłoś rower
+    </a>
+    <a class="btn btn-outline" href="client.html">
+      <i class="fa-solid fa-magnifying-glass"></i> Sprawdź status
+    </a>
+  </div>
+
+  <!-- KARTY CEN -->
+  <section class="pricing">
+    <div class="card">
+      <h3><i class="fa-solid fa-screwdriver-wrench"></i> Pakiety serwisowe</h3>
+      <div class="price">od 180 zł</div>
+      <ul>
+        <li>Budżetowy – 180 zł</li>
+        <li>Standard – 260 zł</li>
+        <li>Premium – 350 zł</li>
+        <li>Duży Premium – 580 zł</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa-solid fa-gears"></i> Przeglądy</h3>
+      <div class="price">od 150 zł</div>
+      <ul>
+        <li>Przegląd mały</li>
+        <li>Przegląd duży / kompleksowy</li>
+        <li>Przegląd gwarancyjny</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa-solid fa-wrench"></i> Usługi pojedyncze</h3>
+      <div class="price">od 30 zł</div>
+      <ul>
+        <li>Regulacje i naprawy</li>
+        <li>Centrowanie kół</li>
+        <li>Serwis hamulców</li>
+        <li>Diagnostyka E-BIKE</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PDF -->
+  <section class="pdfs">
+    <h2>Pobierz cenniki i regulamin (PDF)</h2>
+
+    <div class="pdf-grid">
+      <a class="btn btn-outline" href="assets/pricing/pelny-cennik.pdf" download>
+        <i class="fa-solid fa-file-pdf"></i> Pełny cennik
+      </a>
+
+      <a class="btn btn-outline" href="assets/pricing/pakiety-serwisowe.pdf" download>
+        <i class="fa-solid fa-file-pdf"></i> Pakiety serwisowe
+      </a>
+
+      <a class="btn btn-outline" href="assets/pricing/oferty-sezonowe.pdf" download>
+        <i class="fa-solid fa-file-pdf"></i> Oferty sezonowe
+      </a>
+
+      <a class="btn btn-outline" href="assets/pricing/regulamin-serwisu.pdf" download>
+        <i class="fa-solid fa-scale-balanced"></i> Regulamin serwisu
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  © 2026 JL Pro Bike Serwis
+</footer>
+
+</body>
+</html>
