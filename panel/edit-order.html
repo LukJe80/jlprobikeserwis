@@ -417,8 +417,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   function printIn(){
     const win = window.open("","_blank");
-    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(id)}`;
-
+    const qrUrl = `https://www.jlprobikeserwis.bike/status.html?code=${encodeURIComponent(sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr)}`;
+    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(sb_secret_j5uzzU3kYJb_QSAFwSIgoA_NnyaXyxk)}`;
+    
     win.document.write(`
 <!DOCTYPE html>
 <html lang="pl">
@@ -666,3 +667,4 @@ ${rows}
 
 </body>
 </html>
+
