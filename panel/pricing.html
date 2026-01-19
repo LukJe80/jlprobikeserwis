@@ -31,14 +31,14 @@ header{
   position:fixed;
   top:0;
   width:100%;
-  padding:14px 24px;
+  z-index:10;
   display:flex;
   justify-content:space-between;
   align-items:center;
+  padding:14px 24px;
   background:rgba(2,6,23,.7);
   backdrop-filter:blur(6px);
-  z-index:10;
-  border-bottom:1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 header h1{
@@ -46,22 +46,44 @@ header h1{
   font-size:18px;
   color:var(--accent);
   display:flex;
+  align-items:center;
   gap:8px;
+  white-space:nowrap;
 }
 
+/* NAV */
 nav{
   display:flex;
+  align-items:center;
   gap:16px;
 }
 
 nav a{
+  display:flex;
+  align-items:center;
+  gap:6px;
   color:var(--text);
   text-decoration:none;
   font-weight:600;
   font-size:14px;
+  white-space:nowrap;
 }
 
 nav a:hover{color:var(--accent)}
+
+.nav-icon{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.nav-icon:hover{
+  border-color: rgba(37,99,235,0.6);
+}
+
+@media(max-width:900px){
+  nav a span{display:none}
+}
 
 /* MAIN */
 main{
@@ -125,6 +147,7 @@ h2{font-size:40px;margin-bottom:10px}
   color:var(--accent);
   display:flex;
   gap:10px;
+  align-items:center;
 }
 
 .price{
@@ -162,13 +185,26 @@ footer{
 <body>
 
 <header>
-  <h1> JL Pro Bike Serwis</h1>
+  <!-- ✅ bez ikony roweru przy napisie -->
+  <h1>JL Pro Bike Serwis</h1>
+
   <nav>
-    <a href="index.html">Strona główna</a>
-    <a href="order-online.html">Zgłoś rower</a>
-    <a href="client.html">Status</a>
-    <a href="pricing.html">Cennik</a>
-    <a href="contact.html">Kontakt</a>
+    <!-- (Jeśli nie chcesz domku – usuń tę linijkę) -->
+    <!-- <a href="index.html"><i class="fa-solid fa-house"></i><span>Strona główna</span></a> -->
+
+    <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
+    <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
+    <a href="pricing.html"><i class="fa-solid fa-tags"></i><span>Cennik</span></a>
+    <a href="gallery.html"><i class="fa-solid fa-image"></i><span>Galeria</span></a>
+    <a href="contact.html"><i class="fa-solid fa-phone"></i><span>Kontakt</span></a>
+
+    <a class="nav-icon" href="https://www.facebook.com/JlLukasz/" target="_blank" rel="noopener" title="Facebook">
+      <i class="fa-brands fa-facebook-f"></i>
+    </a>
+
+    <a class="nav-icon" href="login.html" title="Panel serwisanta">
+      <i class="fa-solid fa-user-gear"></i>
+    </a>
   </nav>
 </header>
 
@@ -239,9 +275,11 @@ footer{
         <i class="fa-solid fa-file-pdf"></i> Oferty sezonowe
       </a>
 
+      <!-- ✅ naprawione domknięcie </a> -->
       <a class="btn btn-outline" href="assets/pricing/cennik-uslug-serwisowych.pdf" download>
         <i class="fa-solid fa-file-pdf"></i> Cennik usług serwisowych
-        
+      </a>
+
       <a class="btn btn-outline" href="assets/pricing/regulamin.pdf" download>
         <i class="fa-solid fa-scale-balanced"></i> Regulamin serwisu
       </a>
@@ -255,6 +293,7 @@ footer{
 
 </body>
 </html>
+
 
 
 
