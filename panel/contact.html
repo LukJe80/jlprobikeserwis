@@ -4,9 +4,11 @@
 <meta charset="UTF-8">
 <title>Kontakt – JL Pro Bike Serwis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Kontakt do JL Pro Bike Serwis – telefon, e-mail, adres oraz mapa dojazdu. Napisz zapytanie przez formularz.">
+<meta name="description" content="Kontakt do JL Pro Bike Serwis – telefon, e-mail, adres oraz mapa dojazdu.">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
 
 <style>
 :root{
@@ -16,10 +18,9 @@
   --bg:#020617;
   --text:#e5e7eb;
   --border:#1e293b;
-
-  --panel: rgba(255,255,255,0.03);
-  --panelBorder: rgba(255,255,255,0.10);
-  --muted: rgba(229,231,235,0.78);
+  --muted: rgba(229,231,235,.75);
+  --danger:#ef4444;
+  --ok:#22c55e;
 }
 
 *{box-sizing:border-box}
@@ -43,7 +44,6 @@ header{
   padding:14px 24px;
   background:rgba(2,6,23,.7);
   backdrop-filter:blur(6px);
-  border-bottom:1px solid rgba(255,255,255,0.06);
 }
 
 header h1{
@@ -56,7 +56,6 @@ header h1{
   white-space:nowrap;
 }
 
-/* NAV */
 nav{
   display:flex;
   align-items:center;
@@ -76,16 +75,6 @@ nav a{
 
 nav a:hover{color:var(--accent)}
 
-.nav-icon{
-  padding:8px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-}
-.nav-icon:hover{
-  border-color: rgba(37,99,235,0.6);
-}
-
 @media(max-width:900px){
   nav a span{display:none}
 }
@@ -104,7 +93,7 @@ h2{
 
 .subtitle{
   opacity:.85;
-  margin:0 0 30px;
+  margin-bottom:30px;
   max-width:760px;
 }
 
@@ -122,7 +111,7 @@ h2{
   border:1px solid var(--border);
   border-radius:14px;
   padding:22px;
-  background:var(--panel);
+  background:rgba(255,255,255,0.03);
 }
 
 .card h3{
@@ -175,20 +164,20 @@ h2{
   align-items:center;
   gap:10px;
   font-size:14px;
-  border:none;
-  background:transparent;
-  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.10);
 }
 
 .btn-main{
   background:var(--accent);
   color:var(--accentText);
+  border-color: rgba(37,99,235,.55);
 }
 .btn-main:hover{background:var(--accentHover)}
 
 .btn-outline{
   border:2px solid var(--accent);
   color:var(--accent);
+  background:transparent;
 }
 .btn-outline:hover{
   background:var(--accent);
@@ -213,68 +202,82 @@ h2{
   margin-top:14px;
   opacity:.85;
   font-size:13px;
-  line-height:1.6;
+  color:var(--muted);
 }
 
-/* FORM (FULL WIDTH CARD) */
+/* FORM CARD (FULL WIDTH) */
+.card-wide{
+  grid-column: 1 / -1;
+}
+
 .form-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
+  grid-template-columns: 1fr 1fr;
+  gap:14px;
+  margin-top:12px;
 }
-@media(max-width:720px){
+@media(max-width:900px){
   .form-grid{grid-template-columns:1fr;}
 }
 
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-}
-
 label{
+  display:block;
   font-size:13px;
-  color:rgba(229,231,235,0.85);
-  font-weight:700;
+  font-weight:800;
+  color: rgba(229,231,235,.9);
+  margin-bottom:6px;
 }
 
 input, textarea{
   width:100%;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,0.12);
-  background:rgba(0,0,0,0.28);
-  color:var(--text);
-  padding:12px 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 12px;
+  outline: none;
   font-size:14px;
-  outline:none;
 }
 
 textarea{
-  min-height:160px;
-  resize:vertical;
+  min-height: 160px;
+  resize: vertical;
 }
 
 input:focus, textarea:focus{
-  border-color: rgba(37,99,235,0.70);
+  border-color: rgba(37,99,235,0.60);
   box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
 }
 
 .form-actions{
   display:flex;
   gap:12px;
-  flex-wrap:wrap;
-  margin-top:12px;
   align-items:center;
+  flex-wrap:wrap;
+  margin-top:14px;
 }
 
 .form-status{
   font-size:13px;
-  color:rgba(229,231,235,0.78);
-  min-height:18px;
+  font-weight:800;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.25);
+  color: var(--muted);
 }
 
-.form-status.ok{ color:#86efac; }
-.form-status.err{ color:#fca5a5; }
+.form-status.ok{
+  border-color: rgba(34,197,94,0.35);
+  color: rgba(187,247,208,1);
+  background: rgba(34,197,94,0.10);
+}
+
+.form-status.err{
+  border-color: rgba(239,68,68,0.35);
+  color: rgba(254,202,202,1);
+  background: rgba(239,68,68,0.10);
+}
 
 /* FOOTER */
 footer{
@@ -290,17 +293,15 @@ footer{
 <body>
 
 <header>
-  <!-- ✅ bez ikony roweru przy tytule -->
   <h1>JL Pro Bike Serwis</h1>
-
   <nav>
+    <a href="index.html"><i class="fa-solid fa-house"></i><span>Strona główna</span></a>
     <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
     <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
     <a href="pricing.html"><i class="fa-solid fa-tags"></i><span>Cennik</span></a>
-    <a href="gallery.html"><i class="fa-solid fa-image"></i><span>Galeria</span></a>
+    <a href="gallery.html"><i class="fa-regular fa-image"></i><span>Galeria</span></a>
     <a href="contact.html"><i class="fa-solid fa-phone"></i><span>Kontakt</span></a>
-
-    <a class="nav-icon" href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
+    <a href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
   </nav>
 </header>
 
@@ -361,11 +362,11 @@ footer{
       </div>
 
       <div class="note">
-        Jeśli piszesz w sprawie serwisu wysyłkowego, dopisz w wiadomości: marka/model roweru i krótki opis problemu.
+        Szybki kontakt najlepiej telefonicznie. Zapytania ogólne możesz wysłać też przez formularz poniżej.
       </div>
     </section>
 
-    <!-- MAPA (EMBED) -->
+    <!-- MAPA -->
     <section class="card">
       <h3><i class="fa-solid fa-map"></i> Mapa dojazdu</h3>
 
@@ -379,53 +380,49 @@ footer{
       </div>
 
       <div class="note">
-        Jeśli jedziesz na miejsce, najprościej otworzyć mapę i włączyć nawigację.
+        Mapa jest osadzona jako embed — wygląda profesjonalnie i jest najprostsza w utrzymaniu.
       </div>
     </section>
 
+    <!-- FORMULARZ (SZEROKI KAFEL) -->
+    <section class="card card-wide">
+      <h3><i class="fa-solid fa-message"></i> Napisz zapytanie</h3>
+
+      <div class="note" style="margin-top:-6px;">
+        Masz pytanie, wątpliwości lub chcesz dopytać o serwis wysyłkowy? Napisz — odpowiemy możliwie szybko.
+      </div>
+
+      <form id="contactForm" autocomplete="off">
+        <div class="form-grid">
+          <div>
+            <label for="name">Imię i nazwisko</label>
+            <input id="name" type="text" minlength="2" required placeholder="np. Jan Kowalski">
+          </div>
+
+          <div>
+            <label for="contact">Telefon lub e-mail</label>
+            <input id="contact" type="text" minlength="3" required placeholder="np. 500 000 000 / email@...">
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <label for="message">Treść zapytania</label>
+          <textarea id="message" minlength="10" required placeholder="Opisz krótko, o co chcesz zapytać…"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-main" id="submitBtn" type="submit">
+            <i class="fa-solid fa-paper-plane"></i> Wyślij zapytanie
+          </button>
+
+          <div class="form-status" id="formStatus">
+            Formularz służy do zapytań ogólnych. Zgłoszenia serwisowe wykonasz w „Zgłoś rower online”.
+          </div>
+        </div>
+      </form>
+    </section>
+
   </div>
-
-  <!-- ✅ NOWE: OSOBNY KAFEL NA DOLE (100% SZEROKOŚCI) -->
-  <section class="card" style="margin-top:24px;">
-    <h3><i class="fa-solid fa-message"></i> Napisz zapytanie</h3>
-
-    <p class="subtitle" style="margin-bottom:16px;">
-      Masz pytanie, wątpliwości lub chcesz dopytać o serwis wysyłkowy? Napisz — odpowiemy możliwie szybko.
-    </p>
-
-    <form id="contactForm">
-      <div class="form-grid">
-        <div class="field">
-          <label for="name">Imię i nazwisko</label>
-          <input id="name" name="name" type="text" placeholder="Np. Jan Kowalski" required>
-        </div>
-
-        <div class="field">
-          <label for="contact">Telefon lub e-mail</label>
-          <input id="contact" name="contact" type="text" placeholder="Np. 500 000 000 lub mail@adres.pl" required>
-        </div>
-      </div>
-
-      <div class="field" style="margin-top:12px;">
-        <label for="message">Treść zapytania</label>
-        <textarea id="message" name="message" required
-          placeholder="Opisz krótko problem, pytanie lub zakres serwisu (np. wysyłka roweru, wycena, termin, objawy...)."></textarea>
-      </div>
-
-      <div class="form-actions">
-        <button class="btn btn-main" type="submit" id="sendBtn">
-          <i class="fa-solid fa-paper-plane"></i> Wyślij zapytanie
-        </button>
-
-        <span class="form-status" id="formStatus"></span>
-      </div>
-
-      <div class="note">
-        Formularz służy do zapytań ogólnych. Zgłoszenia serwisowe wykonasz w „Zgłoś rower online”.
-      </div>
-    </form>
-  </section>
-
 </main>
 
 <footer>
@@ -433,45 +430,55 @@ footer{
 </footer>
 
 <script>
-  // Formularz kontaktowy -> endpoint Vercel: /api/contact
+  // ✅ używamy klienta z supabaseClient.js
+  const sb = window.supabaseClient;
+
   const form = document.getElementById("contactForm");
   const statusEl = document.getElementById("formStatus");
-  const sendBtn = document.getElementById("sendBtn");
+  const btn = document.getElementById("submitBtn");
+
+  function setStatus(type, text){
+    statusEl.className = "form-status" + (type ? (" " + type) : "");
+    statusEl.textContent = text;
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    statusEl.className = "form-status";
-    statusEl.textContent = "Wysyłanie...";
-    sendBtn.disabled = true;
-
-    const payload = {
-      name: document.getElementById("name").value.trim(),
-      contact: document.getElementById("contact").value.trim(),
-      message: document.getElementById("message").value.trim()
-    };
-
-    try{
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if(!res.ok){
-        const txt = await res.text().catch(()=> "");
-        throw new Error(txt || "Błąd wysyłki");
-      }
-
-      form.reset();
-      statusEl.className = "form-status ok";
-      statusEl.textContent = "Wiadomość wysłana. Odezwiemy się najszybciej jak to możliwe.";
-    }catch(err){
-      statusEl.className = "form-status err";
-      statusEl.textContent = "Nie udało się wysłać. Spróbuj ponownie lub napisz e-mail / zadzwoń.";
-    }finally{
-      sendBtn.disabled = false;
+    if(!sb){
+      setStatus("err", "Brak konfiguracji Supabase (supabaseClient.js).");
+      return;
     }
+
+    const name = document.getElementById("name").value.trim();
+    const contact = document.getElementById("contact").value.trim();
+    const message = document.getElementById("message").value.trim();
+
+    if(name.length < 2 || contact.length < 3 || message.length < 10){
+      setStatus("err", "Uzupełnij poprawnie wszystkie pola (wiadomość min. 10 znaków).");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.style.opacity = "0.85";
+    setStatus("", "Wysyłam…");
+
+    const { error } = await sb
+      .from("contact_messages")
+      .insert([{ name, contact, message }]);
+
+    if(error){
+      console.error("CONTACT INSERT ERROR:", error);
+      setStatus("err", "Nie udało się wysłać. Spróbuj ponownie lub napisz e-mail / zadzwoń.");
+      btn.disabled = false;
+      btn.style.opacity = "1";
+      return;
+    }
+
+    form.reset();
+    setStatus("ok", "Wysłano ✅ Twoje zapytanie trafiło do panelu serwisanta.");
+    btn.disabled = false;
+    btn.style.opacity = "1";
   });
 </script>
 
