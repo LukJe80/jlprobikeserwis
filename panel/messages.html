@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wiadomości – Panel serwisanta</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root{
+  --accent:#2563eb; --accentHover:#1d4ed8; --bg:#020617; --text:#e5e7eb; --border:#1e293b;
+  --panel:rgba(255,255,255,0.03);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{position:fixed;top:0;width:100%;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:rgba(2,6,23,.7);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.06)}
+header h1{margin:0;font-size:18px;color:var(--accent);white-space:nowrap}
+nav{display:flex;gap:16px;align-items:center}
+nav a{display:flex;align-items:center;gap:6px;color:var(--text);text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap}
+nav a:hover{color:var(--accent)}
+@media(max-width:900px){nav a span{display:none}}
+main{max-width:1200px;margin:auto;padding:120px 24px 80px}
+.card{border:1px solid var(--border);border-radius:14px;padding:20px;background:var(--panel)}
+h2{margin:0 0 14px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top}
+.table th{color:rgba(229,231,235,.85);text-align:left;font-size:13px}
+.small{font-size:12px;opacity:.75}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:999px;font-size:12px}
+.btn{border:none;cursor:pointer;border-radius:999px;padding:10px 14px;font-weight:800;display:inline-flex;gap:8px;align-items:center}
+.btn-main{background:var(--accent);color:#fff}
+.btn-main:hover{background:var(--accentHover)}
+.btn-outline{background:transparent;border:2px solid var(--accent);color:var(--accent)}
+.btn-outline:hover{background:var(--accent);color:#fff}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap}
+.unread{border-left:3px solid var(--accent)}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>Panel serwisanta</h1>
+  <nav>
+    <a href="orders.html"><i class="fa-solid fa-list"></i><span>Zlecenia</span></a>
+    <a href="messages.html"><i class="fa-solid fa-inbox"></i><span>Wiadomości</span></a>
+    <a href="orders-completed.html"><i class="fa-solid fa-clock-rotate-left"></i><span>Historia</span></a>
+    <a href="stats.html"><i class="fa-solid fa-chart-column"></i><span>Statystyki</span></a>
+  </nav>
+</header>
+
+<main>
+  <div class="card">
+    <h2><i class="fa-solid fa-inbox"></i> Wiadomości</h2>
+    <div class="small" id="counter">Ładowanie…</div>
+    <div style="height:14px"></div>
+
+    <table class="table" id="table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Nadawca</th>
+          <th>Kontakt</th>
+          <th>Wiadomość</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  // 🔧 Skopiuj z panelu (orders.html) – te same wartości
+  const SUPABASE_URL = "WKLEJ_SUPABASE_URL";
+  const SUPABASE_ANON_KEY = "WKLEJ_SUPABASE_ANON_KEY";
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const tbody = document.getElementById("tbody");
+  const counter = document.getElementById("counter");
+
+  function fmt(ts){
+    const d = new Date(ts);
+    return d.toLocaleString("pl-PL");
+  }
+
+  async function load(){
+    tbody.innerHTML = "";
+    counter.textContent = "Ładowanie…";
+
+    const { data, error } = await supabase
+      .from("contact_messages")
+      .select("id,created_at,name,contact,message,is_read")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if(error){
+      console.error(error);
+      counter.textContent = "Błąd ładowania wiadomości.";
+      return;
+    }
+
+    const unreadCount = data.filter(x => !x.is_read).length;
+    counter.textContent = `Wszystkie: ${data.length} • Nowe: ${unreadCount}`;
+
+    for(const m of data){
+      const tr = document.createElement("tr");
+      if(!m.is_read) tr.classList.add("unread");
+
+      tr.innerHTML = `
+        <td>${fmt(m.created_at)}<div class="small">${m.is_read ? "Przeczytane" : "Nowe"}</div></td>
+        <td><strong>${escapeHtml(m.name)}</strong></td>
+        <td>${escapeHtml(m.contact)}</td>
+        <td>${escapeHtml(m.message).replace(/\n/g,"<br>")}</td>
+        <td>
+          <div class="row-actions">
+            ${m.is_read ? "" : `<button class="btn btn-main" data-read="${m.id}"><i class="fa-solid fa-check"></i> Oznacz jako przeczytane</button>`}
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // bind actions
+    document.querySelectorAll("[data-read]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const id = btn.getAttribute("data-read");
+        btn.disabled = true;
+        const { error } = await supabase
+          .from("contact_messages")
+          .update({ is_read: true, read_at: new Date().toISOString() })
+          .eq("id", id);
+
+        if(error){
+          console.error(error);
+          btn.disabled = false;
+          return;
+        }
+        load();
+      });
+    });
+  }
+
+  function escapeHtml(str){
+    return String(str || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  load();
+</script>
+</body>
+</html>
