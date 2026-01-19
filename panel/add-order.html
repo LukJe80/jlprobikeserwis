@@ -32,6 +32,7 @@
       color: var(--text);
     }
 
+    /* ===== HEADER (spójny z panelem) ===== */
     header{
       position:fixed;
       top:0;
@@ -88,6 +89,7 @@
       -webkit-appearance:none;
     }
 
+    /* ===== CONTENT ===== */
     main{
       max-width: 900px;
       margin: auto;
@@ -123,6 +125,7 @@
       font-size:14px;
     }
 
+    /* ✅ czarna czcionka w polach */
     input, textarea, select{
       width:100%;
       padding:12px 14px;
@@ -138,6 +141,11 @@
     textarea{
       min-height:120px;
       resize:vertical;
+    }
+
+    input:focus, textarea:focus, select:focus{
+      border-color: rgba(37,99,235,0.55);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.16);
     }
 
     .actions{
@@ -164,6 +172,21 @@
     }
 
     .btn:hover{ background: var(--accentHover); }
+
+    .back{
+      margin-top: 16px;
+      text-align:center;
+      cursor:pointer;
+      color:#60a5fa;
+      font-weight:900;
+      user-select:none;
+    }
+    .back:hover{ color: var(--accent); }
+
+    @media(max-width:720px){
+      main{ padding:110px 16px 60px; }
+      .box{ padding:22px; }
+    }
   </style>
 </head>
 
@@ -209,6 +232,8 @@
         <i class="fa-solid fa-floppy-disk"></i> Zapisz zlecenie
       </button>
     </div>
+
+    
   </div>
 </main>
 
@@ -232,7 +257,8 @@ async function addOrder() {
       phone,
       bike_type,
       status,
-      description: issue_description   // ✅ JEDYNA POPRAWKA
+      issue_description,                // ✅ zostaje (NOT NULL w bazie)
+      description: issue_description    // ✅ dopisane (żeby panel/edycja widziały opis)
     });
 
   if (error) {
@@ -245,6 +271,11 @@ async function addOrder() {
   window.location.href = "orders.html";
 }
 
+function goBack() {
+  window.location.href = "orders.html";
+}
+
+/* ✅ tylko dla UI – logout w headerze */
 async function logout(){
   await window.supabaseClient.auth.signOut();
   window.location.href = "login.html";
