@@ -16,6 +16,10 @@
   --bg:#020617;
   --text:#e5e7eb;
   --border:#1e293b;
+
+  --panel: rgba(255,255,255,0.03);
+  --panelBorder: rgba(255,255,255,0.10);
+  --muted: rgba(229,231,235,0.78);
 }
 
 *{box-sizing:border-box}
@@ -39,6 +43,7 @@ header{
   padding:14px 24px;
   background:rgba(2,6,23,.7);
   backdrop-filter:blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
 header h1{
@@ -69,6 +74,16 @@ nav a{
 }
 
 nav a:hover{color:var(--accent)}
+
+.nav-icon{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+}
+.nav-icon:hover{
+  border-color: rgba(37,99,235,0.6);
+}
 
 @media(max-width:900px){
   nav a span{display:none}
@@ -106,7 +121,7 @@ h2{
   border:1px solid var(--border);
   border-radius:14px;
   padding:22px;
-  background:rgba(255,255,255,0.03);
+  background:var(--panel);
 }
 
 .card h3{
@@ -159,6 +174,8 @@ h2{
   align-items:center;
   gap:10px;
   font-size:14px;
+  border:none;
+  cursor:pointer;
 }
 
 .btn-main{
@@ -170,6 +187,7 @@ h2{
 .btn-outline{
   border:2px solid var(--accent);
   color:var(--accent);
+  background:transparent;
 }
 .btn-outline:hover{
   background:var(--accent);
@@ -196,6 +214,72 @@ h2{
   font-size:13px;
 }
 
+/* FORM */
+.form{
+  margin-top:18px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  padding-top:18px;
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+@media(max-width:720px){
+  .form-grid{grid-template-columns:1fr;}
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+label{
+  font-size:13px;
+  color:rgba(229,231,235,0.85);
+  font-weight:700;
+}
+
+input, textarea{
+  width:100%;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(0,0,0,0.28);
+  color:var(--text);
+  padding:12px 12px;
+  font-size:14px;
+  outline:none;
+}
+
+textarea{
+  min-height:140px;
+  resize:vertical;
+}
+
+input:focus, textarea:focus{
+  border-color: rgba(37,99,235,0.70);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.18);
+}
+
+.form-actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+  align-items:center;
+}
+
+.form-status{
+  font-size:13px;
+  color:rgba(229,231,235,0.78);
+  min-height:18px;
+}
+
+.form-status.ok{ color:#86efac; }
+.form-status.err{ color:#fca5a5; }
+
 /* FOOTER */
 footer{
   border-top:1px solid var(--border);
@@ -210,14 +294,15 @@ footer{
 <body>
 
 <header>
-  <h1> JL Pro Bike Serwis</h1>
+  <h1>JL Pro Bike Serwis</h1>
   <nav>
-    <a href="index.html"><i class="fa-solid fa-house"></i><span>Strona główna</span></a>
     <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
     <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
     <a href="pricing.html"><i class="fa-solid fa-tags"></i><span>Cennik</span></a>
+    <a href="gallery.html"><i class="fa-solid fa-image"></i><span>Galeria</span></a>
     <a href="contact.html"><i class="fa-solid fa-phone"></i><span>Kontakt</span></a>
-    <a href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
+
+    <a class="nav-icon" href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
   </nav>
 </header>
 
@@ -229,7 +314,7 @@ footer{
 
   <div class="grid">
 
-    <!-- DANE -->
+    <!-- DANE + FORMULARZ -->
     <section class="card">
       <h3><i class="fa-solid fa-address-card"></i> Dane kontaktowe</h3>
 
@@ -270,7 +355,6 @@ footer{
           <i class="fa-solid fa-bicycle"></i> Zgłoś rower online
         </a>
 
-        <!-- Otwórz mapę (nawigacja) -->
         <a class="btn btn-outline"
            href="https://www.google.com/maps/search/?api=1&query=ul.%20%C5%9Awi%C4%99tokrzyska%2032%2C%2063-200%20Jarocin"
            target="_blank" rel="noopener">
@@ -278,9 +362,43 @@ footer{
         </a>
       </div>
 
-      <div class="note">
-        Jeśli chcesz, dodamy tu też np. link do Facebook/Instagram lub przycisk „Zadzwoń teraz”.
+      <!-- ✅ NOWE: FORMULARZ -->
+      <div class="form" id="contactFormBox">
+        <h3 style="margin-top:0;"><i class="fa-solid fa-message"></i> Napisz zapytanie</h3>
+
+        <form id="contactForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="name">Imię i nazwisko</label>
+              <input id="name" name="name" type="text" placeholder="Np. Jan Kowalski" required>
+            </div>
+
+            <div class="field">
+              <label for="contact">Telefon lub e-mail</label>
+              <input id="contact" name="contact" type="text" placeholder="Np. 500 000 000 lub mail@adres.pl" required>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <label for="message">Treść zapytania</label>
+            <textarea id="message" name="message" placeholder="Opisz krótko problem / pytanie (np. serwis wysyłkowy, wycena, termin, rodzaj roweru, objawy...)."
+              required></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-main" type="submit" id="sendBtn">
+              <i class="fa-solid fa-paper-plane"></i> Wyślij zapytanie
+            </button>
+
+            <span class="form-status" id="formStatus"></span>
+          </div>
+
+          <div class="note">
+            Formularz służy do zapytań ogólnych. Zgłoszenie serwisowe z numerem i statusem naprawy wykonasz w „Zgłoś rower online”.
+          </div>
+        </form>
       </div>
+
     </section>
 
     <!-- MAPA (EMBED) -->
@@ -308,6 +426,49 @@ footer{
   © 2026 JL Pro Bike Serwis
 </footer>
 
-</body>
+<script>
+  // UI-only: wysyłka zapytania na e-mail przez endpoint Vercel (/api/contact.js)
+  const form = document.getElementById("contactForm");
+  const statusEl = document.getElementById("formStatus");
+  const sendBtn = document.getElementById("sendBtn");
 
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    statusEl.className = "form-status";
+    statusEl.textContent = "Wysyłanie...";
+    sendBtn.disabled = true;
+
+    const payload = {
+      name: document.getElementById("name").value.trim(),
+      contact: document.getElementById("contact").value.trim(),
+      message: document.getElementById("message").value.trim()
+    };
+
+    try{
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if(!res.ok){
+        const txt = await res.text().catch(()=> "");
+        throw new Error(txt || "Błąd wysyłki");
+      }
+
+      form.reset();
+      statusEl.className = "form-status ok";
+      statusEl.textContent = "Wiadomość wysłana. Odezwiemy się najszybciej jak to możliwe.";
+    }catch(err){
+      statusEl.className = "form-status err";
+      statusEl.textContent = "Nie udało się wysłać. Spróbuj ponownie lub napisz e-mail / zadzwoń.";
+    }finally{
+      sendBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
 </html>
+
