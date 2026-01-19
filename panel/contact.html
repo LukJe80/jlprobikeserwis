@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Kontakt – JL Pro Bike Serwis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Kontakt do JL Pro Bike Serwis – telefon, e-mail, adres oraz mapa dojazdu.">
+<meta name="description" content="Kontakt do JL Pro Bike Serwis – telefon, e-mail, adres oraz mapa dojazdu. Napisz zapytanie przez formularz.">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
@@ -43,7 +43,7 @@ header{
   padding:14px 24px;
   background:rgba(2,6,23,.7);
   backdrop-filter:blur(6px);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom:1px solid rgba(255,255,255,0.06);
 }
 
 header h1{
@@ -56,6 +56,7 @@ header h1{
   white-space:nowrap;
 }
 
+/* NAV */
 nav{
   display:flex;
   align-items:center;
@@ -103,7 +104,7 @@ h2{
 
 .subtitle{
   opacity:.85;
-  margin-bottom:30px;
+  margin:0 0 30px;
   max-width:760px;
 }
 
@@ -175,6 +176,7 @@ h2{
   gap:10px;
   font-size:14px;
   border:none;
+  background:transparent;
   cursor:pointer;
 }
 
@@ -187,7 +189,6 @@ h2{
 .btn-outline{
   border:2px solid var(--accent);
   color:var(--accent);
-  background:transparent;
 }
 .btn-outline:hover{
   background:var(--accent);
@@ -212,15 +213,10 @@ h2{
   margin-top:14px;
   opacity:.85;
   font-size:13px;
+  line-height:1.6;
 }
 
-/* FORM */
-.form{
-  margin-top:18px;
-  border-top:1px solid rgba(255,255,255,0.06);
-  padding-top:18px;
-}
-
+/* FORM (FULL WIDTH CARD) */
 .form-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -254,7 +250,7 @@ input, textarea{
 }
 
 textarea{
-  min-height:140px;
+  min-height:160px;
   resize:vertical;
 }
 
@@ -294,7 +290,9 @@ footer{
 <body>
 
 <header>
+  <!-- ✅ bez ikony roweru przy tytule -->
   <h1>JL Pro Bike Serwis</h1>
+
   <nav>
     <a href="order-online.html"><i class="fa-solid fa-pen-to-square"></i><span>Zgłoś rower</span></a>
     <a href="client.html"><i class="fa-solid fa-magnifying-glass"></i><span>Status</span></a>
@@ -314,7 +312,7 @@ footer{
 
   <div class="grid">
 
-    <!-- DANE + FORMULARZ -->
+    <!-- DANE -->
     <section class="card">
       <h3><i class="fa-solid fa-address-card"></i> Dane kontaktowe</h3>
 
@@ -362,43 +360,9 @@ footer{
         </a>
       </div>
 
-      <!-- ✅ NOWE: FORMULARZ -->
-      <div class="form" id="contactFormBox">
-        <h3 style="margin-top:0;"><i class="fa-solid fa-message"></i> Napisz zapytanie</h3>
-
-        <form id="contactForm">
-          <div class="form-grid">
-            <div class="field">
-              <label for="name">Imię i nazwisko</label>
-              <input id="name" name="name" type="text" placeholder="Np. Jan Kowalski" required>
-            </div>
-
-            <div class="field">
-              <label for="contact">Telefon lub e-mail</label>
-              <input id="contact" name="contact" type="text" placeholder="Np. 500 000 000 lub mail@adres.pl" required>
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:12px;">
-            <label for="message">Treść zapytania</label>
-            <textarea id="message" name="message" placeholder="Opisz krótko problem / pytanie (np. serwis wysyłkowy, wycena, termin, rodzaj roweru, objawy...)."
-              required></textarea>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn btn-main" type="submit" id="sendBtn">
-              <i class="fa-solid fa-paper-plane"></i> Wyślij zapytanie
-            </button>
-
-            <span class="form-status" id="formStatus"></span>
-          </div>
-
-          <div class="note">
-            Formularz służy do zapytań ogólnych. Zgłoszenie serwisowe z numerem i statusem naprawy wykonasz w „Zgłoś rower online”.
-          </div>
-        </form>
+      <div class="note">
+        Jeśli piszesz w sprawie serwisu wysyłkowego, dopisz w wiadomości: marka/model roweru i krótki opis problemu.
       </div>
-
     </section>
 
     <!-- MAPA (EMBED) -->
@@ -415,11 +379,53 @@ footer{
       </div>
 
       <div class="note">
-        Mapa jest osadzona jako embed — wygląda profesjonalnie i jest najprostsza w utrzymaniu.
+        Jeśli jedziesz na miejsce, najprościej otworzyć mapę i włączyć nawigację.
       </div>
     </section>
 
   </div>
+
+  <!-- ✅ NOWE: OSOBNY KAFEL NA DOLE (100% SZEROKOŚCI) -->
+  <section class="card" style="margin-top:24px;">
+    <h3><i class="fa-solid fa-message"></i> Napisz zapytanie</h3>
+
+    <p class="subtitle" style="margin-bottom:16px;">
+      Masz pytanie, wątpliwości lub chcesz dopytać o serwis wysyłkowy? Napisz — odpowiemy możliwie szybko.
+    </p>
+
+    <form id="contactForm">
+      <div class="form-grid">
+        <div class="field">
+          <label for="name">Imię i nazwisko</label>
+          <input id="name" name="name" type="text" placeholder="Np. Jan Kowalski" required>
+        </div>
+
+        <div class="field">
+          <label for="contact">Telefon lub e-mail</label>
+          <input id="contact" name="contact" type="text" placeholder="Np. 500 000 000 lub mail@adres.pl" required>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:12px;">
+        <label for="message">Treść zapytania</label>
+        <textarea id="message" name="message" required
+          placeholder="Opisz krótko problem, pytanie lub zakres serwisu (np. wysyłka roweru, wycena, termin, objawy...)."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-main" type="submit" id="sendBtn">
+          <i class="fa-solid fa-paper-plane"></i> Wyślij zapytanie
+        </button>
+
+        <span class="form-status" id="formStatus"></span>
+      </div>
+
+      <div class="note">
+        Formularz służy do zapytań ogólnych. Zgłoszenia serwisowe wykonasz w „Zgłoś rower online”.
+      </div>
+    </form>
+  </section>
+
 </main>
 
 <footer>
@@ -427,7 +433,7 @@ footer{
 </footer>
 
 <script>
-  // UI-only: wysyłka zapytania na e-mail przez endpoint Vercel (/api/contact.js)
+  // Formularz kontaktowy -> endpoint Vercel: /api/contact
   const form = document.getElementById("contactForm");
   const statusEl = document.getElementById("formStatus");
   const sendBtn = document.getElementById("sendBtn");
@@ -471,4 +477,3 @@ footer{
 
 </body>
 </html>
-
