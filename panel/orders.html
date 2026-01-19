@@ -96,6 +96,30 @@
       -webkit-appearance:none;
     }
 
+    /* ✅ badge dla nowych wiadomości */
+    .toplink.messages-link{
+      position:relative;
+      padding-right:10px; /* trochę miejsca na badge */
+    }
+    .msg-badge{
+      position:absolute;
+      top:-6px;
+      right:-10px;
+      min-width:18px;
+      height:18px;
+      padding:0 6px;
+      border-radius:999px;
+      background:#ef4444;
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      display:none;          /* pokazujemy tylko gdy >0 */
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+      box-shadow:0 0 0 2px rgba(2,6,23,.9);
+    }
+
     @media(max-width:900px){
       header h1 span{display:none;}
       .user-email{display:none;}
@@ -269,6 +293,12 @@
   </div>
 
   <div class="header-right">
+    <!-- ✅ NOWE: Wiadomości + licznik nowych -->
+    <a class="toplink messages-link" href="messages.html" title="Wiadomości">
+      <i class="fa-solid fa-inbox"></i> Wiadomości
+      <span class="msg-badge" id="msgBadge">0</span>
+    </a>
+
     <a class="toplink" href="orders-completed.html">
       <i class="fa-solid fa-box-archive"></i> Historia
     </a>
@@ -410,10 +440,41 @@
     renderList();
   }
 
+  // ✅ NOWE: licznik nieprzeczytanych wiadomości w badge
+  async function loadUnreadMessagesCount(){
+    const badge = document.getElementById("msgBadge");
+    if(!badge) return;
+
+    // jeśli tabela jeszcze nie istnieje / RLS blokuje, nie psujemy panelu
+    try{
+      const { count, error } = await sb
+        .from("contact_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("is_read", false);
+
+      if(error){
+        console.warn("Messages badge error:", error.message || error);
+        badge.style.display = "none";
+        return;
+      }
+
+      if((count || 0) > 0){
+        badge.textContent = count;
+        badge.style.display = "flex";
+      }else{
+        badge.style.display = "none";
+      }
+    }catch(e){
+      console.warn("Messages badge exception:", e);
+      badge.style.display = "none";
+    }
+  }
+
   (async()=>{
     await checkAuth();
     setupDashboardClicks();
     await loadOrders();
+    await loadUnreadMessagesCount();
   })();
 </script>
 
