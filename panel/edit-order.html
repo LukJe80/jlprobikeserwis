@@ -194,7 +194,6 @@ textarea{ min-height:120px; resize:vertical; }
 <div class="wrapper">
   <div class="box">
 
-    <!-- ✅ NIE ZMIENIAMY ID, onclick, kolejności pól -->
     <h1 class="page-title">Edycja zlecenia</h1>
 
     <label>Status</label>
@@ -238,7 +237,6 @@ textarea{ min-height:120px; resize:vertical; }
   </div>
 </div>
 
-<!-- ✅ PONIŻEJ: TWÓJ ORYGINALNY JS – MINIMALNA ZMIANA: SMS TYLKO PRZY "gotowe" -->
 <script>
 document.addEventListener("DOMContentLoaded", ()=>{
 
@@ -274,7 +272,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     let s = 0;
     (costText.value || "").split("\n").forEach(l=>{
       const m = l.match(/(\d+(?:[.,]\d+)?)/);
-      if(m) s += parseFloat(m[1].replace(",","."));
+      if(m) s += parseFloat(m[1].replace(",",".")); 
     });
     currentTotal = s;
     sumEl.textContent = s.toFixed(2);
@@ -289,7 +287,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     if(digits.startsWith("48") && digits.length === 11) return digits;
     if(digits.length === 9) return "48" + digits;
 
-    // fallback: jeśli ktoś wpisał np. 0048..., +48..., itp.
     if(digits.endsWith(digits.slice(-9)) && digits.length > 11){
       return "48" + digits.slice(-9);
     }
@@ -301,7 +298,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     const to = normalizePhoneToPL48(phone.value);
     if(!to) return { ok:false, skipped:true, reason:"no_phone" };
 
-    // jasny przekaz bez wycen
     const msg = publicCode
       ? `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior. Kod: ${publicCode}`
       : `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior.`;
@@ -340,7 +336,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
       costText.value = "";
     }
 
-    // ✅ zapamiętujemy stan wyjściowy do anty-dublowania SMS
     previousStatus = status.value;
     publicCode = data.public_code ?? "";
 
@@ -386,12 +381,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
       }else{
         alert("Zapisano sumy ✅, ale błąd zapisu listy pozycji: " + costErr.message);
       }
-      // ✅ aktualizujemy previousStatus mimo wszystko (status został zapisany)
       previousStatus = newStatus;
       return;
     }
 
-    // ✅ SMS tylko gdy przechodzimy NA "gotowe" (i wcześniej nie było "gotowe")
     let smsNote = "";
     const shouldSendSms = (newStatus === "gotowe" && previousStatus !== "gotowe");
     if(shouldSendSms){
@@ -409,23 +402,27 @@ document.addEventListener("DOMContentLoaded", ()=>{
       }
     }
 
-    // po zapisie aktualizujemy previousStatus, żeby nie dublować SMS po kolejnym "Zapisz"
     previousStatus = newStatus;
-
     alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)" + smsNote);
   }
 
   function printIn(){
     const win = window.open("","_blank");
-    const qrUrl = `https://www.jlprobikeserwis.bike/status.html?code=${encodeURIComponent(sb_publishable_u6iZP_f82VIoPc450syj4A_fhWmi9Nr)}`;
-    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(sb_secret_j5uzzU3kYJb_QSAFwSIgoA_NnyaXyxk)}`;
-    
+
+    // ✅ QR ma prowadzić do statusu, a nie być “gołym UUID”
+    const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
+    const qrUrl = `https://www.jlprobikeserwis.bike/status.html?code=${encodeURIComponent(codeForQr)}`;
+
     win.document.write(`
 <!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="utf-8">
 <title>Karta przyjęcia</title>
+
+<!-- ✅ Lokalna generacja QR w przeglądarce (to nie generator online) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+
 <style>
 @page{ size:A4; margin:0; }
 html, body{
@@ -466,9 +463,13 @@ h2{
   line-height:1.35;
 }
 
-.qrbox img{
+.qrbox{
   width:40mm;
   height:40mm;
+}
+.qrbox img{
+  width:40mm !important;
+  height:40mm !important;
   display:block;
 }
 
@@ -482,7 +483,7 @@ h2{
   display:flex;
   justify-content:flex-start;
   align-items:flex-start;
-  margin-top:-0mm;
+  margin-top:0mm;
   page-break-inside: avoid;
   break-inside: avoid;
 }
@@ -530,12 +531,14 @@ h2{
 }
 .tag-text small{ font-weight:400; }
 
-.tag-content img{
+.tag-qr{
   width:40mm;
   height:40mm;
+}
+.tag-qr img{
+  width:40mm !important;
+  height:40mm !important;
   display:block;
-  page-break-inside: avoid;
-  break-inside: avoid;
 }
 </style>
 </head>
@@ -553,9 +556,8 @@ h2{
         <b>Rower:</b> ${escapeHtml(bike.value)}<br>
         <b>Data:</b> ${new Date().toLocaleString("pl-PL")}
       </div>
-      <div class="qrbox">
-        <img src="${qr}" alt="QR">
-      </div>
+
+      <div class="qrbox" id="qrTop"></div>
     </div>
 
     <div style="margin-top:10mm; font-size:12px;">
@@ -586,7 +588,7 @@ h2{
           </small>
         </div>
 
-        <img src="${qr}" alt="QR">
+        <div class="tag-qr" id="qrTag"></div>
       </div>
     </div>
   </div>
@@ -594,7 +596,20 @@ h2{
 </div>
 
 <script>
-  window.onload = () => { window.focus(); window.print(); };
+  const qrUrl = ${JSON.stringify(qrUrl)};
+  function makeQr(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = "";
+    new QRCode(el, { text: qrUrl, width: 151, height: 151 });
+  }
+
+  window.onload = () => {
+    makeQr("qrTop");
+    makeQr("qrTag");
+    window.focus();
+    window.print();
+  };
 <\/script>
 
 </body>
@@ -667,4 +682,3 @@ ${rows}
 
 </body>
 </html>
-
