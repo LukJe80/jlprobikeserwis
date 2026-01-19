@@ -31,7 +31,6 @@
       color: var(--text);
     }
 
-    /* ===== HEADER ===== */
     header{
       position:fixed;
       top:0;
@@ -96,9 +95,7 @@
       white-space:nowrap;
     }
     .toplink:hover{ color:var(--accent); }
-    button.toplink{ font-family:inherit; appearance:none; -webkit-appearance:none; }
 
-    /* Badge na wiadomości (opcjonalnie – jeśli chcesz zostawić też tutaj) */
     .toplink.messages-link{ position:relative; padding-right:10px; }
     .msg-badge{
       position:absolute;
@@ -115,17 +112,9 @@
       display:none;
       align-items:center;
       justify-content:center;
-      line-height:1;
       box-shadow:0 0 0 2px rgba(2,6,23,.9);
     }
 
-    @media(max-width:900px){
-      header h1 span{display:none;}
-      .user-email{display:none;}
-      .toplink span.txt{display:none;}
-    }
-
-    /* ===== CONTENT ===== */
     main{
       max-width:1200px;
       margin:auto;
@@ -168,18 +157,10 @@
       border-radius:999px;
       font-size:12px;
       font-weight:900;
-      white-space:nowrap;
     }
 
     .chip.ok{ border-color: rgba(34,197,94,.35); }
     .chip.warn{ border-color: rgba(239,68,68,.35); }
-
-    .actions-top{
-      display:flex;
-      gap:10px;
-      margin-bottom:14px;
-      flex-wrap:wrap;
-    }
 
     .btn{
       border:none;
@@ -194,95 +175,23 @@
       background:rgba(255,255,255,0.08);
       border:1px solid rgba(255,255,255,0.12);
     }
-    .btn:hover{ border-color: rgba(37,99,235,0.50); }
 
-    .btn-main{
-      background:var(--accent);
-      border-color: rgba(37,99,235,0.65);
-    }
+    .btn-main{ background:var(--accent); }
     .btn-main:hover{ background:var(--accentHover); }
 
-    .btn-outline{
-      background:transparent;
-      border:2px solid var(--accent);
-      color:var(--accent);
-    }
-    .btn-outline:hover{ background:var(--accent); color:#fff; }
-
-    /* ===== TABLE ===== */
-    .table-wrap{
-      border:1px solid rgba(255,255,255,0.1);
-      border-radius:14px;
-      overflow:hidden;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-    }
-
-    th,td{
-      padding:12px;
-      border-bottom:1px solid rgba(255,255,255,0.08);
-      font-size:14px;
-      vertical-align:top;
-    }
-
-    th{
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.5px;
-      color:#93c5fd;
-      white-space:nowrap;
-    }
-
-    tr:hover{ background:rgba(255,255,255,0.04); }
-
-    .small{ font-size:12px; color:var(--muted); }
-
-    .msg{
-      white-space:pre-wrap;
-      line-height:1.35;
-    }
-
-    .badge-new{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      border:1px solid rgba(255,255,255,0.14);
-      background:rgba(239,68,68,0.12);
+    .btn-danger{
+      background:rgba(239,68,68,.15);
       color:#fecaca;
+      border:1px solid rgba(239,68,68,.35);
     }
-    .badge-read{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      border:1px solid rgba(255,255,255,0.14);
-      background:rgba(34,197,94,0.10);
-      color:#bbf7d0;
-    }
+    .btn-danger:hover{ background:rgba(239,68,68,.25); }
 
-    .row-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ padding:12px; border-bottom:1px solid rgba(255,255,255,0.08); }
+    th{ font-size:12px; color:#93c5fd; }
 
-    @media(max-width:980px){
-      th:nth-child(3), td:nth-child(3){ display:none; } /* ukryj Kontakt na mniejszych */
-    }
-    @media(max-width:720px){
-      main{padding:110px 16px 60px;}
-      th:nth-child(1), td:nth-child(1){ display:none; } /* ukryj Datę na bardzo małych */
-    }
+    .row-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+    .msg{ white-space:pre-wrap; }
   </style>
 </head>
 
@@ -290,35 +199,17 @@
 
 <header>
   <div class="header-left">
-    <h1><i class="fa-solid fa-user-gear"></i> <span>Panel serwisanta</span></h1>
+    <h1><i class="fa-solid fa-user-gear"></i> Panel serwisanta</h1>
     <div class="user-email" id="userEmail"></div>
   </div>
 
   <div class="header-right">
-    <a class="toplink" href="orders.html" title="Zlecenia">
-      <i class="fa-solid fa-list"></i> <span class="txt">Zlecenia</span>
-    </a>
-
-    <a class="toplink messages-link" href="messages.html" title="Wiadomości">
-      <i class="fa-solid fa-inbox"></i> <span class="txt">Wiadomości</span>
+    <a class="toplink" href="orders.html"><i class="fa-solid fa-list"></i> Zlecenia</a>
+    <a class="toplink messages-link" href="messages.html">
+      <i class="fa-solid fa-inbox"></i> Wiadomości
       <span class="msg-badge" id="msgBadge">0</span>
     </a>
-
-    <a class="toplink" href="orders-completed.html" title="Historia">
-      <i class="fa-solid fa-box-archive"></i> <span class="txt">Historia</span>
-    </a>
-
-    <a class="toplink" href="stats.html" title="Statystyki">
-      <i class="fa-solid fa-chart-simple"></i> <span class="txt">Statystyki</span>
-    </a>
-
-    <a class="toplink" href="add-order.html" title="Dodaj zlecenie">
-      <i class="fa-solid fa-circle-plus"></i> <span class="txt">Dodaj zlecenie</span>
-    </a>
-
-    <button class="toplink" onclick="logout()" title="Wyloguj">
-      <i class="fa-solid fa-right-from-bracket"></i> <span class="txt">Wyloguj</span>
-    </button>
+    <button class="toplink" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Wyloguj</button>
   </div>
 </header>
 
@@ -329,171 +220,84 @@
     <div class="hint">
       <span class="chip ok" id="allCount">Wszystkie: 0</span>
       <span class="chip warn" id="unreadCount">Nowe: 0</span>
-      <span class="small" id="statusText">Ładowanie…</span>
+      <span id="statusText">Ładowanie…</span>
     </div>
 
-    <div class="actions-top">
-      <button class="btn btn-outline" id="btnReload">
-        <i class="fa-solid fa-rotate-right"></i> Odśwież
-      </button>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Nadawca</th>
-            <th>Kontakt</th>
-            <th>Wiadomość</th>
-            <th>Akcje</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Nadawca</th>
+          <th>Kontakt</th>
+          <th>Wiadomość</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
   </div>
 </main>
 
 <script>
-  // ✅ Używamy JEDNEGO klienta z supabaseClient.js
   const sb = window.supabaseClient;
-
   const tbody = document.getElementById("tbody");
   const statusText = document.getElementById("statusText");
   const allCountEl = document.getElementById("allCount");
   const unreadCountEl = document.getElementById("unreadCount");
   const badge = document.getElementById("msgBadge");
 
-  async function checkAuth(){
-    const { data:{session} } = await sb.auth.getSession();
-    if(!session){ location.href="login.html"; return; }
-    document.getElementById("userEmail").textContent = session.user.email;
-  }
-
   async function logout(){
     await sb.auth.signOut();
     location.href="login.html";
   }
 
-  function fmt(ts){
-    const d = new Date(ts);
-    return d.toLocaleString("pl-PL");
-  }
-
-  function escapeHtml(str){
-    return String(str || "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  async function loadUnreadMessagesCount(){
-    if(!badge) return;
-
-    const { count, error } = await sb
-      .from("contact_messages")
-      .select("id", { count: "exact", head: true })
-      .eq("is_read", false);
-
-    if(error){
-      console.warn("Badge error:", error.message || error);
-      badge.style.display = "none";
-      return;
-    }
-
-    if((count || 0) > 0){
-      badge.textContent = count;
-      badge.style.display = "flex";
-    } else {
-      badge.style.display = "none";
-    }
-  }
+  function fmt(ts){ return new Date(ts).toLocaleString("pl-PL"); }
 
   async function loadMessages(){
-    tbody.innerHTML = "";
-    statusText.textContent = "Ładowanie…";
-
     const { data, error } = await sb
       .from("contact_messages")
-      .select("id, created_at, name, contact, message, is_read")
-      .order("created_at", { ascending: false })
-      .limit(200);
+      .select("*")
+      .order("created_at", { ascending:false });
 
-    if(error){
-      console.error(error);
-      statusText.textContent = "Błąd ładowania wiadomości.";
-      return;
-    }
+    if(error){ statusText.textContent="Błąd."; return; }
 
-    const all = data || [];
-    const unread = all.filter(x => !x.is_read).length;
+    tbody.innerHTML="";
+    allCountEl.textContent=`Wszystkie: ${data.length}`;
+    unreadCountEl.textContent=`Nowe: ${data.filter(x=>!x.is_read).length}`;
 
-    allCountEl.textContent = `Wszystkie: ${all.length}`;
-    unreadCountEl.textContent = `Nowe: ${unread}`;
-    statusText.textContent = all.length ? "" : "Brak wiadomości.";
-
-    for(const m of all){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>
-          ${fmt(m.created_at)}
-          <div class="small">${m.is_read ? "Przeczytane" : "Nowe"}</div>
-        </td>
-        <td>
-          <strong>${escapeHtml(m.name)}</strong><br>
-          ${m.is_read ? `<span class="badge-read"><i class="fa-solid fa-check"></i> Przeczytane</span>`
-                     : `<span class="badge-new"><i class="fa-solid fa-circle"></i> Nowe</span>`}
-        </td>
-        <td>${escapeHtml(m.contact)}</td>
-        <td class="msg">${escapeHtml(m.message)}</td>
+    for(const m of data){
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td>${fmt(m.created_at)}</td>
+        <td>${m.name}</td>
+        <td>${m.contact}</td>
+        <td class="msg">${m.message}</td>
         <td>
           <div class="row-actions">
-            ${m.is_read ? "" : `<button class="btn btn-main" data-read="${m.id}">
-              <i class="fa-solid fa-check"></i> Oznacz jako przeczytane
-            </button>`}
+            ${!m.is_read?`<button class="btn btn-main" data-read="${m.id}">Przeczytane</button>`:""}
+            <button class="btn btn-danger" data-del="${m.id}">Usuń</button>
           </div>
-        </td>
-      `;
+        </td>`;
       tbody.appendChild(tr);
     }
 
-    // bind przycisków
-    document.querySelectorAll("[data-read]").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        const id = btn.getAttribute("data-read");
-        btn.disabled = true;
+    document.querySelectorAll("[data-read]").forEach(b=>{
+      b.onclick=async()=>{
+        await sb.from("contact_messages").update({is_read:true}).eq("id",b.dataset.read);
+        loadMessages();
+      }
+    });
 
-        const { error } = await sb
-          .from("contact_messages")
-          .update({ is_read: true, read_at: new Date().toISOString() })
-          .eq("id", id);
-
-        if(error){
-          console.error(error);
-          btn.disabled = false;
-          return;
-        }
-
-        // odśwież listę i badge
-        await loadMessages();
-        await loadUnreadMessagesCount();
-      });
+    document.querySelectorAll("[data-del]").forEach(b=>{
+      b.onclick=async()=>{
+        if(!confirm("Usunąć wiadomość na stałe?")) return;
+        await sb.from("contact_messages").delete().eq("id",b.dataset.del);
+        loadMessages();
+      }
     });
   }
 
-  document.getElementById("btnReload").addEventListener("click", async ()=>{
-    await loadMessages();
-    await loadUnreadMessagesCount();
-  });
-
-  (async ()=>{
-    await checkAuth();
-    await loadUnreadMessagesCount();
-    await loadMessages();
-  })();
+  loadMessages();
 </script>
 
 </body>
