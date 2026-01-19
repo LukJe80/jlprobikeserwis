@@ -1,145 +1,384 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Wiadomości – Panel serwisanta</title>
+  <meta charset="UTF-8" />
+  <title>Wiadomości – Panel serwisanta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
 
-<style>
-:root{
-  --accent:#2563eb; --accentHover:#1d4ed8; --bg:#020617; --text:#e5e7eb; --border:#1e293b;
-  --panel:rgba(255,255,255,0.03);
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
-header{position:fixed;top:0;width:100%;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:rgba(2,6,23,.7);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,0.06)}
-header h1{margin:0;font-size:18px;color:var(--accent);white-space:nowrap}
-nav{display:flex;gap:16px;align-items:center}
-nav a{display:flex;align-items:center;gap:6px;color:var(--text);text-decoration:none;font-weight:700;font-size:14px;white-space:nowrap}
-nav a:hover{color:var(--accent)}
-@media(max-width:900px){nav a span{display:none}}
-main{max-width:1200px;margin:auto;padding:120px 24px 80px}
-.card{border:1px solid var(--border);border-radius:14px;padding:20px;background:var(--panel)}
-h2{margin:0 0 14px}
-.table{width:100%;border-collapse:collapse}
-.table th,.table td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,0.06);vertical-align:top}
-.table th{color:rgba(229,231,235,.85);text-align:left;font-size:13px}
-.small{font-size:12px;opacity:.75}
-.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.04);padding:6px 10px;border-radius:999px;font-size:12px}
-.btn{border:none;cursor:pointer;border-radius:999px;padding:10px 14px;font-weight:800;display:inline-flex;gap:8px;align-items:center}
-.btn-main{background:var(--accent);color:#fff}
-.btn-main:hover{background:var(--accentHover)}
-.btn-outline{background:transparent;border:2px solid var(--accent);color:var(--accent)}
-.btn-outline:hover{background:var(--accent);color:#fff}
-.row-actions{display:flex;gap:10px;flex-wrap:wrap}
-.unread{border-left:3px solid var(--accent)}
-</style>
+  <style>
+    :root{
+      --accent:#2563eb;
+      --accentHover:#1d4ed8;
+      --bg:#020617;
+      --text:#e5e7eb;
+      --panel: rgba(255,255,255,0.05);
+      --panelBorder: rgba(255,255,255,0.10);
+      --muted: rgba(229,231,235,0.7);
+      --danger:#ef4444;
+      --ok:#22c55e;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ===== HEADER ===== */
+    header{
+      position:fixed;
+      top:0;
+      width:100%;
+      z-index:10;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      padding:14px 24px;
+      background:rgba(2,6,23,.7);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+
+    .header-left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    header h1{
+      margin:0;
+      font-size:18px;
+      color:var(--accent);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+
+    .user-email{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:600;
+      padding-left:26px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:360px;
+    }
+
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .toplink{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      text-decoration:none;
+      font-weight:800;
+      font-size:14px;
+      opacity:.92;
+      padding:6px 4px;
+      background:transparent;
+      border:none;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .toplink:hover{ color:var(--accent); }
+    button.toplink{ font-family:inherit; appearance:none; -webkit-appearance:none; }
+
+    /* Badge na wiadomości (opcjonalnie – jeśli chcesz zostawić też tutaj) */
+    .toplink.messages-link{ position:relative; padding-right:10px; }
+    .msg-badge{
+      position:absolute;
+      top:-6px;
+      right:-10px;
+      min-width:18px;
+      height:18px;
+      padding:0 6px;
+      border-radius:999px;
+      background:var(--danger);
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+      box-shadow:0 0 0 2px rgba(2,6,23,.9);
+    }
+
+    @media(max-width:900px){
+      header h1 span{display:none;}
+      .user-email{display:none;}
+      .toplink span.txt{display:none;}
+    }
+
+    /* ===== CONTENT ===== */
+    main{
+      max-width:1200px;
+      margin:auto;
+      padding:120px 30px 80px;
+    }
+
+    .box{
+      background:var(--panel);
+      border:1px solid var(--panelBorder);
+      border-radius:14px;
+      padding:22px;
+    }
+
+    .page-title{
+      margin:0 0 6px;
+      font-size:28px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .hint{
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:18px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(0,0,0,0.25);
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .chip.ok{ border-color: rgba(34,197,94,.35); }
+    .chip.warn{ border-color: rgba(239,68,68,.35); }
+
+    .actions-top{
+      display:flex;
+      gap:10px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius:999px;
+      padding:10px 14px;
+      font-weight:900;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      color:#fff;
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.12);
+    }
+    .btn:hover{ border-color: rgba(37,99,235,0.50); }
+
+    .btn-main{
+      background:var(--accent);
+      border-color: rgba(37,99,235,0.65);
+    }
+    .btn-main:hover{ background:var(--accentHover); }
+
+    .btn-outline{
+      background:transparent;
+      border:2px solid var(--accent);
+      color:var(--accent);
+    }
+    .btn-outline:hover{ background:var(--accent); color:#fff; }
+
+    /* ===== TABLE ===== */
+    .table-wrap{
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:14px;
+      overflow:hidden;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    th,td{
+      padding:12px;
+      border-bottom:1px solid rgba(255,255,255,0.08);
+      font-size:14px;
+      vertical-align:top;
+    }
+
+    th{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      color:#93c5fd;
+      white-space:nowrap;
+    }
+
+    tr:hover{ background:rgba(255,255,255,0.04); }
+
+    .small{ font-size:12px; color:var(--muted); }
+
+    .msg{
+      white-space:pre-wrap;
+      line-height:1.35;
+    }
+
+    .badge-new{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(239,68,68,0.12);
+      color:#fecaca;
+    }
+    .badge-read{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(34,197,94,0.10);
+      color:#bbf7d0;
+    }
+
+    .row-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    @media(max-width:980px){
+      th:nth-child(3), td:nth-child(3){ display:none; } /* ukryj Kontakt na mniejszych */
+    }
+    @media(max-width:720px){
+      main{padding:110px 16px 60px;}
+      th:nth-child(1), td:nth-child(1){ display:none; } /* ukryj Datę na bardzo małych */
+    }
+  </style>
 </head>
 
 <body>
+
 <header>
-  <h1>Panel serwisanta</h1>
-  <nav>
-    <a href="orders.html"><i class="fa-solid fa-list"></i><span>Zlecenia</span></a>
-    <a href="messages.html"><i class="fa-solid fa-inbox"></i><span>Wiadomości</span></a>
-    <a href="orders-completed.html"><i class="fa-solid fa-clock-rotate-left"></i><span>Historia</span></a>
-    <a href="stats.html"><i class="fa-solid fa-chart-column"></i><span>Statystyki</span></a>
-  </nav>
+  <div class="header-left">
+    <h1><i class="fa-solid fa-user-gear"></i> <span>Panel serwisanta</span></h1>
+    <div class="user-email" id="userEmail"></div>
+  </div>
+
+  <div class="header-right">
+    <a class="toplink" href="orders.html" title="Zlecenia">
+      <i class="fa-solid fa-list"></i> <span class="txt">Zlecenia</span>
+    </a>
+
+    <a class="toplink messages-link" href="messages.html" title="Wiadomości">
+      <i class="fa-solid fa-inbox"></i> <span class="txt">Wiadomości</span>
+      <span class="msg-badge" id="msgBadge">0</span>
+    </a>
+
+    <a class="toplink" href="orders-completed.html" title="Historia">
+      <i class="fa-solid fa-box-archive"></i> <span class="txt">Historia</span>
+    </a>
+
+    <a class="toplink" href="stats.html" title="Statystyki">
+      <i class="fa-solid fa-chart-simple"></i> <span class="txt">Statystyki</span>
+    </a>
+
+    <a class="toplink" href="add-order.html" title="Dodaj zlecenie">
+      <i class="fa-solid fa-circle-plus"></i> <span class="txt">Dodaj zlecenie</span>
+    </a>
+
+    <button class="toplink" onclick="logout()" title="Wyloguj">
+      <i class="fa-solid fa-right-from-bracket"></i> <span class="txt">Wyloguj</span>
+    </button>
+  </div>
 </header>
 
 <main>
-  <div class="card">
-    <h2><i class="fa-solid fa-inbox"></i> Wiadomości</h2>
-    <div class="small" id="counter">Ładowanie…</div>
-    <div style="height:14px"></div>
+  <div class="box">
+    <div class="page-title"><i class="fa-solid fa-inbox"></i> Wiadomości</div>
 
-    <table class="table" id="table">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Nadawca</th>
-          <th>Kontakt</th>
-          <th>Wiadomość</th>
-          <th>Akcje</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
+    <div class="hint">
+      <span class="chip ok" id="allCount">Wszystkie: 0</span>
+      <span class="chip warn" id="unreadCount">Nowe: 0</span>
+      <span class="small" id="statusText">Ładowanie…</span>
+    </div>
+
+    <div class="actions-top">
+      <button class="btn btn-outline" id="btnReload">
+        <i class="fa-solid fa-rotate-right"></i> Odśwież
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Nadawca</th>
+            <th>Kontakt</th>
+            <th>Wiadomość</th>
+            <th>Akcje</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
   </div>
 </main>
 
 <script>
-  // 🔧 Skopiuj z panelu (orders.html) – te same wartości
-  const SUPABASE_URL = "WKLEJ_SUPABASE_URL";
-  const SUPABASE_ANON_KEY = "WKLEJ_SUPABASE_ANON_KEY";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // ✅ Używamy JEDNEGO klienta z supabaseClient.js
+  const sb = window.supabaseClient;
 
   const tbody = document.getElementById("tbody");
-  const counter = document.getElementById("counter");
+  const statusText = document.getElementById("statusText");
+  const allCountEl = document.getElementById("allCount");
+  const unreadCountEl = document.getElementById("unreadCount");
+  const badge = document.getElementById("msgBadge");
+
+  async function checkAuth(){
+    const { data:{session} } = await sb.auth.getSession();
+    if(!session){ location.href="login.html"; return; }
+    document.getElementById("userEmail").textContent = session.user.email;
+  }
+
+  async function logout(){
+    await sb.auth.signOut();
+    location.href="login.html";
+  }
 
   function fmt(ts){
     const d = new Date(ts);
     return d.toLocaleString("pl-PL");
-  }
-
-  async function load(){
-    tbody.innerHTML = "";
-    counter.textContent = "Ładowanie…";
-
-    const { data, error } = await supabase
-      .from("contact_messages")
-      .select("id,created_at,name,contact,message,is_read")
-      .order("created_at", { ascending: false })
-      .limit(200);
-
-    if(error){
-      console.error(error);
-      counter.textContent = "Błąd ładowania wiadomości.";
-      return;
-    }
-
-    const unreadCount = data.filter(x => !x.is_read).length;
-    counter.textContent = `Wszystkie: ${data.length} • Nowe: ${unreadCount}`;
-
-    for(const m of data){
-      const tr = document.createElement("tr");
-      if(!m.is_read) tr.classList.add("unread");
-
-      tr.innerHTML = `
-        <td>${fmt(m.created_at)}<div class="small">${m.is_read ? "Przeczytane" : "Nowe"}</div></td>
-        <td><strong>${escapeHtml(m.name)}</strong></td>
-        <td>${escapeHtml(m.contact)}</td>
-        <td>${escapeHtml(m.message).replace(/\n/g,"<br>")}</td>
-        <td>
-          <div class="row-actions">
-            ${m.is_read ? "" : `<button class="btn btn-main" data-read="${m.id}"><i class="fa-solid fa-check"></i> Oznacz jako przeczytane</button>`}
-          </div>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    }
-
-    // bind actions
-    document.querySelectorAll("[data-read]").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        const id = btn.getAttribute("data-read");
-        btn.disabled = true;
-        const { error } = await supabase
-          .from("contact_messages")
-          .update({ is_read: true, read_at: new Date().toISOString() })
-          .eq("id", id);
-
-        if(error){
-          console.error(error);
-          btn.disabled = false;
-          return;
-        }
-        load();
-      });
-    });
   }
 
   function escapeHtml(str){
@@ -151,7 +390,111 @@ h2{margin:0 0 14px}
       .replaceAll("'","&#039;");
   }
 
-  load();
+  async function loadUnreadMessagesCount(){
+    if(!badge) return;
+
+    const { count, error } = await sb
+      .from("contact_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("is_read", false);
+
+    if(error){
+      console.warn("Badge error:", error.message || error);
+      badge.style.display = "none";
+      return;
+    }
+
+    if((count || 0) > 0){
+      badge.textContent = count;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+  }
+
+  async function loadMessages(){
+    tbody.innerHTML = "";
+    statusText.textContent = "Ładowanie…";
+
+    const { data, error } = await sb
+      .from("contact_messages")
+      .select("id, created_at, name, contact, message, is_read")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if(error){
+      console.error(error);
+      statusText.textContent = "Błąd ładowania wiadomości.";
+      return;
+    }
+
+    const all = data || [];
+    const unread = all.filter(x => !x.is_read).length;
+
+    allCountEl.textContent = `Wszystkie: ${all.length}`;
+    unreadCountEl.textContent = `Nowe: ${unread}`;
+    statusText.textContent = all.length ? "" : "Brak wiadomości.";
+
+    for(const m of all){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          ${fmt(m.created_at)}
+          <div class="small">${m.is_read ? "Przeczytane" : "Nowe"}</div>
+        </td>
+        <td>
+          <strong>${escapeHtml(m.name)}</strong><br>
+          ${m.is_read ? `<span class="badge-read"><i class="fa-solid fa-check"></i> Przeczytane</span>`
+                     : `<span class="badge-new"><i class="fa-solid fa-circle"></i> Nowe</span>`}
+        </td>
+        <td>${escapeHtml(m.contact)}</td>
+        <td class="msg">${escapeHtml(m.message)}</td>
+        <td>
+          <div class="row-actions">
+            ${m.is_read ? "" : `<button class="btn btn-main" data-read="${m.id}">
+              <i class="fa-solid fa-check"></i> Oznacz jako przeczytane
+            </button>`}
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    // bind przycisków
+    document.querySelectorAll("[data-read]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const id = btn.getAttribute("data-read");
+        btn.disabled = true;
+
+        const { error } = await sb
+          .from("contact_messages")
+          .update({ is_read: true, read_at: new Date().toISOString() })
+          .eq("id", id);
+
+        if(error){
+          console.error(error);
+          btn.disabled = false;
+          return;
+        }
+
+        // odśwież listę i badge
+        await loadMessages();
+        await loadUnreadMessagesCount();
+      });
+    });
+  }
+
+  document.getElementById("btnReload").addEventListener("click", async ()=>{
+    await loadMessages();
+    await loadUnreadMessagesCount();
+  });
+
+  (async ()=>{
+    await checkAuth();
+    await loadUnreadMessagesCount();
+    await loadMessages();
+  })();
 </script>
+
 </body>
 </html>
