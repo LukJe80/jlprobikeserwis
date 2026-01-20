@@ -5,21 +5,25 @@
 <title>JL Pro Bike Serwis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Profesjonalny serwis rowerowy – szybkie naprawy, regulacje i pełna kontrola statusu naprawy online.">
+
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#020617">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
 :root{
-  --accent: #2563eb;
-  --accentHover: #1d4ed8;
-  --accentText: #ffffff;
-
-  --bg: #020617;
-  --text: #e5e7eb;
-  --border: #1e293b;
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --accentText:#ffffff;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --border:#1e293b;
 }
 
 *{box-sizing:border-box}
@@ -43,16 +47,13 @@ header{
   padding:14px 24px;
   background:rgba(2,6,23,.7);
   backdrop-filter:blur(6px);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom:1px solid rgba(255,255,255,0.06);
 }
 
 header h1{
   margin:0;
   font-size:18px;
   color:var(--accent);
-  display:flex;
-  align-items:center;
-  gap:8px;
   white-space:nowrap;
 }
 
@@ -71,7 +72,6 @@ nav a{
   text-decoration:none;
   font-weight:600;
   font-size:14px;
-  white-space:nowrap;
 }
 
 nav a:hover{color:var(--accent)}
@@ -80,10 +80,11 @@ nav a:hover{color:var(--accent)}
   padding:8px 10px;
   border-radius:10px;
   border:1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
+  background:rgba(255,255,255,0.03);
 }
+
 .nav-icon:hover{
-  border-color: rgba(37,99,235,0.6);
+  border-color:rgba(37,99,235,0.6);
 }
 
 @media(max-width:900px){
@@ -113,7 +114,6 @@ nav a:hover{color:var(--accent)}
   font-size:18px;
   max-width:600px;
   opacity:.95;
-  text-shadow:0 6px 20px rgba(0,0,0,.6);
 }
 
 /* BUTTONS */
@@ -202,24 +202,20 @@ footer{
 <body>
 
 <header>
-  <h1> JL Pro Bike Serwis</h1>
+  <h1>JL Pro Bike Serwis</h1>
   <nav>
-   <!-- Cennik jako ikona (jak Facebook / logowanie) -->
     <a class="nav-icon" href="pricing.html" title="Cennik">
       <i class="fa-solid fa-tags"></i>
     </a>
-    <!-- Kontakt jako ikona (jak Facebook / logowanie) -->
     <a class="nav-icon" href="contact.html" title="Kontakt">
       <i class="fa-solid fa-phone"></i>
     </a>
-
-    <!-- ✅ Facebook -->
-    <a class="nav-icon" href="https://www.facebook.com/JlLukasz/" target="_blank" rel="noopener" title="Facebook">
+    <a class="nav-icon" href="https://www.facebook.com/JlLukasz/" target="_blank" rel="noopener">
       <i class="fa-brands fa-facebook-f"></i>
     </a>
-
-    <!-- Panel / logowanie -->
-    <a class="nav-icon" href="login.html" title="Panel serwisanta"><i class="fa-solid fa-user-gear"></i></a>
+    <a class="nav-icon" href="login.html" title="Panel serwisanta">
+      <i class="fa-solid fa-user-gear"></i>
+    </a>
   </nav>
 </header>
 
@@ -233,7 +229,7 @@ footer{
         <i class="fa-solid fa-bicycle"></i> Zgłoś rower online
       </a>
       <a class="btn btn-main" href="wysylka.html">
-         <i class="fa-solid fa-box"></i> Instrukcja wysyłki roweru
+        <i class="fa-solid fa-box"></i> Instrukcja wysyłki roweru
       </a>
       <a class="btn btn-outline" href="client.html">
         <i class="fa-solid fa-magnifying-glass"></i> Sprawdź status
@@ -254,10 +250,10 @@ footer{
       <p>Doświadczenie i precyzja.</p>
     </div>
     <div class="feature">
-  <span><i class="fa-solid fa-box"></i></span>
-  <h4>Wysyłka roweru do serwisu</h4>
-  <p>Pełna obsługa serwisu wysyłkowego.</p>
-</div>
+      <span><i class="fa-solid fa-box"></i></span>
+      <h4>Wysyłka roweru do serwisu</h4>
+      <p>Pełna obsługa serwisu wysyłkowego.</p>
+    </div>
     <div class="feature">
       <span><i class="fa-solid fa-mobile-screen-button"></i></span>
       <h4>Status online</h4>
