@@ -411,7 +411,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
     // ✅ QR ma prowadzić do statusu, a nie być “gołym UUID”
     const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
-    const qrUrl = `https://www.jlprobikeserwis.bike/status.html?code=${encodeURIComponent(codeForQr)}`;
+    const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
 
     win.document.write(`
 <!DOCTYPE html>
@@ -682,3 +682,4 @@ ${rows}
 
 </body>
 </html>
+
