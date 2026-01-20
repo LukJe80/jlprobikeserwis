@@ -409,20 +409,20 @@ document.addEventListener("DOMContentLoaded", ()=>{
   function printIn(){
     const win = window.open("","_blank");
 
-    // ✅ QR ma prowadzic do podgladu statusu (order-status.html)
-    // Uzywamy public_code (jesli brak, awaryjnie id)
-    const code = String(publicCode || id || "");
-    const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(code)}`;
-
-    // ✅ QR jako obrazek (bez dodatkowych bibliotek)
-    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(qrUrl)}`;
+    // ✅ QR ma prowadzić do statusu, a nie być “gołym UUID”
+    const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
+    const qrUrl = `https://www.jlprobikeserwis.bike/status.html?code=${encodeURIComponent(codeForQr)}`;
 
     win.document.write(`
 <!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="utf-8">
-<title>Karta przyjecia</title>
+<title>Karta przyjęcia</title>
+
+<!-- ✅ Lokalna generacja QR w przeglądarce (to nie generator online) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+
 <style>
 @page{ size:A4; margin:0; }
 html, body{
@@ -463,9 +463,13 @@ h2{
   line-height:1.35;
 }
 
-.qrbox img{
+.qrbox{
   width:40mm;
   height:40mm;
+}
+.qrbox img{
+  width:40mm !important;
+  height:40mm !important;
   display:block;
 }
 
@@ -479,7 +483,7 @@ h2{
   display:flex;
   justify-content:flex-start;
   align-items:flex-start;
-  margin-top:-0mm;
+  margin-top:0mm;
   page-break-inside: avoid;
   break-inside: avoid;
 }
@@ -527,12 +531,14 @@ h2{
 }
 .tag-text small{ font-weight:400; }
 
-.tag-content img{
+.tag-qr{
   width:40mm;
   height:40mm;
+}
+.tag-qr img{
+  width:40mm !important;
+  height:40mm !important;
   display:block;
-  page-break-inside: avoid;
-  break-inside: avoid;
 }
 </style>
 </head>
@@ -541,23 +547,21 @@ h2{
 <div class="page">
   <div class="main">
 
-    <h2>KARTA PRZYJECIA - SERWIS ROWEROWY</h2>
+    <h2>KARTA PRZYJĘCIA – SERWIS ROWEROWY</h2>
 
     <div class="header">
       <div class="left-info">
         <b>Klient:</b> ${escapeHtml(customer.value)}<br>
         <b>Telefon:</b> ${escapeHtml(phone.value)}<br>
         <b>Rower:</b> ${escapeHtml(bike.value)}<br>
-        <b>Data:</b> ${new Date().toLocaleString("pl-PL")}<br>
-        <b>Kod:</b> ${escapeHtml(code)}
+        <b>Data:</b> ${new Date().toLocaleString("pl-PL")}
       </div>
-      <div class="qrbox">
-        <img src="${qrImg}" alt="QR">
-      </div>
+
+      <div class="qrbox" id="qrTop"></div>
     </div>
 
     <div style="margin-top:10mm; font-size:12px;">
-      <b>Opis zgloszenia:</b><br><br>
+      <b>Opis zgłoszenia:</b><br><br>
       <div style="white-space:pre-line;">${escapeHtml(note.value)}</div>
     </div>
 
@@ -575,17 +579,16 @@ h2{
 
       <div class="tag-content">
         <div class="tag-text">
-          ZAWIESZKA - SERWIS<br>
+          ZAWIESZKA – SERWIS<br>
           <small>
             Klient: ${escapeHtml(customer.value)}<br>
             Tel: ${escapeHtml(phone.value)}<br>
             Rower: ${escapeHtml(bike.value)}<br>
-            Data: ${new Date().toLocaleDateString("pl-PL")}<br>
-            Kod: ${escapeHtml(code)}
+            Data: ${new Date().toLocaleDateString("pl-PL")}
           </small>
         </div>
 
-        <img src="${qrImg}" alt="QR">
+        <div class="tag-qr" id="qrTag"></div>
       </div>
     </div>
   </div>
@@ -593,7 +596,20 @@ h2{
 </div>
 
 <script>
-  window.onload = () => { window.focus(); window.print(); };
+  const qrUrl = ${JSON.stringify(qrUrl)};
+  function makeQr(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = "";
+    new QRCode(el, { text: qrUrl, width: 151, height: 151 });
+  }
+
+  window.onload = () => {
+    makeQr("qrTop");
+    makeQr("qrTag");
+    window.focus();
+    window.print();
+  };
 <\/script>
 
 </body>
