@@ -80,11 +80,11 @@ header h1{
 }
 .toplink:hover{ color:var(--accent); }
 
-/* ===== LAYOUT (zamiast flex center) ===== */
+/* ===== LAYOUT ===== */
 .wrapper{
   max-width: 900px;
   margin: 0 auto;
-  padding: 120px 24px 80px; /* miejsce na header */
+  padding: 120px 24px 80px;
 }
 
 /* ===== BOX ===== */
@@ -130,7 +130,7 @@ textarea{ min-height:120px; resize:vertical; }
   margin:14px 0 22px;
 }
 
-/* ===== BUTTONS (spójne z projektem, bez zmiany onclick) ===== */
+/* ===== BUTTONS ===== */
 .btn{
   width:100%;
   padding:16px;
@@ -160,7 +160,6 @@ textarea{ min-height:120px; resize:vertical; }
 }
 .btn.save:hover{ background:var(--accentHover); }
 
-/* przyciski druku w stylu panelu (bez “starych” kolorów) */
 .btn.pdf-in, .btn.pdf-out{
   border-color: rgba(255,255,255,0.18);
   color:#fff;
@@ -170,15 +169,6 @@ textarea{ min-height:120px; resize:vertical; }
   background: rgba(37,99,235,0.14);
   color:#fff;
 }
-
-.back{
-  margin-top:20px;
-  color:#60a5fa;
-  cursor:pointer;
-  text-align:center;
-  font-weight:800;
-}
-.back:hover{ color:var(--accent); }
 </style>
 </head>
 
@@ -254,9 +244,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   let currentTotal = 0;
 
-  // ✅ do SMS: zapamiętujemy poprzedni status i kod publiczny (jeśli jest)
   let previousStatus = null;
-  let publicCode = "";
+  let publicCode = ""; // ✅ do QR i SMS
 
   function escapeHtml(str){
     return (str ?? "")
@@ -272,28 +261,22 @@ document.addEventListener("DOMContentLoaded", ()=>{
     let s = 0;
     (costText.value || "").split("\n").forEach(l=>{
       const m = l.match(/(\d+(?:[.,]\d+)?)/);
-      if(m) s += parseFloat(m[1].replace(",",".")); 
+      if(m) s += parseFloat(m[1].replace(",","."));
     });
     currentTotal = s;
     sumEl.textContent = s.toFixed(2);
   }
   costText.addEventListener("input", calcSum);
 
-  // ✅ normalizacja telefonu do formatu 48XXXXXXXXX
   function normalizePhoneToPL48(raw){
     const digits = String(raw || "").replace(/\D/g, "");
     if(!digits) return "";
-
     if(digits.startsWith("48") && digits.length === 11) return digits;
     if(digits.length === 9) return "48" + digits;
-
-    if(digits.endsWith(digits.slice(-9)) && digits.length > 11){
-      return "48" + digits.slice(-9);
-    }
+    if(digits.length > 11) return "48" + digits.slice(-9);
     return digits;
   }
 
-  // ✅ SMS tylko przy statusie "gotowe"
   async function sendSmsGotowe(){
     const to = normalizePhoneToPL48(phone.value);
     if(!to) return { ok:false, skipped:true, reason:"no_phone" };
@@ -393,7 +376,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
         if(smsRes && smsRes.ok){
           smsNote = "\nSMS: wysłano ✅";
         }else{
-          smsNote = "\nSMS: nie wysłano (sprawdź konfigurację/test-mode) ⚠️";
+          smsNote = "\nSMS: nie wysłano ⚠️";
           console.warn("SMSAPI response:", smsRes);
         }
       }catch(e){
@@ -409,9 +392,14 @@ document.addEventListener("DOMContentLoaded", ()=>{
   function printIn(){
     const win = window.open("","_blank");
 
-    // ✅ QR ma prowadzić do statusu, a nie być “gołym UUID”
-    const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
+    // ✅ Najważniejsze: QR ma kodować pełny URL do statusu
+    const codeForQr = (publicCode && String(publicCode).trim()) ? String(publicCode).trim() : String(id || "").trim();
+
+    // jeśli u Ciebie status jest pod inną ścieżką, zmień tylko poniższą linię:
     const qrUrl = `https://www.jlprobikeserwis.bike/status.html?code=${encodeURIComponent(codeForQr)}`;
+
+    // ✅ większy QR = mniej pomyłek skanera (koniec "status.htr")
+    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(qrUrl)}`;
 
     win.document.write(`
 <!DOCTYPE html>
@@ -419,10 +407,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
 <head>
 <meta charset="utf-8">
 <title>Karta przyjęcia</title>
-
-<!-- ✅ Lokalna generacja QR w przeglądarce (to nie generator online) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-
 <style>
 @page{ size:A4; margin:0; }
 html, body{
@@ -461,16 +445,24 @@ h2{
 .left-info{
   font-size:12px;
   line-height:1.35;
+  max-width:120mm;
 }
 
 .qrbox{
-  width:40mm;
-  height:40mm;
+  text-align:right;
+  max-width:55mm;
 }
 .qrbox img{
-  width:40mm !important;
-  height:40mm !important;
+  width:40mm;
+  height:40mm;
   display:block;
+  border:1px solid #000;
+}
+.qrbox .link{
+  margin-top:3mm;
+  font-size:9px;
+  line-height:1.2;
+  word-break:break-all;
 }
 
 .sep{
@@ -483,7 +475,7 @@ h2{
   display:flex;
   justify-content:flex-start;
   align-items:flex-start;
-  margin-top:0mm;
+  margin-top:-0mm;
   page-break-inside: avoid;
   break-inside: avoid;
 }
@@ -531,14 +523,13 @@ h2{
 }
 .tag-text small{ font-weight:400; }
 
-.tag-qr{
+.tag-content img{
   width:40mm;
   height:40mm;
-}
-.tag-qr img{
-  width:40mm !important;
-  height:40mm !important;
   display:block;
+  border:1px solid #000;
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 </style>
 </head>
@@ -554,10 +545,14 @@ h2{
         <b>Klient:</b> ${escapeHtml(customer.value)}<br>
         <b>Telefon:</b> ${escapeHtml(phone.value)}<br>
         <b>Rower:</b> ${escapeHtml(bike.value)}<br>
-        <b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+        <b>Data:</b> ${new Date().toLocaleString("pl-PL")}<br>
+        <b>Kod statusu:</b> ${escapeHtml(codeForQr)}
       </div>
 
-      <div class="qrbox" id="qrTop"></div>
+      <div class="qrbox">
+        <img src="${qrImg}" alt="QR">
+        <div class="link">${escapeHtml(qrUrl)}</div>
+      </div>
     </div>
 
     <div style="margin-top:10mm; font-size:12px;">
@@ -584,11 +579,12 @@ h2{
             Klient: ${escapeHtml(customer.value)}<br>
             Tel: ${escapeHtml(phone.value)}<br>
             Rower: ${escapeHtml(bike.value)}<br>
+            Kod: ${escapeHtml(codeForQr)}<br>
             Data: ${new Date().toLocaleDateString("pl-PL")}
           </small>
         </div>
 
-        <div class="tag-qr" id="qrTag"></div>
+        <img src="${qrImg}" alt="QR">
       </div>
     </div>
   </div>
@@ -596,20 +592,7 @@ h2{
 </div>
 
 <script>
-  const qrUrl = ${JSON.stringify(qrUrl)};
-  function makeQr(elId){
-    const el = document.getElementById(elId);
-    if(!el) return;
-    el.innerHTML = "";
-    new QRCode(el, { text: qrUrl, width: 151, height: 151 });
-  }
-
-  window.onload = () => {
-    makeQr("qrTop");
-    makeQr("qrTag");
-    window.focus();
-    window.print();
-  };
+  window.onload = () => { window.focus(); window.print(); };
 <\/script>
 
 </body>
@@ -629,15 +612,15 @@ h2{
       const price = parseFloat(m[1].replace(",",".")) || 0;
       const desc = l.replace(m[1],"").trim();
 
-      rows += `<tr>
-        <td>${i++}</td>
-        <td>${escapeHtml(desc)}</td>
-        <td style="text-align:right">${price.toFixed(2)} zł</td>
-      </tr>`;
+      rows += \`<tr>
+        <td>\${i++}</td>
+        <td>\${escapeHtml(desc)}</td>
+        <td style="text-align:right">\${price.toFixed(2)} zł</td>
+      </tr>\`;
     });
 
     const win=window.open("","_blank");
-    win.document.write(`
+    win.document.write(\`
 <!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">
 <title>Wydanie roweru</title>
 <style>
@@ -650,25 +633,25 @@ th{background:#eee}
 
 <h2 style="text-align:center">WYDANIE ROWERU – ROZLICZENIE</h2>
 <p>
-<b>Klient:</b> ${escapeHtml(customer.value)}<br>
-<b>Telefon:</b> ${escapeHtml(phone.value)}<br>
-<b>Rower:</b> ${escapeHtml(bike.value)}<br>
-<b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+<b>Klient:</b> \${escapeHtml(customer.value)}<br>
+<b>Telefon:</b> \${escapeHtml(phone.value)}<br>
+<b>Rower:</b> \${escapeHtml(bike.value)}<br>
+<b>Data:</b> \${new Date().toLocaleString("pl-PL")}
 </p>
 
 <table>
 <tr><th>Lp</th><th>Czynność</th><th>Cena</th></tr>
-${rows}
+\${rows}
 </table>
 
-<div class="sum">DO ZAPŁATY: ${currentTotal.toFixed(2)} zł</div>
+<div class="sum">DO ZAPŁATY: \${currentTotal.toFixed(2)} zł</div>
 <p>Podpis klienta: _____________________</p>
 
 <script>
   window.onload = () => { window.focus(); window.print(); };
 <\/script>
 
-</body></html>`);
+</body></html>\`);
     win.document.close();
   }
 
