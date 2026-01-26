@@ -2,13 +2,10 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Poradniki serwisowe – JL Pro Bike Serwis</title>
+<title>Poradniki – JL Pro Bike Serwis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Poradniki serwisowe dla rowerzystów. Pobierz PDF i dowiedz się, jak dbać o rower.">
 
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -16,7 +13,6 @@
 <style>
 :root{
   --accent:#2563eb;
-  --accentHover:#1d4ed8;
   --bg:#020617;
   --text:#e5e7eb;
   --muted:#94a3b8;
@@ -33,90 +29,80 @@ body{
 }
 
 /* ===== HEADER ===== */
-.top-header{
+.header{
   display:flex;
-  justify-content:flex-end;
+  justify-content:space-between;
+  align-items:center;
   padding:16px 24px;
-  background:rgba(2,6,23,.7);
-  backdrop-filter:blur(6px);
   border-bottom:1px solid rgba(255,255,255,0.06);
 }
 
-.home-link{
-  display:flex;
-  align-items:center;
-  gap:8px;
+.brand{
+  font-weight:800;
+  font-size:20px;
   color:var(--accent);
+}
+
+.home-icon{
+  color:#fff;
+  font-size:20px;
   text-decoration:none;
-  font-weight:700;
-  padding:10px 14px;
-  border-radius:12px;
-  background:rgba(255,255,255,0.05);
-  border:1px solid rgba(255,255,255,0.12);
 }
 
-.home-link:hover{
-  background:rgba(37,99,235,0.15);
-  border-color:var(--accent);
-}
-
-/* ===== CONTACT ICONS ===== */
+/* ===== CONTACT BAR ===== */
 .contact-bar{
   display:flex;
-  gap:16px;
-  padding:20px 24px 10px;
+  gap:14px;
+  padding:12px 24px 24px;
 }
 
 .contact-bar a{
-  width:44px;
-  height:44px;
+  width:42px;
+  height:42px;
   display:flex;
   align-items:center;
   justify-content:center;
   border-radius:14px;
-  background:rgba(255,255,255,0.05);
+  background:rgba(255,255,255,0.06);
   border:1px solid rgba(255,255,255,0.12);
   color:var(--accent);
-  font-size:18px;
   text-decoration:none;
 }
 
 .contact-bar a:hover{
-  background:rgba(37,99,235,0.15);
   border-color:var(--accent);
 }
 
 /* ===== CONTENT ===== */
 .wrap{
   max-width:1100px;
-  margin:0 auto;
-  padding:30px 24px 80px;
+  margin:auto;
+  padding:20px 24px 80px;
 }
 
-.title h1{
-  margin:0;
-  font-size:34px;
+h1{
+  margin:0 0 10px;
+  font-size:36px;
 }
 
 .desc{
-  margin-top:10px;
-  max-width:700px;
   color:var(--muted);
-  line-height:1.5;
+  max-width:720px;
+  line-height:1.6;
 }
 
-/* ===== PDF LIST ===== */
-.list{
+/* ===== CARDS ===== */
+.cards{
   margin-top:40px;
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:20px;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:24px;
 }
 
 .card{
   border:1px solid var(--border);
-  border-radius:16px;
-  padding:20px;
+  border-radius:18px;
+  padding:24px;
   background:rgba(255,255,255,0.03);
 }
 
@@ -125,76 +111,88 @@ body{
   color:var(--accent);
 }
 
+.card p{
+  color:var(--muted);
+  font-size:14px;
+}
+
 .card a{
   display:inline-flex;
   align-items:center;
-  gap:8px;
-  margin-top:10px;
+  gap:10px;
+  margin-top:14px;
   color:var(--accent);
-  text-decoration:none;
   font-weight:700;
+  text-decoration:none;
 }
 
-.card a:hover{
-  text-decoration:underline;
+.card.disabled{
+  opacity:.45;
 }
 
-/* ===== FOOTER ===== */
 footer{
   border-top:1px solid var(--border);
-  padding:30px 20px;
+  padding:30px;
   text-align:center;
   font-size:13px;
-  opacity:.8;
+  opacity:.7;
   margin-top:60px;
-}
-
-/* MOBILE */
-@media(max-width:600px){
-  .home-link span{display:none;}
 }
 </style>
 </head>
 
 <body>
 
-<header class="top-header">
-  <a href="/" class="home-link" title="Strona główna">
+<!-- HEADER -->
+<header class="header">
+  <div class="brand">JL Pro Bike Serwis</div>
+  <a href="/" class="home-icon" title="Strona główna">
     <i class="fa-solid fa-house"></i>
-    <span>Strona główna</span>
   </a>
 </header>
 
-<section class="contact-bar">
-  <a href="tel:500877306" title="Zadzwoń">
+<!-- CONTACT -->
+<div class="contact-bar">
+  <a href="tel:500877306" title="Telefon">
     <i class="fa-solid fa-phone"></i>
   </a>
   <a href="mailto:probikeserwis@poczta.fm" title="E-mail">
     <i class="fa-solid fa-envelope"></i>
   </a>
-  <a href="https://www.facebook.com/JlLukasz/" target="_blank" rel="noopener" title="Facebook">
+  <a href="https://www.facebook.com/JlLukasz/" target="_blank" title="Facebook">
     <i class="fa-brands fa-facebook-f"></i>
   </a>
-</section>
+</div>
 
+<!-- CONTENT -->
 <main class="wrap">
-  <div class="title">
-    <h1>Poradniki serwisowe</h1>
-    <p class="desc">
-      Krótkie i praktyczne poradniki dla rowerzystów amatorów.
-      Pobierz PDF i dowiedz się, jak dbać o swój rower.
-    </p>
-  </div>
+  <h1>Poradniki serwisowe</h1>
+  <p class="desc">
+    Praktyczne poradniki dla rowerzystów amatorów.
+    Dowiedz się, jak dbać o rower i kiedy wykonać serwis okresowy.
+  </p>
 
-  <section class="list">
+  <section class="cards">
+    <!-- PORADNIK -->
     <div class="card">
       <h3>Świadomość serwisu okresowego</h3>
-      <a href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-krotka.pdf" target="_blank">
-        <i class="fa-solid fa-file-pdf"></i> Wersja krótka
-      </a><br>
-      <a href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-rozszerzona.pdf" target="_blank">
-        <i class="fa-solid fa-file-pdf"></i> Wersja rozszerzona
+      <p>
+        Poradnik dla użytkownika roweru – kiedy serwisować,
+        na co zwracać uwagę i jak uniknąć kosztownych napraw.
+      </p>
+      <a href="/panel/assets/pricing/poradnik-swiadomosc-serwisu.pdf" target="_blank">
+        <i class="fa-solid fa-file-pdf"></i> Otwórz poradnik (PDF)
       </a>
+    </div>
+
+    <!-- WKRÓTCE -->
+    <div class="card disabled">
+      <h3>Kolejne poradniki</h3>
+      <p>
+        Przygotowujemy następne materiały:
+        czyszczenie napędu, regulacje i podstawy diagnostyki.
+      </p>
+      <span><i class="fa-solid fa-clock"></i> Wkrótce</span>
     </div>
   </section>
 </main>
