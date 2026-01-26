@@ -1,194 +1,207 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <title>Poradnik – JL Pro Bike Serwis</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Poradniki serwisowe dla rowerzystów. PDF do pobrania." />
+<meta charset="UTF-8">
+<title>Poradniki serwisowe – JL Pro Bike Serwis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Poradniki serwisowe dla rowerzystów. Pobierz PDF i dowiedz się, jak dbać o rower.">
 
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <style>
-    :root{
-      --accent:#2563eb;
-      --accentHover:#1d4ed8;
-      --accentText:#ffffff;
-      --bg:#020617;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --border:#1e293b;
-      --card: rgba(255,255,255,0.03);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --border:#1e293b;
+}
 
-    /* HEADER */
-    header{
-      position:fixed;
-      top:0;
-      width:100%;
-      z-index:10;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:14px 24px;
-      background:rgba(2,6,23,.7);
-      backdrop-filter:blur(6px);
-      border-bottom:1px solid rgba(255,255,255,0.06);
-    }
-    header a{
-      color:var(--text);
-      text-decoration:none;
-      font-weight:700;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    header a:hover{color:var(--accent)}
-    .nav-icon{
-      padding:8px 10px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-    }
-    .nav-icon:hover{border-color: rgba(37,99,235,0.6)}
+*{box-sizing:border-box}
 
-    /* LAYOUT */
-    .wrap{
-      max-width:1100px;
-      margin:0 auto;
-      padding:110px 20px 60px;
-    }
-    .title{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:20px;
-      flex-wrap:wrap;
-      margin-bottom:24px;
-    }
-    h1{margin:0;font-size:34px}
-    .desc{margin:10px 0 0;color:var(--muted);max-width:720px;line-height:1.5}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:18px;
-      margin-top:22px;
-    }
-    .card{
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:18px;
-      background:var(--card);
-    }
-    .card h3{margin:0 0 10px;color:var(--accent)}
-    .meta{color:var(--muted);font-size:13px;margin-bottom:12px}
-    .actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:14px;
-    }
-    .btn{
-      padding:12px 14px;
-      border-radius:12px;
-      text-decoration:none;
-      font-weight:700;
-      font-size:14px;
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-    }
-    .btn-main{background:var(--accent);color:var(--accentText)}
-    .btn-main:hover{background:var(--accentHover)}
-    .btn-outline{
-      border:1px solid rgba(37,99,235,0.7);
-      color:var(--accent);
-    }
-    .btn-outline:hover{background:rgba(37,99,235,0.14)}
-    .note{
-      margin-top:24px;
-      color:var(--muted);
-      font-size:13px;
-      border-top:1px solid rgba(255,255,255,0.06);
-      padding-top:18px;
-      line-height:1.5;
-    }
+/* ===== HEADER ===== */
+.top-header{
+  display:flex;
+  justify-content:flex-end;
+  padding:16px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
 
-    footer{
-      border-top:1px solid var(--border);
-      padding:30px 20px;
-      text-align:center;
-      font-size:13px;
-      opacity:.85;
-      margin-top:40px;
-    }
-  </style>
+.home-link{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--accent);
+  text-decoration:none;
+  font-weight:700;
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);
+}
+
+.home-link:hover{
+  background:rgba(37,99,235,0.15);
+  border-color:var(--accent);
+}
+
+/* ===== CONTACT ICONS ===== */
+.contact-bar{
+  display:flex;
+  gap:16px;
+  padding:20px 24px 10px;
+}
+
+.contact-bar a{
+  width:44px;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:14px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.12);
+  color:var(--accent);
+  font-size:18px;
+  text-decoration:none;
+}
+
+.contact-bar a:hover{
+  background:rgba(37,99,235,0.15);
+  border-color:var(--accent);
+}
+
+/* ===== CONTENT ===== */
+.wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:30px 24px 80px;
+}
+
+.title h1{
+  margin:0;
+  font-size:34px;
+}
+
+.desc{
+  margin-top:10px;
+  max-width:700px;
+  color:var(--muted);
+  line-height:1.5;
+}
+
+/* ===== PDF LIST ===== */
+.list{
+  margin-top:40px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+}
+
+.card{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  background:rgba(255,255,255,0.03);
+}
+
+.card h3{
+  margin:0 0 10px;
+  color:var(--accent);
+}
+
+.card a{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-top:10px;
+  color:var(--accent);
+  text-decoration:none;
+  font-weight:700;
+}
+
+.card a:hover{
+  text-decoration:underline;
+}
+
+/* ===== FOOTER ===== */
+footer{
+  border-top:1px solid var(--border);
+  padding:30px 20px;
+  text-align:center;
+  font-size:13px;
+  opacity:.8;
+  margin-top:60px;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  .home-link span{display:none;}
+}
+</style>
 </head>
 
 <body>
-  <header>
-    <a href="/"><i class="fa-solid fa-house"></i> Strona główna</a>
-  </header>
 
-  <main class="wrap">
-    <div class="title">
-      <div>
-        <h1>Poradniki serwisowe</h1>
-        <p class="desc">
-          Krótkie, konkretne poradniki dla rowerzystów. Pobierz PDF lub otwórz na telefonie.
-        </p>
-      </div>
+<header class="top-header">
+  <a href="/" class="home-link" title="Strona główna">
+    <i class="fa-solid fa-house"></i>
+    <span>Strona główna</span>
+  </a>
+</header>
+
+<section class="contact-bar">
+  <a href="tel:500877306" title="Zadzwoń">
+    <i class="fa-solid fa-phone"></i>
+  </a>
+  <a href="mailto:probikeserwis@poczta.fm" title="E-mail">
+    <i class="fa-solid fa-envelope"></i>
+  </a>
+  <a href="https://www.facebook.com/JlLukasz/" target="_blank" rel="noopener" title="Facebook">
+    <i class="fa-brands fa-facebook-f"></i>
+  </a>
+</section>
+
+<main class="wrap">
+  <div class="title">
+    <h1>Poradniki serwisowe</h1>
+    <p class="desc">
+      Krótkie i praktyczne poradniki dla rowerzystów amatorów.
+      Pobierz PDF i dowiedz się, jak dbać o swój rower.
+    </p>
+  </div>
+
+  <section class="list">
+    <div class="card">
+      <h3>Świadomość serwisu okresowego</h3>
+      <a href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-krotka.pdf" target="_blank">
+        <i class="fa-solid fa-file-pdf"></i> Wersja krótka
+      </a><br>
+      <a href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-rozszerzona.pdf" target="_blank">
+        <i class="fa-solid fa-file-pdf"></i> Wersja rozszerzona
+      </a>
     </div>
+  </section>
+</main>
 
-    <section class="grid">
+<footer>
+  © 2026 JL Pro Bike Serwis
+</footer>
 
-      <!-- ✅ Poradnik 1 -->
-      <article class="card">
-        <h3>Świadomość serwisu okresowego</h3>
-        <div class="meta">PORADNIK DLA UŻYTKOWNIKA ROWERU • wersja krótka / długa</div>
-
-        <div class="actions">
-          <!-- podmień linki na swoje PDF-y gdy je wrzucisz -->
-          <a class="btn btn-main" href="/pdf/swiadomosc-serwisu-okresowego-krotka.pdf" target="_blank" rel="noopener">
-            <i class="fa-solid fa-file-pdf"></i> Pobierz (krótka)
-          </a>
-          <a class="btn btn-outline" href="/pdf/swiadomosc-serwisu-okresowego-rozszerzona.pdf" target="_blank" rel="noopener">
-            <i class="fa-solid fa-file-pdf"></i> Pobierz (długa)
-          </a>
-        </div>
-      </article>
-
-      <!-- Miejsce na kolejne poradniki -->
-      <article class="card">
-        <h3>Wkrótce kolejne poradniki</h3>
-        <div class="meta">napęd, hamulce, mycie roweru, opony, itd</div>
-        <p class="desc" style="margin:0;color:var(--muted);">
-          
-        </p>
-      </article>
-
-    </section>
-
-    <div class="note">
-      .
-    </div>
-
-    <footer>© 2026 JL Pro Bike Serwis</footer>
-  </main>
 </body>
-
 </html>
-
-
