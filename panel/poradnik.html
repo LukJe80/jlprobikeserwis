@@ -12,12 +12,9 @@
 :root{
   --accent:#2563eb;
   --accentHover:#1d4ed8;
-  --accentText:#ffffff;
-
   --bg:#020617;
   --text:#e5e7eb;
   --border:#1e293b;
-
   --panel: rgba(255,255,255,0.05);
   --panelBorder: rgba(255,255,255,0.10);
   --muted: rgba(229,231,235,0.78);
@@ -32,7 +29,7 @@ body{
   color:var(--text);
 }
 
-/* ===== HEADER (jak w wysyłka) ===== */
+/* ===== HEADER ===== */
 header{
   position:fixed;
   top:0;
@@ -54,10 +51,8 @@ header h1{
   display:flex;
   align-items:center;
   gap:8px;
-  white-space:nowrap;
 }
 
-/* HOME po prawej: mniejsze + tekst, bez otoczki */
 .home-link{
   display:flex;
   align-items:center;
@@ -66,24 +61,24 @@ header h1{
   text-decoration:none;
   font-weight:700;
   font-size:14px;
-  white-space:nowrap;
-  opacity:.92;
+  opacity:.9;
 }
-
-.home-link i{
-  font-size:14px; /* mniejsza ikona */
-}
-
-.home-link:hover{
-  color:var(--accent);  /* ✅ na podświetleniu niebieskie */
-  opacity:1;
-}
+.home-link i{font-size:14px}
+.home-link:hover{color:var(--accent)}
 
 /* ===== MAIN ===== */
 main{
   max-width:1100px;
   margin:auto;
-  padding:120px 24px 80px; /* miejsce na header */
+  padding:120px 24px 80px;
+}
+
+/* 🔲 RAMKA jak w instrukcji wysyłki */
+.poradnik-box{
+  background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border:1px solid var(--panelBorder);
+  border-radius:22px;
+  padding:32px;
 }
 
 h2{
@@ -98,7 +93,7 @@ h2{
   line-height:1.55;
 }
 
-/* ===== PRZYCISKI KONTAKT/FACEBOOK (jak w wysyłka) ===== */
+/* ===== PRZYCISKI ===== */
 .contact-bar{
   margin-top:22px;
   display:flex;
@@ -117,11 +112,12 @@ h2{
   gap:10px;
 }
 
+/* ✅ ZMIENIONA IKONA + TEKST */
 .contact-phone{
   background:var(--accent);
   color:#fff;
 }
-.contact-phone:hover{ background:var(--accentHover); }
+.contact-phone:hover{background:var(--accentHover)}
 
 .contact-fb{
   border:2px solid var(--accent);
@@ -132,7 +128,7 @@ h2{
   color:#fff;
 }
 
-/* ===== KAFELKI PORADNIKÓW ===== */
+/* ===== KAFELKI ===== */
 .cards{
   margin-top:30px;
   display:grid;
@@ -163,7 +159,6 @@ h2{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin-top:12px;
 }
 
 .btn{
@@ -181,17 +176,15 @@ h2{
   background:var(--accent);
   color:#fff;
 }
-.btn-main:hover{ background:var(--accentHover); }
+.btn-main:hover{background:var(--accentHover)}
 
 .btn-outline{
   border:1px solid rgba(37,99,235,0.7);
   color:var(--accent);
 }
-.btn-outline:hover{ background:rgba(37,99,235,0.15); }
+.btn-outline:hover{background:rgba(37,99,235,0.15)}
 
-.card.soon{
-  opacity:.55;
-}
+.card.soon{opacity:.55}
 
 footer{
   border-top:1px solid var(--border);
@@ -208,60 +201,55 @@ footer{
 
 <header>
   <h1>JL Pro Bike Serwis</h1>
-
-  <!-- ✅ HOME: mały domek + tekst, bez otoczki -->
-  <a class="home-link" href="/" title="Strona główna">
-    <i class="fa-solid fa-house"></i>
-    <span>Strona główna</span>
+  <a class="home-link" href="/">
+    <i class="fa-solid fa-house"></i> Strona główna
   </a>
 </header>
 
 <main>
-  <h2>Poradniki serwisowe</h2>
-  <p class="desc">
-    Krótkie, konkretne poradniki dla rowerzystów amatorów. Pobierz PDF lub otwórz na telefonie.
-  </p>
+  <!-- 🔲 RAMKA -->
+  <section class="poradnik-box">
 
-  <!-- ✅ jak w wysyłka: 2 „kafelki”/pigułki -->
-  <div class="contact-bar">
-    <!-- IKONA ZMIENIONA: zamiast telefonu dałem headset (kontakt) -->
-    <a class="contact-btn contact-phone" href="/contact.html">
-      <i class="fa-solid fa-headset"></i> Kontakt
-    </a>
+    <h2>Poradniki serwisowe</h2>
+    <p class="desc">
+      Krótkie, konkretne poradniki dla rowerzystów amatorów. Pobierz PDF lub otwórz na telefonie.
+    </p>
 
-    <!-- IKONA ZMIENIONA: facebook-f -->
-    <a class="contact-btn contact-fb" href="https://www.facebook.com/JlLukasz/" target="_blank" rel="noopener">
-      <i class="fa-brands fa-facebook-f"></i> Facebook
-    </a>
-  </div>
+    <div class="contact-bar">
+      <!-- ✅ SŁUCHAWKI + „Skontaktuj się” -->
+      <a class="contact-btn contact-phone" href="/contact.html">
+        <i class="fa-solid fa-headset"></i> Skontaktuj się
+      </a>
 
-  <!-- ✅ reszta jak poradnik: 2 kafelki -->
-  <section class="cards">
+      <a class="contact-btn contact-fb" href="https://www.facebook.com/JlLukasz/" target="_blank">
+        <i class="fa-brands fa-facebook-f"></i> Facebook
+      </a>
+    </div>
 
-    <article class="card">
-      <h3>Świadomość serwisu okresowego</h3>
-      <div class="meta">PORADNIK DLA UŻYTKOWNIKA ROWERU</div>
+    <section class="cards">
 
-      <div class="actions">
-        <!-- PODMIEŃ NA SWOJE DOKŁADNE NAZWY PLIKÓW PDF -->
-        <a class="btn btn-main" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-krotka.pdf" target="_blank" rel="noopener">
-          <i class="fa-solid fa-file-pdf"></i> Wersja krótka
-        </a>
+      <article class="card">
+        <h3>Świadomość serwisu okresowego</h3>
+        <div class="meta">PORADNIK DLA UŻYTKOWNIKA ROWERU</div>
 
-        <a class="btn btn-outline" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-rozszerzona.pdf" target="_blank" rel="noopener">
-          <i class="fa-solid fa-file-pdf"></i> Wersja długa
-        </a>
-      </div>
-    </article>
+        <div class="actions">
+          <a class="btn btn-main" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-krotka.pdf" target="_blank">
+            <i class="fa-solid fa-file-pdf"></i> Wersja krótka
+          </a>
 
-    <article class="card soon">
-      <h3>Kolejne poradniki</h3>
-      <div class="meta">WKRÓTCE</div>
-      <p class="desc" style="margin:0;">
-        Przygotowujemy następne materiały: napęd, hamulce, mycie roweru, przygotowanie do sezonu.
-      </p>
-    </article>
+          <a class="btn btn-outline" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-rozszerzona.pdf" target="_blank">
+            <i class="fa-solid fa-file-pdf"></i> Wersja długa
+          </a>
+        </div>
+      </article>
 
+      <article class="card soon">
+        <h3>Kolejne poradniki</h3>
+        <div class="meta">WKRÓTCE</div>
+        <p class="desc">Przygotowujemy następne materiały.</p>
+      </article>
+
+    </section>
   </section>
 
   <footer>© 2026 JL Pro Bike Serwis</footer>
