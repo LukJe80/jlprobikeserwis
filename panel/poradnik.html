@@ -61,7 +61,6 @@ header h1{
   text-decoration:none;
   font-weight:700;
   font-size:14px;
-  opacity:.9;
 }
 .home-link i{font-size:14px}
 .home-link:hover{color:var(--accent)}
@@ -73,12 +72,13 @@ main{
   padding:120px 24px 80px;
 }
 
-/* 🔲 RAMKA jak w instrukcji wysyłki */
+/* 🔲 RAMKA – TYLKO GÓRA */
 .poradnik-box{
   background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
   border:1px solid var(--panelBorder);
   border-radius:22px;
   padding:32px;
+  margin-bottom:28px;
 }
 
 h2{
@@ -93,7 +93,7 @@ h2{
   line-height:1.55;
 }
 
-/* ===== PRZYCISKI ===== */
+/* ===== IKONY KONTAKT ===== */
 .contact-bar{
   margin-top:22px;
   display:flex;
@@ -112,7 +112,6 @@ h2{
   gap:10px;
 }
 
-/* ✅ ZMIENIONA IKONA + TEKST */
 .contact-phone{
   background:var(--accent);
   color:#fff;
@@ -128,9 +127,8 @@ h2{
   color:#fff;
 }
 
-/* ===== KAFELKI ===== */
+/* ===== KAFELKI (POZA RAMKĄ) ===== */
 .cards{
-  margin-top:30px;
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
   gap:18px;
@@ -207,16 +205,15 @@ footer{
 </header>
 
 <main>
-  <!-- 🔲 RAMKA -->
-  <section class="poradnik-box">
 
+  <!-- 🔲 RAMKA KOŃCZY SIĘ POD IKONAMI -->
+  <section class="poradnik-box">
     <h2>Poradniki serwisowe</h2>
     <p class="desc">
       Krótkie, konkretne poradniki dla rowerzystów amatorów. Pobierz PDF lub otwórz na telefonie.
     </p>
 
     <div class="contact-bar">
-      <!-- ✅ SŁUCHAWKI + „Skontaktuj się” -->
       <a class="contact-btn contact-phone" href="/contact.html">
         <i class="fa-solid fa-headset"></i> Skontaktuj się
       </a>
@@ -225,34 +222,36 @@ footer{
         <i class="fa-brands fa-facebook-f"></i> Facebook
       </a>
     </div>
+  </section>
 
-    <section class="cards">
+  <!-- ⬇️ KAFELKI JUŻ POZA RAMKĄ -->
+  <section class="cards">
 
-      <article class="card">
-        <h3>Świadomość serwisu okresowego</h3>
-        <div class="meta">PORADNIK DLA UŻYTKOWNIKA ROWERU</div>
+    <article class="card">
+      <h3>Świadomość serwisu okresowego</h3>
+      <div class="meta">PORADNIK DLA UŻYTKOWNIKA ROWERU</div>
 
-        <div class="actions">
-          <a class="btn btn-main" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-krotka.pdf" target="_blank">
-            <i class="fa-solid fa-file-pdf"></i> Wersja krótka
-          </a>
+      <div class="actions">
+        <a class="btn btn-main" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-krotka.pdf" target="_blank">
+          <i class="fa-solid fa-file-pdf"></i> Wersja krótka
+        </a>
 
-          <a class="btn btn-outline" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-rozszerzona.pdf" target="_blank">
-            <i class="fa-solid fa-file-pdf"></i> Wersja długa
-          </a>
-        </div>
-      </article>
+        <a class="btn btn-outline" href="/panel/assets/pricing/swiadomosc-serwisu-okresowego-rozszerzona.pdf" target="_blank">
+          <i class="fa-solid fa-file-pdf"></i> Wersja długa
+        </a>
+      </div>
+    </article>
 
-      <article class="card soon">
-        <h3>Kolejne poradniki</h3>
-        <div class="meta">WKRÓTCE</div>
-        <p class="desc">Przygotowujemy następne materiały.</p>
-      </article>
+    <article class="card soon">
+      <h3>Kolejne poradniki</h3>
+      <div class="meta">WKRÓTCE</div>
+      <p class="desc">Przygotowujemy następne materiały.</p>
+    </article>
 
-    </section>
   </section>
 
   <footer>© 2026 JL Pro Bike Serwis</footer>
+
 </main>
 
 </body>
