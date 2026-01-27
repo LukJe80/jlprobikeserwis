@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Notatnik serwisanta – wycena (lokalnie)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --muted: rgba(229,231,235,0.78);
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+}
+
+*{ box-sizing:border-box; }
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* HEADER */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 18px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:12px;
+}
+
+header .brand{
+  font-weight:900;
+  color:var(--accent);
+  font-size:16px;
+  white-space:nowrap;
+}
+
+header .right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.toplink{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+  opacity:.92;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+}
+.toplink:hover{ color:var(--accent); opacity:1; }
+
+.wrap{
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 90px 16px 80px;
+}
+
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+h1{
+  margin:0 0 10px;
+  font-size:20px;
+  font-weight:900;
+}
+
+.sub{
+  margin:0 0 14px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.35;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:12px;
+}
+
+.card{
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  border-radius:14px;
+  padding:12px;
+}
+
+.label{
+  color:#93c5fd;
+  font-weight:900;
+  font-size:12px;
+  margin-bottom:6px;
+}
+
+.value{
+  font-weight:900;
+  font-size:15px;
+  word-break:break-word;
+}
+
+.value a{ color:#fff; text-decoration:none; }
+.value a:hover{ color:var(--accent); }
+
+hr.sep{
+  border:none;
+  border-top:1px solid rgba(255,255,255,0.08);
+  margin:14px 0;
+}
+
+/* FORM (jak edit-order: czarna czcionka w polach) */
+label{
+  display:block;
+  font-weight:900;
+  color:#93c5fd;
+  margin-top:10px;
+}
+
+input, textarea{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color:#000;
+  font-size:16px;
+  margin-top:6px;
+}
+
+textarea{ min-height:140px; resize:vertical; }
+
+.sum{
+  text-align:right;
+  font-size:22px;
+  font-weight:900;
+  margin:12px 0 8px;
+}
+
+.hint{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:6px;
+  line-height:1.35;
+}
+
+.btnrow{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.btn{
+  width:100%;
+  padding:14px;
+  font-size:15px;
+  font-weight:900;
+  border-radius:999px;
+  cursor:pointer;
+
+  border:2px solid var(--accent);
+  background:transparent;
+  color:var(--accent);
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.btn:hover{ background:var(--accent); color:#fff; }
+
+.btn.primary{
+  background:var(--accent);
+  color:#fff;
+}
+.btn.primary:hover{ background:var(--accentHover); }
+
+.btn.danger{
+  border-color: rgba(248,113,113,0.9);
+  color: rgba(248,113,113,0.95);
+}
+.btn.danger:hover{
+  background: rgba(248,113,113,0.20);
+  border-color: rgba(248,113,113,0.95);
+  color:#fff;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  font-weight:900;
+  font-size:13px;
+}
+
+.ok{ color:#22c55e; }
+.warn{ color:#f59e0b; }
+.err{ color:#f87171; }
+
+.small{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+}
+code{
+  background: rgba(255,255,255,0.08);
+  padding:2px 6px;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="brand">JL Pro Bike Serwis</div>
+  <div class="right">
+    <a class="toplink" href="orders.html" title="Lista zleceń">
+      <i class="fa-solid fa-list"></i> Zlecenia
+    </a>
+    <a class="toplink" href="/" title="Strona główna">
+      <i class="fa-solid fa-house"></i>
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="box">
+
+    <h1><i class="fa-solid fa-calculator"></i> Notatnik serwisanta (lokalnie)</h1>
+    <p class="sub">
+      Ta strona pobiera zlecenie z Supabase (po zalogowaniu), ale <b>wycena i notatki zapisują się tylko w telefonie</b>.
+      Nic nie zmienia się w bazie.
+    </p>
+
+    <div id="stateBadge" class="badge warn" style="display:none;"></div>
+
+    <!-- jeśli brak code -->
+    <div id="noCode" class="card" style="display:none;">
+      <div class="label">Brak kodu w linku</div>
+      <div class="value">Otwórz stronę z parametrem: <code>?code=PUBLIC_CODE</code></div>
+      <div class="hint">Przykład: <code>order-local.html?code=ABC123</code></div>
+    </div>
+
+    <!-- jeśli brak logowania -->
+    <div id="needLogin" class="card" style="display:none;">
+      <div class="label">Wymagane logowanie</div>
+      <div class="value">Zaloguj się, aby pobrać dane zlecenia.</div>
+      <div class="btnrow">
+        <button class="btn primary" id="goLogin"><i class="fa-solid fa-right-to-bracket"></i> Zaloguj</button>
+      </div>
+      <div class="small">Kod z linku: <code id="codePreview">-</code></div>
+    </div>
+
+    <!-- dane zlecenia -->
+    <div id="orderBox" class="grid" style="display:none;">
+      <div class="card">
+        <div class="label">Klient</div>
+        <div class="value" id="customer">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Telefon</div>
+        <div class="value" id="phone">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Rower</div>
+        <div class="value" id="bike">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Opis (zlecenie)</div>
+        <div class="value" id="desc">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Status</div>
+        <div class="value" id="status">-</div>
+      </div>
+    </div>
+
+    <hr class="sep" />
+
+    <!-- kalkulator -->
+    <div id="calcBox" style="display:none;">
+      <label>Wycena / pozycje (lokalnie)</label>
+      <textarea id="costText" placeholder="np. detka 25&#10;regulacja przerzutek 40"></textarea>
+      <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
+      <div class="hint">
+        Wpisuj pozycje w osobnych liniach. Program zlicza pierwszą liczbę z każdej linii (tak jak w edit-order).
+      </div>
+
+      <div class="btnrow">
+        <button class="btn primary" id="saveLocal"><i class="fa-solid fa-floppy-disk"></i> Zapisz lokalnie</button>
+        <button class="btn" id="copySms"><i class="fa-solid fa-copy"></i> Kopiuj SMS (wycena)</button>
+        <button class="btn danger" id="clearLocal"><i class="fa-solid fa-trash"></i> Wyczyść lokalnie</button>
+      </div>
+
+      <div class="small">
+        Zlecenie: <code id="codeShow">-</code> • Ostatni zapis lokalny: <span id="lastSaved">-</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async ()=>{
+
+  const code = new URLSearchParams(location.search).get("code") || "";
+  const LS_KEY = code ? `jl_local_quote_${code}` : "";
+
+  const noCode     = document.getElementById("noCode");
+  const needLogin  = document.getElementById("needLogin");
+  const orderBox   = document.getElementById("orderBox");
+  const calcBox    = document.getElementById("calcBox");
+
+  const badge      = document.getElementById("stateBadge");
+  const codePrev   = document.getElementById("codePreview");
+  const codeShow   = document.getElementById("codeShow");
+
+  const customerEl = document.getElementById("customer");
+  const phoneEl    = document.getElementById("phone");
+  const bikeEl     = document.getElementById("bike");
+  const descEl     = document.getElementById("desc");
+  const statusEl   = document.getElementById("status");
+
+  const costText   = document.getElementById("costText");
+  const sumEl      = document.getElementById("sum");
+  const lastSaved  = document.getElementById("lastSaved");
+
+  const goLoginBtn = document.getElementById("goLogin");
+  const saveBtn    = document.getElementById("saveLocal");
+  const clearBtn   = document.getElementById("clearLocal");
+  const copyBtn    = document.getElementById("copySms");
+
+  let currentTotal = 0;
+  let orderData = null;
+
+  function showBadge(type, text){
+    badge.style.display = "inline-flex";
+    badge.className = "badge " + (type || "warn");
+    badge.innerHTML = text;
+  }
+
+  // ===== Kalkulator (1:1 jak w edit-order) =====
+  function calcSum(){
+    let s = 0;
+    (costText.value || "").split("\n").forEach(l=>{
+      const m = l.match(/(\d+(?:[.,]\d+)?)/);
+      if(m) s += parseFloat(m[1].replace(",","."));
+    });
+    currentTotal = s;
+    sumEl.textContent = s.toFixed(2);
+  }
+  costText.addEventListener("input", calcSum);
+
+  function fmtDate(ts){
+    try{
+      const d = new Date(ts);
+      if(isNaN(d.getTime())) return "-";
+      return d.toLocaleString("pl-PL");
+    }catch(_){ return "-"; }
+  }
+
+  function loadLocal(){
+    if(!LS_KEY) return;
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    try{
+      const obj = JSON.parse(raw);
+      if(obj && typeof obj.costText === "string") costText.value = obj.costText;
+      calcSum();
+      lastSaved.textContent = obj && obj.updatedAt ? fmtDate(obj.updatedAt) : "-";
+      showBadge("ok", '<i class="fa-solid fa-check"></i> Wczytano lokalną wycenę z telefonu');
+    }catch(e){
+      console.warn("Local parse error:", e);
+    }
+  }
+
+  function saveLocal(){
+    if(!LS_KEY) return;
+    const payload = {
+      code,
+      costText: costText.value || "",
+      total: currentTotal,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+    lastSaved.textContent = fmtDate(payload.updatedAt);
+    showBadge("ok", '<i class="fa-solid fa-check"></i> Zapisano lokalnie w telefonie');
+  }
+
+  function clearLocal(){
+    if(!LS_KEY) return;
+    localStorage.removeItem(LS_KEY);
+    costText.value = "";
+    calcSum();
+    lastSaved.textContent = "-";
+    showBadge("warn", '<i class="fa-solid fa-triangle-exclamation"></i> Wyczyściłeś lokalną wycenę w telefonie');
+  }
+
+  async function copySms(){
+    const customer = (orderData?.customer_name || "").trim();
+    const bike = (orderData?.bike_type || "").trim();
+    const phone = (orderData?.phone || "").trim();
+
+    const header = "JL Pro Bike Serwis";
+    const lines = (costText.value || "").trim();
+    const total = currentTotal.toFixed(2);
+
+    let msg = `${header}\nWycena: ${total} zł`;
+    if(customer) msg += `\nKlient: ${customer}`;
+    if(bike) msg += `\nRower: ${bike}`;
+    if(lines) msg += `\n\nPozycje:\n${lines}`;
+    msg += `\n\nKod: ${code}`;
+
+    try{
+      await navigator.clipboard.writeText(msg);
+      showBadge("ok", '<i class="fa-solid fa-copy"></i> Skopiowano SMS do schowka');
+    }catch(e){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = msg;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      showBadge("ok", '<i class="fa-solid fa-copy"></i> Skopiowano SMS (tryb awaryjny)');
+    }
+
+    // opcjonalnie: otwórz aplikację SMS (bez zdjęć – tylko tekst)
+    // jeśli nie chcesz, usuń poniższe 3 linie
+    if(phone){
+      const smsUrl = `sms:${encodeURIComponent(phone.replace(/\s+/g,""))}?body=${encodeURIComponent(msg)}`;
+      // nie wymuszamy, ale na telefonie bywa wygodne:
+      // location.href = smsUrl;
+    }
+  }
+
+  // ===== Auth =====
+  async function getSession(){
+    const { data } = await supabaseClient.auth.getSession();
+    return data?.session || null;
+  }
+
+  goLoginBtn.onclick = () => {
+    const next = encodeURIComponent(location.pathname.replace(/^\//,"") + location.search);
+    // login.html jest w /panel/ więc używamy ścieżki względnej
+    location.href = `login.html?next=${next}`;
+  };
+
+  saveBtn.onclick = () => saveLocal();
+  clearBtn.onclick = () => clearLocal();
+  copyBtn.onclick = () => copySms();
+
+  // ===== Start =====
+  if(!code){
+    noCode.style.display = "block";
+    showBadge("err", '<i class="fa-solid fa-circle-xmark"></i> Brak parametru ?code=');
+    return;
+  }
+
+  codePrev.textContent = code;
+  codeShow.textContent = code;
+
+  const session = await getSession();
+  if(!session){
+    needLogin.style.display = "block";
+    showBadge("warn", '<i class="fa-solid fa-lock"></i> Zaloguj się, aby pobrać dane zlecenia');
+    return;
+  }
+
+  // pobierz dane zlecenia (tylko odczyt!)
+  showBadge("warn", '<i class="fa-solid fa-spinner"></i> Pobieram dane zlecenia...');
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("customer_name, phone, bike_type, description, status, public_code")
+    .eq("public_code", code)
+    .single();
+
+  if(error || !data){
+    console.warn("Load order error:", error);
+    showBadge("err", '<i class="fa-solid fa-circle-xmark"></i> Nie znaleziono zlecenia lub brak uprawnień');
+    return;
+  }
+
+  orderData = data;
+
+  // pokaż dane
+  orderBox.style.display = "grid";
+  calcBox.style.display = "block";
+
+  customerEl.textContent = data.customer_name || "-";
+
+  const phone = (data.phone || "").trim();
+  if(phone){
+    phoneEl.innerHTML = `<a href="tel:${phone.replace(/\s+/g,"")}">${phone}</a>`;
+  }else{
+    phoneEl.textContent = "-";
+  }
+
+  bikeEl.textContent = data.bike_type || "-";
+  descEl.textContent = data.description || "-";
+  statusEl.textContent = data.status || "-";
+
+  showBadge("ok", '<i class="fa-solid fa-check"></i> Zlecenie pobrane. Wycena działa lokalnie.');
+
+  // wczytaj lokalną wycenę dla tego kodu (jeśli istnieje)
+  loadLocal();
+});
+</script>
+
+</body>
+</html>
