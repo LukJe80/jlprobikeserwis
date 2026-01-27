@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Zlecenie – widok serwisu</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --muted: rgba(229,231,235,0.78);
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family: Arial, sans-serif;
+  padding:18px;
+}
+
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+
+.brand{
+  font-weight:900;
+  color:var(--accent);
+  font-size:16px;
+}
+
+.home-link{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+  opacity:.92;
+}
+.home-link:hover{ color:var(--accent); opacity:1; }
+
+.box{
+  max-width:520px;
+  margin:0 auto;
+  background:var(--panel);
+  border:1px solid var(--panelBorder);
+  padding:18px;
+  border-radius:14px;
+}
+
+.h2{
+  margin:0 0 12px;
+  font-size:18px;
+  font-weight:900;
+}
+
+.row{
+  text-align:left;
+  margin:10px 0;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+}
+
+.label{
+  color:#93c5fd;
+  font-weight:800;
+  font-size:12px;
+  margin-bottom:6px;
+}
+
+.value{
+  font-size:15px;
+  font-weight:800;
+  word-break:break-word;
+}
+
+.value a{
+  color:#fff;
+  text-decoration:none;
+}
+.value a:hover{ color:var(--accent); }
+
+.status{
+  margin-top:10px;
+  font-size:18px;
+  font-weight:900;
+  text-align:center;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+}
+
+/* kolory statusów (jak w projekcie) */
+.st-oczekujace { color:#94a3b8; }
+.st-nowe       { color:#60a5fa; }
+.st-wtrakcie   { color:#f59e0b; }
+.st-gotowe     { color:#22c55e; }
+.st-wydano     { color:#9ca3af; }
+
+.note{
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.4;
+  margin-top:10px;
+  text-align:center;
+}
+
+.btn{
+  width:100%;
+  padding:14px;
+  border-radius:999px;
+  border:2px solid var(--accent);
+  background:transparent;
+  color:var(--accent);
+  font-weight:900;
+  font-size:15px;
+  cursor:pointer;
+  margin-top:12px;
+}
+.btn:hover{
+  background:var(--accent);
+  color:#fff;
+}
+
+.btn.primary{
+  background:var(--accent);
+  color:#fff;
+}
+.btn.primary:hover{ background:var(--accentHover); }
+
+.error{
+  max-width:520px;
+  margin:14px auto 0;
+  color:#f87171;
+  font-weight:900;
+  text-align:center;
+}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+  margin-top:10px;
+}
+code{
+  background: rgba(255,255,255,0.08);
+  padding:2px 6px;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="brand">JL Pro Bike Serwis</div>
+  <a class="home-link" href="/"><span>Strona główna</span></a>
+</div>
+
+<!-- Widok gdy brak zalogowania -->
+<div class="box" id="loginBox" style="display:none;">
+  <div class="h2">Widok serwisu (wymaga logowania)</div>
+  <div class="note">
+    Zaloguj się, aby zobaczyć dane klienta i numer telefonu.
+  </div>
+  <button class="btn primary" id="goLogin">Zaloguj się</button>
+  <div class="small">
+    Kod z zawieszki: <code id="codePreview">-</code>
+  </div>
+</div>
+
+<!-- Widok serwisu -->
+<div class="box" id="serviceBox" style="display:none;">
+  <div class="h2">Zlecenie – widok serwisu</div>
+
+  <div class="row">
+    <div class="label">Klient</div>
+    <div class="value" id="customer">-</div>
+  </div>
+
+  <div class="row">
+    <div class="label">Telefon</div>
+    <div class="value" id="phone">-</div>
+  </div>
+
+  <div class="row">
+    <div class="label">Rower</div>
+    <div class="value" id="bike">-</div>
+  </div>
+
+  <div class="row">
+    <div class="label">Opis</div>
+    <div class="value" id="desc">-</div>
+  </div>
+
+  <div class="status" id="statusBox">-</div>
+
+  <button class="btn" id="logoutBtn">Wyloguj</button>
+
+  <div class="small">
+    Kod: <code id="codeShow">-</code>
+  </div>
+</div>
+
+<div class="error" id="err" style="display:none;"></div>
+
+<script>
+  const code = new URLSearchParams(location.search).get("code") || "";
+
+  const loginBox   = document.getElementById("loginBox");
+  const serviceBox = document.getElementById("serviceBox");
+  const errEl      = document.getElementById("err");
+
+  const codePreview = document.getElementById("codePreview");
+  const codeShow    = document.getElementById("codeShow");
+
+  const customerEl = document.getElementById("customer");
+  const phoneEl    = document.getElementById("phone");
+  const bikeEl     = document.getElementById("bike");
+  const descEl     = document.getElementById("desc");
+  const statusBox  = document.getElementById("statusBox");
+
+  document.getElementById("goLogin").onclick = () => {
+    // jeśli Twoje login.html obsługuje next=, to wrócisz automatycznie po zalogowaniu
+    const next = encodeURIComponent(location.pathname + location.search);
+    location.href = `login.html?next=${next}`;
+  };
+
+  document.getElementById("logoutBtn").onclick = async () => {
+    await supabaseClient.auth.signOut();
+    location.reload();
+  };
+
+  function statusText(s){
+    return {
+      "oczekujące": "Zgłoszenie online",
+      "nowe": "Rower przyjęty",
+      "w trakcie": "Naprawa w toku",
+      "gotowe": "Gotowe do odbioru",
+      "wydano": "Rower wydany"
+    }[s] || (s || "-");
+  }
+
+  function statusClass(s){
+    if(s === "oczekujące") return "st-oczekujace";
+    if(s === "nowe") return "st-nowe";
+    if(s === "w trakcie") return "st-wtrakcie";
+    if(s === "gotowe") return "st-gotowe";
+    if(s === "wydano") return "st-wydano";
+    return "";
+  }
+
+  function esc(str){
+    return (str ?? "").toString();
+  }
+
+  async function ensureAuth(){
+    const { data } = await supabaseClient.auth.getSession();
+    return data?.session || null;
+  }
+
+  async function loadOrder(){
+    if(!code){
+      errEl.style.display = "block";
+      errEl.textContent = "Brak kodu w linku (?code=...)";
+      return;
+    }
+
+    // Pobieramy pełne dane tylko dla zalogowanego serwisu (RLS ma to pilnować)
+    const { data, error } = await supabaseClient
+      .from("orders")
+      .select("customer_name, phone, bike_type, description, status, public_code")
+      .eq("public_code", code)
+      .single();
+
+    if(error || !data){
+      errEl.style.display = "block";
+      errEl.textContent = "Nie znaleziono zlecenia lub brak uprawnień.";
+      return;
+    }
+
+    serviceBox.style.display = "block";
+    loginBox.style.display = "none";
+    errEl.style.display = "none";
+
+    customerEl.textContent = esc(data.customer_name || "-");
+
+    const phone = esc(data.phone || "-");
+    if(phone !== "-" && phone.trim()){
+      // kliknij -> zadzwoń
+      phoneEl.innerHTML = `<a href="tel:${phone.replace(/\s+/g,'')}">${phone}</a>`;
+    }else{
+      phoneEl.textContent = "-";
+    }
+
+    bikeEl.textContent = esc(data.bike_type || "-");
+    descEl.textContent = esc(data.description || "-");
+
+    statusBox.textContent = statusText(data.status);
+    statusBox.className = "status " + statusClass(data.status);
+
+    codeShow.textContent = esc(data.public_code || code);
+  }
+
+  async function init(){
+    codePreview.textContent = code || "-";
+    const session = await ensureAuth();
+
+    if(!session){
+      // Wymagamy logowania
+      loginBox.style.display = "block";
+      serviceBox.style.display = "none";
+      errEl.style.display = "none";
+      return;
+    }
+
+    await loadOrder();
+  }
+
+  init();
+</script>
+
+</body>
+</html>
