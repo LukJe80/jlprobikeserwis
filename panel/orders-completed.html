@@ -2,14 +2,12 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zakończone zlecenia — JL Pro Bike Serwis</title>
+  <title>Historia zleceń – Zakończone</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- ✅ Najbezpieczniej absolutnie (działa niezależnie czy plik jest w /panel/ czy w root) -->
-  <script src="/supabaseClient.js"></script>
+  <script src="supabaseClient.js"></script>
 
   <style>
     :root{
@@ -17,401 +15,233 @@
       --accentHover:#1d4ed8;
       --bg:#020617;
       --text:#e5e7eb;
-      --muted:#94a3b8;
-      --card:#0b1222;
-      --border:rgba(255,255,255,0.08);
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --danger:#ef4444;
+      --panel: rgba(255,255,255,0.05);
+      --panelBorder: rgba(255,255,255,0.10);
+      --muted: rgba(229,231,235,0.7);
     }
 
-    *{box-sizing:border-box}
+    *{ box-sizing:border-box; }
+
     body{
       margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background: radial-gradient(1200px 800px at 20% -10%, rgba(37,99,235,.25), transparent 60%),
-                  radial-gradient(900px 600px at 80% 0%, rgba(29,78,216,.18), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-    }
-    <header style="
-  position:sticky;
-  top:0;
-  z-index:10;
-  backdrop-filter: blur(10px);
-  background: rgba(2,6,23,.65);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 14px 16px;
-">
-  <a href="/panel/panel.html"
-     style="
-       color:#ffffff;
-       text-decoration:none;
-       font-size:16px;
-       font-weight:500;
-       display:inline-flex;
-       align-items:center;
-       gap:8px;
-     ">
-    ← Powrót
-  </a>
-</header>
-    
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:800;
-      letter-spacing:.2px;
-      color: var(--accent);
-      text-decoration:none;
-    }
-    .brand i{color: var(--accent)}
-    .actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .btn{
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.02);
+      font-family: Arial, sans-serif;
+      background: var(--bg);
       color: var(--text);
-      padding:10px 12px;
-      border-radius: 12px;
-      text-decoration:none;
-      display:inline-flex;
+    }
+
+    /* ===== HEADER ===== */
+    header{
+      position:fixed;
+      top:0;
+      width:100%;
+      z-index:10;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      padding:14px 24px;
+      background:rgba(2,6,23,7);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+
+    .header-left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    header h1{
+      margin:0;
+      font-size:18px;
+      color:var(--accent);
+      display:flex;
       align-items:center;
       gap:8px;
+    }
+
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .toplink{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      text-decoration:none;
+      font-weight:800;
+      font-size:14px;
+      opacity:.92;
+      padding:6px 4px;
+      background:transparent;
+      border:none;
       cursor:pointer;
-      transition: .15s ease;
-    }
-    .btn:hover{border-color: rgba(37,99,235,.45); color:#fff}
-    .btn i{color: var(--muted)}
-    .btn:hover i{color: var(--accent)}
-    .btn-primary{
-      background: rgba(37,99,235,.18);
-      border-color: rgba(37,99,235,.35);
-    }
-    .btn-primary:hover{background: rgba(37,99,235,.28)}
-    .btn-danger{
-      background: rgba(239,68,68,.10);
-      border-color: rgba(239,68,68,.30);
-    }
-    .btn-danger:hover{
-      border-color: rgba(239,68,68,.55);
     }
 
-    .wrap{
+    .toplink:hover{ color:var(--accent); }
+
+    /* ===== MAIN ===== */
+    main{
+      padding:110px 24px 60px;
       max-width:1100px;
-      margin: 18px auto 40px;
-      padding: 0 14px;
+      margin:auto;
     }
 
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-      border:1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
+    .box{
+      background:var(--panel);
+      border:1px solid var(--panelBorder);
+      border-radius:18px;
+      padding:22px;
+    }
+
+    .page-title{
+      font-size:44px;
+      font-weight:900;
+      margin:0 0 6px 0;
+      letter-spacing:.2px;
+    }
+
+    .hint{
+      margin:0 0 18px 0;
+      color:rgba(229,231,235,0.75);
+      font-weight:600;
+    }
+
+    /* ===== TABLE ===== */
+    .table-wrap{
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:14px;
       overflow:hidden;
-    }
-
-    .hero{
-      padding: 22px 20px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-    .hero h1{
-      margin:0;
-      font-size: 44px;
-      line-height: 1.05;
-      letter-spacing: .2px;
-    }
-    .hero p{
-      margin:10px 0 0;
-      color: var(--muted);
-      max-width: 720px;
-    }
-
-    .err{
-      margin:14px 0 0;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(239,68,68,.28);
-      background: rgba(239,68,68,.08);
-      color: #fecaca;
-      display:none;
     }
 
     table{
       width:100%;
-      border-collapse:separate;
-      border-spacing:0;
+      border-collapse:collapse;
     }
-    thead th{
-      text-align:left;
-      padding: 14px 14px;
-      font-size: 13px;
-      color: #93c5fd;
-      letter-spacing: .8px;
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border);
-      background: rgba(255,255,255,.01);
+
+    th,td{
+      padding:12px;
+      border-bottom:1px solid rgba(255,255,255,0.08);
+      font-size:14px;
+      vertical-align:top;
     }
-    tbody td{
-      padding: 14px 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: top;
-      color: var(--text);
-      font-size: 15px;
+
+    th{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      color:#93c5fd;
     }
-    tbody tr:hover td{
-      background: rgba(255,255,255,.015);
-    }
+
+    tr:hover{ background:rgba(255,255,255,0.04); }
 
     td.text{
-      color: #d1d5db;
-      line-height: 1.35;
+      white-space:pre-wrap;
+      color:rgba(229,231,235,0.92);
+      font-weight:600;
     }
 
-    .small-muted{color: var(--muted); font-size: 13px; margin-top:6px}
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,.02);
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 8px;
-    }
-    .pill i{color: var(--accent)}
-    .date{
+    td.date{
       white-space:nowrap;
-      color:#cbd5e1;
-      font-size: 13px;
+      color:rgba(229,231,235,0.85);
+      font-weight:700;
     }
 
-    /* miniaturki */
-    .thumbs{
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-      margin-top: 10px;
-    }
-    .thumbs img{
-      width:32px;
-      height:32px;
-      object-fit:cover;
-      border-radius:8px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.03);
+    @media(max-width:900px){
+      .page-title{font-size:36px;}
+      th:nth-child(2),td:nth-child(2){display:none;} /* telefon ukryj Telefon */
     }
 
-    /* mobile */
-    @media (max-width: 820px){
-      .hero h1{font-size:34px}
-      thead{display:none}
-      table, tbody, tr, td{display:block; width:100%}
-      tbody td{border-bottom: 1px solid var(--border)}
-      tbody tr{border-bottom: 10px solid transparent}
-      td.date{margin-top: 6px}
+    @media(max-width:720px){
+      main{padding:110px 16px 60px;}
     }
   </style>
 </head>
 
 <body>
-<header>
-  <a class="brand" href="/panel/panel.html" title="Panel">
-    <i class="fa-solid fa-clipboard-list"></i>
-    <span>Historia zleceń</span>
-  </a>
 
-  <div class="actions">
-    <a class="btn btn-primary" href="/panel/panel.html">
-      <i class="fa-solid fa-arrow-left"></i> Powrót
-    </a>
-    <button class="btn btn-danger" onclick="logout()">
-      <i class="fa-solid fa-right-from-bracket"></i> Wyloguj
-    </button>
+<header>
+  <div class="header-left">
+    <h1><i class="fa-solid fa-book"></i> <span>Historia zleceń</span></h1>
+  </div>
+
+  <div class="header-right">
+    <!-- ✅ biały napis ze strzałką (bez ikony) -->
+    <a class="toplink" href="orders.html">← Powrót</a>
   </div>
 </header>
 
-<div class="wrap">
-  <div class="card">
-    <div class="hero">
-      <h1>Zakończone zlecenia</h1>
-      <p>Lista zleceń ze statusem „wydano”. Pokazuje opis zgłoszenia oraz kosztorys (jeśli zapisany).</p>
-      <div id="err" class="err"></div>
-    </div>
+<main>
+  <div class="box">
+    <div class="page-title">Zakończone zlecenia</div>
+    <div class="hint">Lista zleceń ze statusem „wydano”.</div>
 
-    <div style="overflow:auto;">
+    <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th style="min-width:180px;">KLIENT</th>
-            <th style="min-width:140px;">TEL</th>
-            <th style="min-width:220px;">ROWER</th>
-            <th style="min-width:360px;">OPIS / WYKONANE CZYNNOŚCI</th>
-            <th style="min-width:160px;">ZAKOŃCZONE</th>
+            <th>Klient</th>
+            <th>Telefon</th>
+            <th>Rower</th>
+            <th>Opis / wykonane czynności</th>
+            <th>Zakończone</th>
           </tr>
         </thead>
-        <tbody id="tbody">
-          <tr><td colspan="5" class="text">Ładowanie…</td></tr>
-        </tbody>
+        <tbody id="ordersTable"></tbody>
       </table>
     </div>
   </div>
-</div>
+</main>
 
 <script>
-/**
- * Miniaturki:
- * - To jest OPCJONALNE.
- * - Jeśli masz już galerię w Supabase Storage, ustaw tu poprawnie:
- *   1) BUCKET_NAME
- *   2) PREFIX_PATTERN
- *
- * Jeżeli nie masz / inne nazwy — strona i tak działa, tylko nie pokaże miniatur.
- */
-const BUCKET_NAME = "order-photos";              // ← jeśli masz inny bucket, zmień
-const PREFIX_PATTERN = (orderId) => `orders/${orderId}`; // ← jeśli u Ciebie foldery są inaczej, zmień
-
-const tbody = document.getElementById("tbody");
-const errBox = document.getElementById("err");
-
-function showErr(msg){
-  errBox.style.display = "block";
-  errBox.textContent = msg;
-}
-
-function esc(s){
-  return (s ?? "").toString()
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function fmtDate(d){
-  if(!d) return "";
-  try{ return new Date(d).toLocaleString("pl-PL"); }
-  catch(e){ return ""; }
-}
-
-/**
- * Spróbuj pobrać max 3 miniaturki z Storage.
- * Jak nie masz bucketa / brak uprawnień / inna struktura — zwróci [].
- */
-async function tryLoadThumbs(orderId){
-  try{
-    if(!supabaseClient?.storage) return [];
-
-    const prefix = PREFIX_PATTERN(orderId);
-
-    // listowanie w folderze
-    const { data: files, error } = await supabaseClient
-      .storage
-      .from(BUCKET_NAME)
-      .list(prefix, { limit: 10 });
-
-    if(error || !files || files.length === 0) return [];
-
-    // tylko obrazy
-    const imgs = files
-      .filter(f => (f.name || "").match(/\.(png|jpe?g|webp)$/i))
-      .slice(0, 3);
-
-    if(imgs.length === 0) return [];
-
-    // jeśli bucket jest prywatny → podpisujemy
-    const urls = [];
-    for(const f of imgs){
-      const fullPath = `${prefix}/${f.name}`;
-      const signed = await supabaseClient.storage.from(BUCKET_NAME).createSignedUrl(fullPath, 60);
-      if(signed?.data?.signedUrl) urls.push(signed.data.signedUrl);
-    }
-    return urls;
-  }catch(e){
-    return [];
-  }
-}
-
 async function loadCompletedOrders(){
-  errBox.style.display = "none";
-  tbody.innerHTML = `<tr><td colspan="5" class="text">Ładowanie…</td></tr>`;
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select(`
+      customer_name,
+      phone,
+      bike_type,
+      description,
+      completed_at
+    `)
+    .eq("status","wydano")
+    .order("completed_at",{ascending:false});
 
-  try{
-    const { data: sessionRes } = await supabaseClient.auth.getSession();
-    if(!sessionRes?.session){
-      window.location.href = "/panel/login.html";
-      return;
-    }
-
-    // ✅ Kolumny zgodne z Twoją tabelą (issue_description, costs_text, completed_at)
-    const { data, error } = await supabaseClient
-      .from("orders")
-      .select("id, customer_name, phone, bike_type, issue_description, description, costs_text, labor_cost, parts_cost, total_cost, completed_at, created_at, status")
-      .eq("status", "wydano")
-      .order("completed_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
-
-    if(error) throw error;
-
-    if(!data || data.length === 0){
-      tbody.innerHTML = `<tr><td colspan="5" class="text">Brak zakończonych zleceń</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = "";
-
-    for(const o of data){
-      const tr = document.createElement("tr");
-
-      const opis = o.description || o.issue_description || "";
-      const koszt = o.costs_text || "";
-
-      const kosztPill = (o.total_cost || o.labor_cost || o.parts_cost)
-        ? `<div class="pill"><i class="fa-solid fa-calculator"></i>
-            <span>Suma: ${Number(o.total_cost || 0).toFixed(0)} zł</span>
-          </div>`
-        : "";
-
-      tr.innerHTML = `
-        <td>${esc(o.customer_name)}</td>
-        <td>${esc(o.phone)}</td>
-        <td>${esc(o.bike_type)}</td>
-        <td class="text">
-          ${esc(opis)}
-          ${koszt ? `<div class="small-muted" style="margin-top:10px;"><b>Kosztorys:</b><br>${esc(koszt).replaceAll("\n","<br>")}</div>` : ""}
-          ${kosztPill}
-          <div class="thumbs" id="thumbs-${esc(o.id)}"></div>
-        </td>
-        <td class="date">${fmtDate(o.completed_at || o.created_at)}</td>
-      `;
-
-      tbody.appendChild(tr);
-
-      // miniaturki 32x32 — opcjonalnie
-      const thumbsWrap = document.getElementById(`thumbs-${o.id}`);
-      const urls = await tryLoadThumbs(o.id);
-      if(thumbsWrap && urls.length){
-        thumbsWrap.innerHTML = urls.map(u => `<img src="${u}" alt="foto">`).join("");
-      }
-    }
-
-  }catch(e){
-    console.error(e);
-    tbody.innerHTML = `<tr><td colspan="5" class="text">Błąd pobierania danych.</td></tr>`;
-    showErr("Błąd ładowania zakończonych zleceń. Sprawdź konsolę (F12).");
+  if(error){
+    alert("Błąd pobierania archiwum: " + error.message);
+    console.error(error);
+    return;
   }
-}
 
-async function logout(){
-  try{
-    await supabaseClient.auth.signOut();
-  }catch(e){}
-  window.location.href = "/panel/login.html";
+  const tbody = document.getElementById("ordersTable");
+  tbody.innerHTML = "";
+
+  if(!data || data.length === 0){
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5">Brak zakończonych zleceń</td>
+      </tr>`;
+    return;
+  }
+
+  data.forEach(o=>{
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${o.customer_name ?? ""}</td>
+      <td>${o.phone ?? ""}</td>
+      <td>${o.bike_type ?? ""}</td>
+      <td class="text">${o.description ?? ""}</td>
+      <td class="date">
+        ${o.completed_at ? new Date(o.completed_at).toLocaleString("pl-PL") : ""}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
 }
 
 loadCompletedOrders();
@@ -419,4 +249,3 @@ loadCompletedOrders();
 
 </body>
 </html>
-
