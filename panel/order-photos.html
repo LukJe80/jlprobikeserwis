@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zdjęcia zlecenia — JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+
+  <style>
+    :root{
+      --accent:#2563eb;
+      --bg:#020617;
+      --text:#e5e7eb;
+      --panel: rgba(255,255,255,0.05);
+      --panelBorder: rgba(255,255,255,0.10);
+      --muted: rgba(229,231,235,0.7);
+      --danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header{
+      position:fixed;
+      top:0;
+      width:100%;
+      z-index:10;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:14px 24px;
+      background:rgba(2,6,23,7);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      gap:14px;
+      flex-wrap:wrap;
+    }
+    header h1{
+      margin:0;
+      font-size:18px;
+      color: var(--accent);
+      display:flex;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+    }
+    .header-right{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+    .toplink{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:#fff;
+      text-decoration:none;
+      font-weight:800;
+      font-size:14px;
+      opacity:.92;
+      padding:6px 4px;
+      background:transparent;
+      border:none;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .toplink:hover{ color: var(--accent); }
+
+    main{
+      max-width:1100px;
+      margin:auto;
+      padding:120px 30px 80px;
+    }
+    .box{
+      background: var(--panel);
+      border: 1px solid var(--panelBorder);
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .hint{
+      font-size:13px;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:14px;
+    }
+
+    input[type="file"]{
+      width:100%;
+      max-width:520px;
+      padding:12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.92);
+      color:#000;
+      font-size:14px;
+    }
+
+    .btn{
+      padding:12px 16px;
+      border-radius:999px;
+      cursor:pointer;
+      border:2px solid var(--accent);
+      background:transparent;
+      color:var(--accent);
+      font-weight:900;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      white-space:nowrap;
+    }
+    .btn:hover{
+      background:var(--accent);
+      color:#fff;
+    }
+
+    .btn-danger{
+      border-color: rgba(239,68,68,0.7);
+      color: rgba(239,68,68,1);
+    }
+    .btn-danger:hover{
+      background: rgba(239,68,68,0.9);
+      border-color: rgba(239,68,68,0.9);
+      color:#fff;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap:12px;
+      margin-top:10px;
+    }
+
+    .tile{
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.18);
+      border-radius:14px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .tile img{
+      width:100%;
+      height:160px;
+      object-fit:cover;
+      display:block;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .tile-actions{
+      position:absolute;
+      bottom:8px;
+      left:8px;
+      right:8px;
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      opacity:0.98;
+    }
+
+    .small{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:8px;
+    }
+
+    .err{
+      color:#fecaca;
+      background: rgba(239,68,68,0.10);
+      border:1px solid rgba(239,68,68,0.25);
+      border-radius:12px;
+      padding:10px 12px;
+      margin-top:10px;
+      display:none;
+      white-space:pre-line;
+    }
+
+    .ok{
+      color:#bbf7d0;
+      background: rgba(34,197,94,0.08);
+      border:1px solid rgba(34,197,94,0.18);
+      border-radius:12px;
+      padding:10px 12px;
+      margin-top:10px;
+      display:none;
+      white-space:pre-line;
+    }
+
+    @media(max-width:720px){
+      main{ padding:110px 16px 60px; }
+      .grid{ grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      .tile img{ height:140px; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-camera"></i> Zdjęcia zlecenia</h1>
+  <div class="header-right">
+    <a class="toplink" href="orders-completed.html">← Powrót</a>
+  </div>
+</header>
+
+<main>
+  <div class="box">
+    <p class="hint">
+      Zlecenie: <b id="orderIdText">—</b><br>
+      Zdjęcia są prywatne (tylko zalogowany panel).
+    </p>
+
+    <!-- ✅ Upload (żeby od razu dało się dodawać zdjęcia) -->
+    <div class="row">
+      <input id="photoInput" type="file" accept="image/*" multiple />
+      <button class="btn" onclick="uploadPhotos()">
+        <i class="fa-solid fa-upload"></i> Dodaj zdjęcia
+      </button>
+      <button class="btn" onclick="refresh()">
+        <i class="fa-solid fa-rotate"></i> Odśwież
+      </button>
+    </div>
+
+    <div id="ok" class="ok"></div>
+    <div id="err" class="err"></div>
+
+    <div class="small" id="countInfo">Ładowanie…</div>
+    <div class="grid" id="grid"></div>
+  </div>
+</main>
+
+<script>
+  const BUCKET = "order-photos";
+  const SIGN_TTL = 60 * 60; // 1h
+  const sb = window.supabaseClient;
+
+  const qs = new URLSearchParams(location.search);
+  const orderId = qs.get("id");
+
+  const orderIdText = document.getElementById("orderIdText");
+  const grid = document.getElementById("grid");
+  const countInfo = document.getElementById("countInfo");
+
+  const okBox = document.getElementById("ok");
+  const errBox = document.getElementById("err");
+
+  function showOk(msg){
+    okBox.style.display = "block";
+    okBox.textContent = msg;
+    setTimeout(()=>{ okBox.style.display="none"; }, 3500);
+  }
+  function showErr(msg){
+    errBox.style.display = "block";
+    errBox.textContent = msg;
+  }
+  function clearErr(){
+    errBox.style.display = "none";
+    errBox.textContent = "";
+  }
+
+  async function requireLogin(){
+    const { data } = await sb.auth.getSession();
+    if(!data?.session){
+      // jeśli masz inne ścieżki logowania, podmień
+      location.href = "login.html";
+      return false;
+    }
+    return true;
+  }
+
+  function safeName(n){
+    return (n || "photo").replace(/[^\w.-]+/g, "_");
+  }
+
+  async function refresh(){
+    clearErr();
+    if(!orderId){
+      showErr("Brak parametru ?id=... w linku.");
+      countInfo.textContent = "Błąd.";
+      return;
+    }
+    orderIdText.textContent = orderId;
+
+    const ok = await requireLogin();
+    if(!ok) return;
+
+    // pobierz wpisy z tabeli
+    const { data: rows, error } = await sb
+      .from("order_photos")
+      .select("id, path, created_at")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false });
+
+    if(error){
+      showErr("Błąd pobierania listy zdjęć (order_photos):\n" + error.message);
+      countInfo.textContent = "Błąd.";
+      return;
+    }
+
+    const count = rows ? rows.length : 0;
+    countInfo.textContent = "Liczba zdjęć: " + count;
+
+    grid.innerHTML = "";
+
+    if(!rows || rows.length === 0){
+      grid.innerHTML = `<div class="small">Brak zdjęć dla tego zlecenia.</div>`;
+      return;
+    }
+
+    // podpisz URL-e (bucket prywatny)
+    for(const r of rows){
+      const { data: sData, error: sErr } = await sb.storage
+        .from(BUCKET)
+        .createSignedUrl(r.path, SIGN_TTL);
+
+      const url = (!sErr && sData?.signedUrl) ? sData.signedUrl : null;
+
+      const tile = document.createElement("div");
+      tile.className = "tile";
+
+      tile.innerHTML = `
+        ${url ? `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="zdjęcie"></a>` : `<img alt="brak dostępu">`}
+        <div class="tile-actions">
+          <a class="btn" style="padding:8px 10px; font-size:12px; border-width:1px;" href="${url || "#"}" target="_blank" rel="noopener">
+            <i class="fa-solid fa-up-right-from-square"></i> Otwórz
+          </a>
+          <button class="btn btn-danger" style="padding:8px 10px; font-size:12px; border-width:1px;" onclick="deletePhoto('${r.id}', '${r.path.replace(/'/g,"\\'")}')">
+            <i class="fa-solid fa-trash"></i> Usuń
+          </button>
+        </div>
+      `;
+
+      grid.appendChild(tile);
+    }
+  }
+
+  async function uploadPhotos(){
+    clearErr();
+    if(!orderId){
+      showErr("Brak parametru ?id=... w linku.");
+      return;
+    }
+
+    const ok = await requireLogin();
+    if(!ok) return;
+
+    const input = document.getElementById("photoInput");
+    const files = input.files ? Array.from(input.files) : [];
+    if(files.length === 0){
+      showErr("Wybierz zdjęcia.");
+      return;
+    }
+
+    let uploaded = 0;
+
+    for(let i=0;i<files.length;i++){
+      const file = files[i];
+      const ts = Date.now();
+      const name = safeName(file.name || ("photo-" + (i+1) + ".jpg"));
+      const path = `${orderId}/${ts}-${i+1}-${name}`;
+
+      // upload do Storage
+      const { error: upErr } = await sb.storage
+        .from(BUCKET)
+        .upload(path, file, { upsert: false });
+
+      if(upErr){
+        showErr("Błąd uploadu do Storage:\n" + upErr.message);
+        return;
+      }
+
+      // wpis do tabeli
+      const { error: insErr } = await sb
+        .from("order_photos")
+        .insert({ order_id: orderId, path });
+
+      if(insErr){
+        showErr("Upload poszedł, ale błąd zapisu do order_photos:\n" + insErr.message);
+        return;
+      }
+
+      uploaded++;
+    }
+
+    input.value = "";
+    showOk("Dodano zdjęcia: " + uploaded);
+    await refresh();
+  }
+
+  async function deletePhoto(photoId, path){
+    clearErr();
+    const ok = await requireLogin();
+    if(!ok) return;
+
+    const sure = confirm("Usunąć to zdjęcie na stałe?");
+    if(!sure) return;
+
+    // usuń z Storage
+    const { error: delErr } = await sb.storage.from(BUCKET).remove([path]);
+    if(delErr){
+      showErr("Błąd usuwania z Storage:\n" + delErr.message);
+      return;
+    }
+
+    // usuń wpis w tabeli
+    const { error: dbErr } = await sb.from("order_photos").delete().eq("id", photoId);
+    if(dbErr){
+      showErr("Usunięto plik, ale błąd usuwania rekordu w order_photos:\n" + dbErr.message);
+      return;
+    }
+
+    showOk("Usunięto zdjęcie.");
+    await refresh();
+  }
+
+  refresh();
+</script>
+
+</body>
+</html>
