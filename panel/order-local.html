@@ -1,630 +1,549 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <title>Zlecenie (lokalnie) – JL Pro Bike Serwis</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<title>Notatnik serwisanta – wycena (lokalnie)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabaseClient.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <style>
-    :root{
-      --accent:#2563eb;
-      --accentHover:#1d4ed8;
-      --bg:#020617;
-      --text:#e5e7eb;
-      --panel: rgba(255,255,255,0.05);
-      --panelBorder: rgba(255,255,255,0.10);
-      --muted: rgba(229,231,235,0.7);
-      --danger:#ef4444;
-      --ok:#22c55e;
-    }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
 
-    header{
-      position:fixed; top:0; width:100%; z-index:10;
-      display:flex; justify-content:space-between; align-items:center;
-      padding:14px 18px;
-      background:rgba(2,6,23,.78);
-      backdrop-filter: blur(6px);
-      border-bottom:1px solid rgba(255,255,255,0.06);
-    }
-    .brand{
-      margin:0; font-size:18px; font-weight:900;
-      color:var(--accent);
-      display:flex; align-items:center; gap:10px;
-    }
-    .right{
-      display:flex; gap:12px; align-items:center;
-    }
-    .toplink, button.toplink{
-      display:flex; align-items:center; gap:8px;
-      color:#fff; text-decoration:none; font-weight:800; font-size:14px;
-      background:transparent; border:none; cursor:pointer;
-      padding:8px 10px; border-radius:12px;
-      border:1px solid rgba(255,255,255,0.10);
-    }
-    .toplink:hover{ color:var(--accent); border-color: rgba(37,99,235,0.45); }
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --muted: rgba(229,231,235,0.78);
 
-    main{
-      max-width:980px;
-      margin:auto;
-      padding:86px 14px 80px;
-    }
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+}
 
-    .box{
-      background:var(--panel);
-      border:1px solid var(--panelBorder);
-      border-radius:16px;
-      padding:16px;
-    }
+*{ box-sizing:border-box; }
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    .head{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:flex-start;
-      margin-bottom:10px;
-    }
-    h1{ margin:0; font-size:22px; font-weight:900; }
-    .sub{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.35; }
+/* HEADER */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 18px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:12px;
+}
 
-    .grid{
-      margin-top:14px;
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
-    }
-    @media(min-width:900px){
-      .grid{ grid-template-columns: 1.1fr 0.9fr; }
-    }
+header .brand{
+  font-weight:900;
+  color:var(--accent);
+  font-size:16px;
+  white-space:nowrap;
+}
 
-    .panel{
-      border:1px solid rgba(255,255,255,0.10);
-      background:rgba(0,0,0,0.22);
-      border-radius:16px;
-      padding:14px;
-    }
-    .panel h2{
-      margin:0 0 10px;
-      font-size:16px;
-      font-weight:900;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      color:#93c5fd;
-    }
+header .right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
-    .kv{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:8px;
-      font-size:13px;
-      color: rgba(229,231,235,0.92);
-    }
-    .kv div{
-      display:flex; gap:10px; align-items:flex-start;
-    }
-    .kv i{ width:18px; margin-top:1px; color:#93c5fd; }
-    .kv span{ display:block; min-width:0; }
+.toplink{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+  opacity:.92;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+}
+.toplink:hover{ color:var(--accent); opacity:1; }
 
-    textarea, input{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,0.10);
-      background:rgba(0,0,0,0.25);
-      color:var(--text);
-      outline:none;
-      font-family:inherit;
-    }
-    textarea{ min-height:120px; resize:vertical; }
-    textarea:focus, input:focus{
-      border-color: rgba(37,99,235,0.55);
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.16);
-    }
+.wrap{
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 90px 16px 80px;
+}
 
-    .row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 16px;
+  padding: 18px;
+}
 
-    .btn{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:12px 14px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.12);
-      background:rgba(255,255,255,0.05);
-      color:#fff;
-      font-weight:900;
-      cursor:pointer;
-      text-decoration:none;
-    }
-    .btn:hover{ border-color: rgba(37,99,235,0.45); color: var(--accent); }
-    .btn-main{
-      background: var(--accent);
-      border-color: rgba(37,99,235,0.75);
-    }
-    .btn-main:hover{ background: var(--accentHover); color:#fff; }
+h1{
+  margin:0 0 10px;
+  font-size:20px;
+  font-weight:900;
+}
 
-    .warn{
-      margin-top:12px;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,0.10);
-      background:rgba(0,0,0,0.25);
-      color:rgba(229,231,235,0.9);
-      font-weight:800;
-      display:none;
-      gap:10px;
-      align-items:center;
-    }
-    .warn i{ color: var(--danger); }
+.sub{
+  margin:0 0 14px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.35;
+}
 
-    /* --- Kalkulator --- */
-    .calc-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-    .calc-grid .full{ grid-column: 1 / -1; }
-    .total{
-      font-size:22px;
-      font-weight:900;
-      padding:12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,0.10);
-      background:rgba(0,0,0,0.25);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .total .val{ color:#a7f3d0; }
+.grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:12px;
+}
 
-    /* --- Zdjęcia --- */
-    .photos{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap:10px;
-    }
-    @media(min-width:700px){
-      .photos{ grid-template-columns: repeat(4, 1fr); }
-    }
-    .ph{
-      position:relative;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,0.10);
-      background:rgba(0,0,0,0.35);
-      aspect-ratio: 1/1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-    }
-    .ph img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .ph .x{
-      position:absolute;
-      top:8px;
-      right:8px;
-      width:32px;
-      height:32px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.18);
-      background:rgba(0,0,0,0.45);
-      color:#fff;
-      font-weight:900;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .ph .x:hover{
-      border-color: rgba(239,68,68,0.65);
-      color:#fecaca;
-    }
+.card{
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  border-radius:14px;
+  padding:12px;
+}
 
-    .hint{
-      margin-top:8px;
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.35;
-    }
-  </style>
+.label{
+  color:#93c5fd;
+  font-weight:900;
+  font-size:12px;
+  margin-bottom:6px;
+}
+
+.value{
+  font-weight:900;
+  font-size:15px;
+  word-break:break-word;
+}
+
+.value a{ color:#fff; text-decoration:none; }
+.value a:hover{ color:var(--accent); }
+
+hr.sep{
+  border:none;
+  border-top:1px solid rgba(255,255,255,0.08);
+  margin:14px 0;
+}
+
+/* FORM (jak edit-order: czarna czcionka w polach) */
+label{
+  display:block;
+  font-weight:900;
+  color:#93c5fd;
+  margin-top:10px;
+}
+
+input, textarea{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color:#000;
+  font-size:16px;
+  margin-top:6px;
+}
+
+textarea{ min-height:140px; resize:vertical; }
+
+.sum{
+  text-align:right;
+  font-size:22px;
+  font-weight:900;
+  margin:12px 0 8px;
+}
+
+.hint{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:6px;
+  line-height:1.35;
+}
+
+.btnrow{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.btn{
+  width:100%;
+  padding:14px;
+  font-size:15px;
+  font-weight:900;
+  border-radius:999px;
+  cursor:pointer;
+
+  border:2px solid var(--accent);
+  background:transparent;
+  color:var(--accent);
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.btn:hover{ background:var(--accent); color:#fff; }
+
+.btn.primary{
+  background:var(--accent);
+  color:#fff;
+}
+.btn.primary:hover{ background:var(--accentHover); }
+
+.btn.danger{
+  border-color: rgba(248,113,113,0.9);
+  color: rgba(248,113,113,0.95);
+}
+.btn.danger:hover{
+  background: rgba(248,113,113,0.20);
+  border-color: rgba(248,113,113,0.95);
+  color:#fff;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  font-weight:900;
+  font-size:13px;
+}
+
+.ok{ color:#22c55e; }
+.warn{ color:#f59e0b; }
+.err{ color:#f87171; }
+
+.small{
+  margin-top:10px;
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+}
+code{
+  background: rgba(255,255,255,0.08);
+  padding:2px 6px;
+  border-radius:8px;
+}
+</style>
 </head>
 
 <body>
-<header>
-  <div class="brand">
-    <span>JL Pro Bike Serwis</span>
-  </div>
 
+<header>
+  <div class="brand">JL Pro Bike Serwis</div>
   <div class="right">
-    <a class="toplink" href="orders-local.html" title="Powrót do listy">
-      <i class="fa-solid fa-arrow-left"></i> Zlecenia
+    <a class="toplink" href="orders.html" title="Lista zleceń">
+      <i class="fa-solid fa-list"></i> Zlecenia
     </a>
-    <button class="toplink" onclick="logout()" title="Wyloguj">
-      <i class="fa-solid fa-right-from-bracket"></i>
-    </button>
+    <a class="toplink" href="/" title="Strona główna">
+      <i class="fa-solid fa-house"></i>
+    </a>
   </div>
 </header>
 
-<main>
+<div class="wrap">
   <div class="box">
-    <div class="head">
-      <div>
-        <h1>Notatnik serwisanta (lokalnie)</h1>
-        <p class="sub">
-          Dane zlecenia są tylko do podglądu. <b>Wycena / notatki / zdjęcia</b> zapisują się <b>tylko w telefonie</b> (nie w bazie).
-        </p>
+
+    <h1><i class="fa-solid fa-calculator"></i> Notatnik serwisanta (lokalnie)</h1>
+    <p class="sub">
+      Ta strona pobiera zlecenie z Supabase (po zalogowaniu), ale <b>wycena i notatki zapisują się tylko w telefonie</b>.
+      Nic nie zmienia się w bazie.
+    </p>
+
+    <div id="stateBadge" class="badge warn" style="display:none;"></div>
+
+    <!-- jeśli brak code -->
+    <div id="noCode" class="card" style="display:none;">
+      <div class="label">Brak kodu w linku</div>
+      <div class="value">Otwórz stronę z parametrem: <code>?code=PUBLIC_CODE</code></div>
+      <div class="hint">Przykład: <code>order-local.html?code=ABC123</code></div>
+    </div>
+
+    <!-- jeśli brak logowania -->
+    <div id="needLogin" class="card" style="display:none;">
+      <div class="label">Wymagane logowanie</div>
+      <div class="value">Zaloguj się, aby pobrać dane zlecenia.</div>
+      <div class="btnrow">
+        <button class="btn primary" id="goLogin"><i class="fa-solid fa-right-to-bracket"></i> Zaloguj</button>
+      </div>
+      <div class="small">Kod z linku: <code id="codePreview">-</code></div>
+    </div>
+
+    <!-- dane zlecenia -->
+    <div id="orderBox" class="grid" style="display:none;">
+      <div class="card">
+        <div class="label">Klient</div>
+        <div class="value" id="customer">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Telefon</div>
+        <div class="value" id="phone">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Rower</div>
+        <div class="value" id="bike">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Opis (zlecenie)</div>
+        <div class="value" id="desc">-</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Status</div>
+        <div class="value" id="status">-</div>
       </div>
     </div>
 
-    <div id="warn" class="warn">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      <div id="warnText">Błąd.</div>
-    </div>
+    <hr class="sep" />
 
-    <div class="grid">
-      <!-- LEWA: PODGLĄD + NOTATKI -->
-      <div class="panel">
-        <h2><i class="fa-solid fa-clipboard-list"></i> Podgląd zlecenia</h2>
-        <div class="kv" id="orderKv"></div>
-
-        <div style="height:12px"></div>
-
-        <h2><i class="fa-solid fa-note-sticky"></i> Notatki (lokalnie)</h2>
-        <textarea id="notes" placeholder="Np. trudny klient, uwagi do roweru, co wymaga obserwacji..."></textarea>
-
-        <div style="height:10px"></div>
-
-        <div class="row">
-          <button class="btn btn-main" onclick="saveLocal()">
-            <i class="fa-solid fa-floppy-disk"></i> Zapisz lokalnie
-          </button>
-          <button class="btn" onclick="clearLocal()">
-            <i class="fa-solid fa-trash"></i> Wyczyść lokalne dane
-          </button>
-        </div>
-
-        <div class="hint">
-          * Lokalny zapis działa na tym konkretnym telefonie (PWA/przeglądarka). Jeśli odinstalujesz PWA lub wyczyścisz dane przeglądarki — lokalne dane znikną.
-        </div>
+    <!-- kalkulator -->
+    <div id="calcBox" style="display:none;">
+      <label>Wycena / pozycje (lokalnie)</label>
+      <textarea id="costText" placeholder="np. detka 25&#10;regulacja przerzutek 40"></textarea>
+      <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
+      <div class="hint">
+        Wpisuj pozycje w osobnych liniach. Program zlicza pierwszą liczbę z każdej linii (tak jak w edit-order).
       </div>
 
-      <!-- PRAWA: KALKULATOR + ZDJĘCIA -->
-      <div class="panel">
-        <h2><i class="fa-solid fa-calculator"></i> Wycena (kalkulator)</h2>
+      <div class="btnrow">
+        <button class="btn primary" id="saveLocal"><i class="fa-solid fa-floppy-disk"></i> Zapisz lokalnie</button>
+        <button class="btn" id="copySms"><i class="fa-solid fa-copy"></i> Kopiuj SMS (wycena)</button>
+        <button class="btn danger" id="clearLocal"><i class="fa-solid fa-trash"></i> Wyczyść lokalnie</button>
+      </div>
 
-        <div class="calc-grid">
-          <div>
-            <label style="font-weight:900; font-size:12px; opacity:.9;">Robocizna (zł)</label>
-            <input id="labour" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
-          </div>
-          <div>
-            <label style="font-weight:900; font-size:12px; opacity:.9;">Części (zł)</label>
-            <input id="parts" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
-          </div>
-
-          <div>
-            <label style="font-weight:900; font-size:12px; opacity:.9;">Dodatki (zł)</label>
-            <input id="extras" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
-          </div>
-          <div>
-            <label style="font-weight:900; font-size:12px; opacity:.9;">Rabat (zł)</label>
-            <input id="discount" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
-          </div>
-
-          <div class="full total">
-            <span>Razem</span>
-            <span class="val" id="total">0 zł</span>
-          </div>
-
-          <div class="full">
-            <label style="font-weight:900; font-size:12px; opacity:.9;">Komentarz do wyceny</label>
-            <textarea id="pricingNote" placeholder="Np. dlaczego tyle kosztuje, co było zużyte..."></textarea>
-          </div>
-        </div>
-
-        <div style="height:12px"></div>
-
-        <h2><i class="fa-solid fa-camera"></i> Zdjęcia (lokalnie)</h2>
-
-        <div class="row">
-          <input id="photoInput" type="file" accept="image/*" capture="environment" multiple />
-          <button class="btn btn-main" onclick="addPhotos()">
-            <i class="fa-solid fa-plus"></i> Dodaj
-          </button>
-        </div>
-
-        <div style="height:10px"></div>
-        <div id="photos" class="photos"></div>
-
-        <div class="hint">
-          * Zdjęcia są trzymane w <b>IndexedDB</b> w telefonie. To nadal lokalnie — nie idą do bazy.
-        </div>
+      <div class="small">
+        Zlecenie: <code id="codeShow">-</code> • Ostatni zapis lokalny: <span id="lastSaved">-</span>
       </div>
     </div>
+
   </div>
-</main>
+</div>
 
 <script>
-  const sb = window.supabaseClient;
+document.addEventListener("DOMContentLoaded", async ()=>{
 
-  function qs(name){
-    const u = new URL(location.href);
-    return u.searchParams.get(name);
+  const code = new URLSearchParams(location.search).get("code") || "";
+  const LS_KEY = code ? `jl_local_quote_${code}` : "";
+
+  const noCode     = document.getElementById("noCode");
+  const needLogin  = document.getElementById("needLogin");
+  const orderBox   = document.getElementById("orderBox");
+  const calcBox    = document.getElementById("calcBox");
+
+  const badge      = document.getElementById("stateBadge");
+  const codePrev   = document.getElementById("codePreview");
+  const codeShow   = document.getElementById("codeShow");
+
+  const customerEl = document.getElementById("customer");
+  const phoneEl    = document.getElementById("phone");
+  const bikeEl     = document.getElementById("bike");
+  const descEl     = document.getElementById("desc");
+  const statusEl   = document.getElementById("status");
+
+  const costText   = document.getElementById("costText");
+  const sumEl      = document.getElementById("sum");
+  const lastSaved  = document.getElementById("lastSaved");
+
+  const goLoginBtn = document.getElementById("goLogin");
+  const saveBtn    = document.getElementById("saveLocal");
+  const clearBtn   = document.getElementById("clearLocal");
+  const copyBtn    = document.getElementById("copySms");
+
+  let currentTotal = 0;
+  let orderData = null;
+
+  function showBadge(type, text){
+    badge.style.display = "inline-flex";
+    badge.className = "badge " + (type || "warn");
+    badge.innerHTML = text;
   }
 
-  async function checkAuth(){
-    const { data:{session} } = await sb.auth.getSession();
-    if(!session){
-      location.href = "login.html";
-      return null;
-    }
-    return session;
-  }
-
-  async function logout(){
-    await sb.auth.signOut();
-    location.href = "login.html";
-  }
-
-  function showWarn(msg){
-    const w = document.getElementById("warn");
-    const t = document.getElementById("warnText");
-    t.textContent = msg;
-    w.style.display = "flex";
-  }
-
-  function escapeHtml(str){
-    return (str ?? "")
-      .toString()
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // ===== Local keys =====
-  function keyBase(orderId){ return `jl_local_${orderId}`; }
-  function keyNotes(orderId){ return `${keyBase(orderId)}_notes`; }
-  function keyCalc(orderId){ return `${keyBase(orderId)}_calc`; }
-  function keyPricingNote(orderId){ return `${keyBase(orderId)}_pricingNote`; }
-
-  // ===== IndexedDB for photos =====
-  const DB_NAME = "jl_local_orders";
-  const DB_STORE = "photos";
-
-  function openDb(){
-    return new Promise((resolve, reject)=>{
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = ()=>{
-        const db = req.result;
-        if(!db.objectStoreNames.contains(DB_STORE)){
-          const store = db.createObjectStore(DB_STORE, { keyPath: "id" }); // id = `${orderId}__${photoId}`
-          store.createIndex("orderId", "orderId", { unique:false });
-        }
-      };
-      req.onsuccess = ()=> resolve(req.result);
-      req.onerror = ()=> reject(req.error);
+  // ===== Kalkulator (1:1 jak w edit-order) =====
+  function calcSum(){
+    let s = 0;
+    (costText.value || "").split("\n").forEach(l=>{
+      const m = l.match(/(\d+(?:[.,]\d+)?)/);
+      if(m) s += parseFloat(m[1].replace(",","."));
     });
+    currentTotal = s;
+    sumEl.textContent = s.toFixed(2);
   }
+  costText.addEventListener("input", calcSum);
 
-  function uid(){
-    return Math.random().toString(16).slice(2) + Date.now().toString(16);
-  }
-
-  async function dbPutPhoto(orderId, dataUrl){
-    const db = await openDb();
-    return new Promise((resolve, reject)=>{
-      const tx = db.transaction(DB_STORE, "readwrite");
-      const store = tx.objectStore(DB_STORE);
-      const rec = { id: `${orderId}__${uid()}`, orderId, dataUrl, createdAt: Date.now() };
-      store.put(rec);
-      tx.oncomplete = ()=> resolve(rec);
-      tx.onerror = ()=> reject(tx.error);
-    });
-  }
-
-  async function dbListPhotos(orderId){
-    const db = await openDb();
-    return new Promise((resolve, reject)=>{
-      const tx = db.transaction(DB_STORE, "readonly");
-      const store = tx.objectStore(DB_STORE);
-      const idx = store.index("orderId");
-      const req = idx.getAll(orderId);
-      req.onsuccess = ()=> resolve((req.result || []).sort((a,b)=>b.createdAt-a.createdAt));
-      req.onerror = ()=> reject(req.error);
-    });
-  }
-
-  async function dbDeletePhoto(id){
-    const db = await openDb();
-    return new Promise((resolve, reject)=>{
-      const tx = db.transaction(DB_STORE, "readwrite");
-      tx.objectStore(DB_STORE).delete(id);
-      tx.oncomplete = ()=> resolve();
-      tx.onerror = ()=> reject(tx.error);
-    });
-  }
-
-  // ===== UI =====
-  function calcTotal(){
-    const labour = parseFloat(document.getElementById("labour").value || "0") || 0;
-    const parts = parseFloat(document.getElementById("parts").value || "0") || 0;
-    const extras = parseFloat(document.getElementById("extras").value || "0") || 0;
-    const discount = parseFloat(document.getElementById("discount").value || "0") || 0;
-    const total = Math.max(0, (labour + parts + extras - discount));
-    document.getElementById("total").textContent = `${total.toFixed(0)} zł`;
-  }
-
-  function saveLocal(){
-    const orderId = qs("id");
-    if(!orderId) return;
-
-    localStorage.setItem(keyNotes(orderId), document.getElementById("notes").value || "");
-
-    const calc = {
-      labour: document.getElementById("labour").value || "",
-      parts: document.getElementById("parts").value || "",
-      extras: document.getElementById("extras").value || "",
-      discount: document.getElementById("discount").value || ""
-    };
-    localStorage.setItem(keyCalc(orderId), JSON.stringify(calc));
-    localStorage.setItem(keyPricingNote(orderId), document.getElementById("pricingNote").value || "");
-
-    // mała informacja (bez alertów)
-    showWarn("Zapisano lokalnie ✅ (to komunikat informacyjny – możesz go zignorować)");
-    document.getElementById("warn").style.borderColor = "rgba(34,197,94,0.55)";
-    document.getElementById("warn").querySelector("i").style.color = "var(--ok)";
-  }
-
-  async function clearLocal(){
-    const orderId = qs("id");
-    if(!orderId) return;
-
-    if(!confirm("Usunąć lokalne notatki i wycenę dla tego zlecenia? (zdjęcia też usuniesz osobno)")) return;
-
-    localStorage.removeItem(keyNotes(orderId));
-    localStorage.removeItem(keyCalc(orderId));
-    localStorage.removeItem(keyPricingNote(orderId));
-
-    document.getElementById("notes").value = "";
-    document.getElementById("labour").value = "";
-    document.getElementById("parts").value = "";
-    document.getElementById("extras").value = "";
-    document.getElementById("discount").value = "";
-    document.getElementById("pricingNote").value = "";
-    calcTotal();
-
-    showWarn("Wyczyszczono lokalne dane ✅");
-    document.getElementById("warn").style.borderColor = "rgba(34,197,94,0.55)";
-    document.getElementById("warn").querySelector("i").style.color = "var(--ok)";
+  function fmtDate(ts){
+    try{
+      const d = new Date(ts);
+      if(isNaN(d.getTime())) return "-";
+      return d.toLocaleString("pl-PL");
+    }catch(_){ return "-"; }
   }
 
   function loadLocal(){
-    const orderId = qs("id");
-    if(!orderId) return;
-
-    document.getElementById("notes").value = localStorage.getItem(keyNotes(orderId)) || "";
-
-    const calcRaw = localStorage.getItem(keyCalc(orderId));
-    if(calcRaw){
-      try{
-        const c = JSON.parse(calcRaw);
-        document.getElementById("labour").value = c.labour ?? "";
-        document.getElementById("parts").value = c.parts ?? "";
-        document.getElementById("extras").value = c.extras ?? "";
-        document.getElementById("discount").value = c.discount ?? "";
-      }catch(e){}
+    if(!LS_KEY) return;
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    try{
+      const obj = JSON.parse(raw);
+      if(obj && typeof obj.costText === "string") costText.value = obj.costText;
+      calcSum();
+      lastSaved.textContent = obj && obj.updatedAt ? fmtDate(obj.updatedAt) : "-";
+      showBadge("ok", '<i class="fa-solid fa-check"></i> Wczytano lokalną wycenę z telefonu');
+    }catch(e){
+      console.warn("Local parse error:", e);
     }
-    document.getElementById("pricingNote").value = localStorage.getItem(keyPricingNote(orderId)) || "";
-    calcTotal();
   }
 
-  async function addPhotos(){
-    const orderId = qs("id");
-    if(!orderId) return;
-
-    const input = document.getElementById("photoInput");
-    const files = Array.from(input.files || []);
-    if(!files.length) return;
-
-    // konwersja do dataURL (dla IndexedDB)
-    for(const f of files){
-      const dataUrl = await fileToDataUrl(f);
-      await dbPutPhoto(orderId, dataUrl);
-    }
-    input.value = "";
-    await renderPhotos();
+  function saveLocal(){
+    if(!LS_KEY) return;
+    const payload = {
+      code,
+      costText: costText.value || "",
+      total: currentTotal,
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+    lastSaved.textContent = fmtDate(payload.updatedAt);
+    showBadge("ok", '<i class="fa-solid fa-check"></i> Zapisano lokalnie w telefonie');
   }
 
-  function fileToDataUrl(file){
-    return new Promise((resolve, reject)=>{
-      const r = new FileReader();
-      r.onload = ()=> resolve(r.result);
-      r.onerror = ()=> reject(r.error);
-      r.readAsDataURL(file);
-    });
+  function clearLocal(){
+    if(!LS_KEY) return;
+    localStorage.removeItem(LS_KEY);
+    costText.value = "";
+    calcSum();
+    lastSaved.textContent = "-";
+    showBadge("warn", '<i class="fa-solid fa-triangle-exclamation"></i> Wyczyściłeś lokalną wycenę w telefonie');
   }
 
-  async function renderPhotos(){
-    const orderId = qs("id");
-    if(!orderId) return;
-    const items = await dbListPhotos(orderId);
-    const wrap = document.getElementById("photos");
-    wrap.innerHTML = "";
+  async function copySms(){
+    const customer = (orderData?.customer_name || "").trim();
+    const bike = (orderData?.bike_type || "").trim();
+    const phone = (orderData?.phone || "").trim();
 
-    items.forEach(it=>{
-      const div = document.createElement("div");
-      div.className = "ph";
-      div.innerHTML = `
-        <img src="${it.dataUrl}" alt="zdjęcie">
-        <div class="x" title="Usuń" onclick="event.stopPropagation(); deletePhoto('${it.id}')">
-          <i class="fa-solid fa-xmark"></i>
-        </div>
-      `;
-      div.onclick = ()=> window.open(it.dataUrl, "_blank");
-      wrap.appendChild(div);
-    });
-  }
+    const header = "JL Pro Bike Serwis";
+    const lines = (costText.value || "").trim();
+    const total = currentTotal.toFixed(2);
 
-  async function deletePhoto(id){
-    if(!confirm("Usunąć to zdjęcie lokalnie?")) return;
-    await dbDeletePhoto(id);
-    await renderPhotos();
-  }
-  window.deletePhoto = deletePhoto;
+    let msg = `${header}\nWycena: ${total} zł`;
+    if(customer) msg += `\nKlient: ${customer}`;
+    if(bike) msg += `\nRower: ${bike}`;
+    if(lines) msg += `\n\nPozycje:\n${lines}`;
+    msg += `\n\nKod: ${code}`;
 
-  async function loadOrder(){
-    const orderId = qs("id");
-    if(!orderId){
-      showWarn("Brak parametru id w URL. Wejdź tu z listy zleceń.");
-      return;
+    try{
+      await navigator.clipboard.writeText(msg);
+      showBadge("ok", '<i class="fa-solid fa-copy"></i> Skopiowano SMS do schowka');
+    }catch(e){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = msg;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      showBadge("ok", '<i class="fa-solid fa-copy"></i> Skopiowano SMS (tryb awaryjny)');
     }
 
-    const { data, error } = await sb
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .single();
-
-    if(error || !data){
-      showWarn("Nie znaleziono zlecenia lub brak uprawnień.");
-      return;
+    // opcjonalnie: otwórz aplikację SMS (bez zdjęć – tylko tekst)
+    // jeśli nie chcesz, usuń poniższe 3 linie
+    if(phone){
+      const smsUrl = `sms:${encodeURIComponent(phone.replace(/\s+/g,""))}?body=${encodeURIComponent(msg)}`;
+      // nie wymuszamy, ale na telefonie bywa wygodne:
+      // location.href = smsUrl;
     }
-
-    const o = data;
-    const prob = (o.problem_description || o.problem || o.description || "—");
-
-    document.getElementById("orderKv").innerHTML = `
-      <div><i class="fa-solid fa-user"></i><span><b>${escapeHtml(o.customer_name || "—")}</b></span></div>
-      <div><i class="fa-solid fa-phone"></i><span>${escapeHtml(o.phone || "—")}</span></div>
-      <div><i class="fa-solid fa-bicycle"></i><span>${escapeHtml(o.bike_type || "—")}</span></div>
-      <div><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(o.status || "—")}</span></div>
-      <div><i class="fa-solid fa-comment-dots"></i><span>${escapeHtml(prob)}</span></div>
-    `;
   }
 
-  (async ()=>{
-    await checkAuth();
-    await loadOrder();
-    loadLocal();
-    await renderPhotos();
-  })();
+  // ===== Auth =====
+  async function getSession(){
+    const { data } = await supabaseClient.auth.getSession();
+    return data?.session || null;
+  }
+
+  goLoginBtn.onclick = () => {
+    const next = encodeURIComponent(location.pathname.replace(/^\//,"") + location.search);
+    // login.html jest w /panel/ więc używamy ścieżki względnej
+    location.href = `login.html?next=${next}`;
+  };
+
+  saveBtn.onclick = () => saveLocal();
+  clearBtn.onclick = () => clearLocal();
+  copyBtn.onclick = () => copySms();
+
+  // ===== Start =====
+  if(!code){
+    noCode.style.display = "block";
+    showBadge("err", '<i class="fa-solid fa-circle-xmark"></i> Brak parametru ?code=');
+    return;
+  }
+
+  codePrev.textContent = code;
+  codeShow.textContent = code;
+
+  const session = await getSession();
+  if(!session){
+    needLogin.style.display = "block";
+    showBadge("warn", '<i class="fa-solid fa-lock"></i> Zaloguj się, aby pobrać dane zlecenia');
+    return;
+  }
+
+  // pobierz dane zlecenia (tylko odczyt!)
+  showBadge("warn", '<i class="fa-solid fa-spinner"></i> Pobieram dane zlecenia...');
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("customer_name, phone, bike_type, description, status, public_code")
+    .eq("public_code", code)
+    .single();
+
+  if(error || !data){
+    console.warn("Load order error:", error);
+    showBadge("err", '<i class="fa-solid fa-circle-xmark"></i> Nie znaleziono zlecenia lub brak uprawnień');
+    return;
+  }
+
+  orderData = data;
+
+  // pokaż dane
+  orderBox.style.display = "grid";
+  calcBox.style.display = "block";
+
+  customerEl.textContent = data.customer_name || "-";
+
+  const phone = (data.phone || "").trim();
+  if(phone){
+    phoneEl.innerHTML = `<a href="tel:${phone.replace(/\s+/g,"")}">${phone}</a>`;
+  }else{
+    phoneEl.textContent = "-";
+  }
+
+  bikeEl.textContent = data.bike_type || "-";
+  descEl.textContent = data.description || "-";
+  statusEl.textContent = data.status || "-";
+
+  showBadge("ok", '<i class="fa-solid fa-check"></i> Zlecenie pobrane. Wycena działa lokalnie.');
+
+  // wczytaj lokalną wycenę dla tego kodu (jeśli istnieje)
+  loadLocal();
+});
 </script>
+
 </body>
 </html>
