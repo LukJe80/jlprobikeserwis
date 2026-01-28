@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zlecenia (mobile) – JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+
+  <style>
+    :root{
+      --accent:#2563eb;
+      --accentHover:#1d4ed8;
+      --bg:#020617;
+      --text:#e5e7eb;
+      --panel: rgba(255,255,255,0.05);
+      --panelBorder: rgba(255,255,255,0.10);
+      --muted: rgba(229,231,235,0.7);
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
+
+    header{
+      position:fixed; top:0; width:100%; z-index:10;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 18px;
+      background:rgba(2,6,23,.78);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+    }
+    .brand{
+      margin:0; font-size:18px; font-weight:900;
+      color:var(--accent);
+      display:flex; align-items:center; gap:10px;
+    }
+    .brand i{ color:var(--accent); }
+    .right{
+      display:flex; gap:12px; align-items:center;
+    }
+    .toplink, button.toplink{
+      display:flex; align-items:center; gap:8px;
+      color:#fff; text-decoration:none; font-weight:800; font-size:14px;
+      background:transparent; border:none; cursor:pointer;
+      padding:8px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,0.10);
+    }
+    .toplink:hover{ color:var(--accent); border-color: rgba(37,99,235,0.45); }
+
+    main{
+      max-width:900px;
+      margin:auto;
+      padding:86px 14px 80px;
+    }
+
+    .box{
+      background:var(--panel);
+      border:1px solid var(--panelBorder);
+      border-radius:16px;
+      padding:16px;
+    }
+
+    .title{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+      margin-bottom:10px;
+    }
+    .title h1{
+      margin:0; font-size:22px; font-weight:900;
+    }
+    .desc{
+      margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.35;
+    }
+
+    .search{
+      margin-top:14px;
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    input[type="search"]{
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(0,0,0,0.25);
+      color:var(--text);
+      outline:none;
+    }
+    input[type="search"]:focus{
+      border-color: rgba(37,99,235,0.55);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.16);
+    }
+
+    .list{
+      margin-top:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .card{
+      border-radius:18px;
+      padding:14px 14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background:linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      cursor:pointer;
+      transition:.12s ease;
+    }
+    .card:hover{
+      transform: translateY(-1px);
+      border-color: rgba(37,99,235,0.45);
+    }
+
+    .left{
+      min-width:0;
+      display:flex; flex-direction:column; gap:8px;
+    }
+
+    .row1{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+    .name{ font-weight:900; font-size:16px; }
+    .pill{
+      font-size:12px; font-weight:900;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.12);
+      background:rgba(0,0,0,0.35);
+      color:#e5e7eb;
+    }
+
+    .meta{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:6px;
+      color: rgba(229,231,235,0.86);
+      font-size:13px;
+    }
+
+    .meta div{
+      display:flex; gap:10px; align-items:flex-start;
+      min-width:0;
+    }
+    .meta i{
+      width:18px;
+      margin-top:1px;
+      opacity:.9;
+      color: #93c5fd;
+    }
+    .meta span{
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      display:block;
+      min-width:0;
+    }
+
+    .go{
+      flex:0 0 auto;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#cbd5e1;
+      font-weight:900;
+    }
+    .go i{ color:#93c5fd; }
+
+    .empty{
+      margin-top:14px;
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(0,0,0,0.25);
+      color:rgba(229,231,235,0.86);
+      font-weight:800;
+      display:none;
+      gap:10px;
+      align-items:center;
+    }
+    .empty i{ color:#f87171; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="brand">
+    <span>JL Pro Bike Serwis</span>
+  </div>
+
+  <div class="right">
+    <a class="toplink" href="orders.html" title="Panel (pełny)">
+      <i class="fa-solid fa-list"></i> Zlecenia
+    </a>
+    <button class="toplink" onclick="logout()" title="Wyloguj">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="box">
+    <div class="title">
+      <div>
+        <h1>Lista zleceń (mobile)</h1>
+        <p class="desc">
+          Tylko podgląd zleceń z bazy. Po wejściu w zlecenie możesz dodać <b>wycenę / notatki / zdjęcia</b> —
+          wszystko zapisuje się <b>lokalnie w telefonie</b>.
+        </p>
+      </div>
+    </div>
+
+    <div class="search">
+      <input id="q" type="search" placeholder="Szukaj: klient / telefon / rower / opis..." />
+    </div>
+
+    <div id="empty" class="empty">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <div>Brak wyników.</div>
+    </div>
+
+    <div id="list" class="list"></div>
+  </div>
+</main>
+
+<script>
+  const sb = window.supabaseClient;
+  let all = [];
+
+  async function checkAuth(){
+    const { data:{session} } = await sb.auth.getSession();
+    if(!session){
+      location.href = "login.html";
+      return null;
+    }
+    return session;
+  }
+
+  async function logout(){
+    await sb.auth.signOut();
+    location.href = "login.html";
+  }
+
+  function safe(v){ return (v ?? "").toString().trim(); }
+
+  function cardHtml(o){
+    const name = safe(o.customer_name) || "—";
+    const phone = safe(o.phone) || "—";
+    const bike = safe(o.bike_type) || "—";
+    const prob = safe(o.problem_description || o.problem || o.description) || "—";
+    const status = safe(o.status) || "—";
+
+    return `
+      <div class="card" onclick="openOrder('${o.id}')">
+        <div class="left">
+          <div class="row1">
+            <div class="name">${escapeHtml(name)}</div>
+            <div class="pill">${escapeHtml(status)}</div>
+          </div>
+
+          <div class="meta">
+            <div><i class="fa-solid fa-bicycle"></i><span>${escapeHtml(bike)}</span></div>
+            <div><i class="fa-solid fa-phone"></i><span>${escapeHtml(phone)}</span></div>
+            <div><i class="fa-solid fa-comment-dots"></i><span>${escapeHtml(prob)}</span></div>
+          </div>
+        </div>
+
+        <div class="go">
+          <span>Otwórz</span>
+          <i class="fa-solid fa-chevron-right"></i>
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(str){
+    return (str ?? "")
+      .toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function render(items){
+    const el = document.getElementById("list");
+    const empty = document.getElementById("empty");
+    el.innerHTML = "";
+    if(!items.length){
+      empty.style.display = "flex";
+      return;
+    }
+    empty.style.display = "none";
+    el.innerHTML = items.map(cardHtml).join("");
+  }
+
+  function filterNow(){
+    const v = safe(document.getElementById("q").value).toLowerCase();
+    if(!v){ render(all); return; }
+    const out = all.filter(o=>{
+      const blob = [
+        o.customer_name, o.phone, o.bike_type, o.status,
+        o.problem_description, o.problem, o.description
+      ].map(safe).join(" ").toLowerCase();
+      return blob.includes(v);
+    });
+    render(out);
+  }
+
+  function openOrder(id){
+    location.href = `order-local.html?id=${encodeURIComponent(id)}`;
+  }
+
+  async function loadOrders(){
+    // bierzemy wszystko jak w Twoim orders.html (tylko odczyt)
+    const { data, error } = await sb
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending:false });
+
+    if(error){
+      alert("Błąd pobierania zleceń: " + (error.message || "unknown"));
+      return;
+    }
+
+    all = (data || []);
+    render(all);
+  }
+
+  (async ()=>{
+    await checkAuth();
+    document.getElementById("q").addEventListener("input", filterNow);
+    await loadOrders();
+  })();
+</script>
+</body>
+</html>
