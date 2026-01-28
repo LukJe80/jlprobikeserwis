@@ -33,21 +33,29 @@
                   var(--bg);
       color:var(--text);
     }
-
-    header{
-      position:sticky;
-      top:0;
-      z-index:10;
-      backdrop-filter: blur(10px);
-      background: rgba(2,6,23,.55);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-
+    <header style="
+  position:sticky;
+  top:0;
+  z-index:10;
+  backdrop-filter: blur(10px);
+  background: rgba(2,6,23,.65);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 14px 16px;
+">
+  <a href="/panel/panel.html"
+     style="
+       color:#ffffff;
+       text-decoration:none;
+       font-size:16px;
+       font-weight:500;
+       display:inline-flex;
+       align-items:center;
+       gap:8px;
+     ">
+    ← Powrót
+  </a>
+</header>
+    
     .brand{
       display:flex;
       align-items:center;
@@ -411,3 +419,4 @@ loadCompletedOrders();
 
 </body>
 </html>
+
