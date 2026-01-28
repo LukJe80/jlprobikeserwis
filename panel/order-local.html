@@ -145,6 +145,7 @@
       font-weight:900;
       cursor:pointer;
       text-decoration:none;
+      white-space:nowrap;
     }
     .btn:hover{ border-color: rgba(37,99,235,0.45); color: var(--accent); }
     .btn-main{
@@ -237,6 +238,34 @@
       border-color: rgba(239,68,68,0.65);
       color:#fecaca;
     }
+
+    .small{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:8px;
+      line-height:1.35;
+    }
+
+    .tinyRow{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .tinyRow label{
+      font-size:12px;
+      font-weight:900;
+      color: rgba(229,231,235,0.92);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .tinyRow input{
+      width:110px;
+      padding:10px 10px;
+      border-radius:12px;
+    }
   </style>
 </head>
 
@@ -273,7 +302,7 @@
     </div>
 
     <div class="grid">
-      <!-- LEWA: PODGLĄD + NOTATKI -->
+      <!-- LEWA: PODGLĄD + NOTATKI + BACKUP -->
       <div class="panel">
         <h2><i class="fa-solid fa-clipboard-list"></i> Podgląd zlecenia</h2>
         <div class="kv" id="orderKv"></div>
@@ -289,20 +318,48 @@
           <button class="btn btn-main" onclick="saveLocal()">
             <i class="fa-solid fa-floppy-disk"></i> Zapisz lokalnie
           </button>
+
           <button class="btn" onclick="copySms()">
             <i class="fa-solid fa-comment-sms"></i> Kopiuj SMS (wycena)
           </button>
+
+          <button class="btn" onclick="exportBackup()">
+            <i class="fa-solid fa-file-export"></i> Eksport backup
+          </button>
+
+          <button class="btn" onclick="importBackup()">
+            <i class="fa-solid fa-file-import"></i> Import backup
+          </button>
+
+          <button class="btn" onclick="exportPdf()">
+            <i class="fa-solid fa-file-pdf"></i> Eksport PDF
+          </button>
+
           <button class="btn" onclick="clearLocal()">
             <i class="fa-solid fa-trash"></i> Wyczyść lokalne dane
           </button>
         </div>
 
-        <div class="hint">
-          * „Kopiuj SMS” tworzy gotową wiadomość: suma + pozycje + klient/rower. Nic nie zapisuje do bazy.
+        <input type="file" id="importFile" accept="application/json" hidden />
+
+        <div class="small">
+          • <b>Auto-backup</b> zapisuje się cicho w telefonie przy wyjściu z ekranu / zamknięciu.  
+          • „Eksport backup” tworzy plik .json (możesz go wysłać na komputer).  
+          • „Eksport PDF” otwiera wydruk — w drukowaniu wybierasz „Zapisz jako PDF”.
+        </div>
+
+        <div class="tinyRow">
+          <label title="Po ilu dniach usuwać lokalne dane (notatki/wycena/zdjęcia) dla starych zleceń">
+            <i class="fa-solid fa-hourglass-half"></i> Auto-usuwanie po (dni):
+          </label>
+          <input id="retentionDays" type="number" min="1" step="1" />
+          <button class="btn" onclick="saveRetention()">
+            <i class="fa-solid fa-check"></i> Zapisz
+          </button>
         </div>
       </div>
 
-      <!-- PRAWA: KALKULATOR (1:1 jak edit-order) + ZDJĘCIA -->
+      <!-- PRAWA: KALKULATOR + ZDJĘCIA -->
       <div class="panel">
         <h2><i class="fa-solid fa-calculator"></i> Wycena (lista + suma)</h2>
 
@@ -318,7 +375,7 @@
         </div>
 
         <div class="hint">
-          Wpisuj pozycje w osobnych liniach. Program sumuje pierwszą liczbę z każdej linii (tak jak w edit-order). 0
+          Wpisuj pozycje w osobnych liniach. Program sumuje pierwszą liczbę z każdej linii.
         </div>
 
         <div style="height:12px"></div>
@@ -336,7 +393,7 @@
         <div id="photos" class="photos"></div>
 
         <div class="hint">
-          * Zdjęcia są trzymane w <b>IndexedDB</b> w telefonie. To nadal lokalnie — nie idą do bazy.
+          * Zdjęcia są trzymane w <b>IndexedDB</b> w telefonie (lokalnie, nie w bazie).
         </div>
       </div>
     </div>
@@ -346,6 +403,15 @@
 <script>
   const sb = window.supabaseClient;
 
+  // =========================
+  // USTAWIENIA
+  // =========================
+  const DEFAULT_RETENTION_DAYS = 60; // <-- tu zmienisz "X dni" jeśli chcesz domyślnie inaczej
+  const RETENTION_KEY = "jl_local_retention_days";
+
+  // =========================
+  // HELPERS
+  // =========================
   function qs(name){
     const u = new URL(location.href);
     return u.searchParams.get(name);
@@ -384,13 +450,22 @@
       .replaceAll("'","&#039;");
   }
 
-  // ===== Local keys =====
+  // =========================
+  // LOCAL KEYS
+  // =========================
   function keyBase(orderId){ return `jl_local_${orderId}`; }
   function keyNotes(orderId){ return `${keyBase(orderId)}_notes`; }
   function keyCostText(orderId){ return `${keyBase(orderId)}_costText`; }
   function keyCostTotal(orderId){ return `${keyBase(orderId)}_costTotal`; }
+  function keyUpdatedAt(orderId){ return `${keyBase(orderId)}_updatedAt`; }
 
-  // ===== IndexedDB for photos =====
+  // auto-backup (cichy) – trzymamy JSON w localStorage (bez pobierania pliku)
+  function keyAutoBackup(orderId){ return `${keyBase(orderId)}_autobackup_json`; }
+  function keyAutoBackupAt(orderId){ return `${keyBase(orderId)}_autobackup_at`; }
+
+  // =========================
+  // INDEXEDDB PHOTOS
+  // =========================
   const DB_NAME = "jl_local_orders";
   const DB_STORE = "photos";
 
@@ -447,7 +522,16 @@
     });
   }
 
-  // ===== Kalkulator (1:1 jak edit-order) =====
+  async function dbDeleteAllPhotosForOrder(orderId){
+    const items = await dbListPhotos(orderId);
+    for(const p of items){
+      await dbDeletePhoto(p.id);
+    }
+  }
+
+  // =========================
+  // KALKULATOR (jak edit-order)
+  // =========================
   const costTextEl = document.getElementById("costText");
   const sumValEl   = document.getElementById("sumVal");
   let currentTotal = 0;
@@ -461,8 +545,57 @@
     currentTotal = s;
     sumValEl.textContent = s.toFixed(2);
   }
-  costTextEl.addEventListener("input", calcSum);
+  costTextEl.addEventListener("input", ()=>{
+    calcSum();
+    touchUpdatedAt();
+  });
 
+  function touchUpdatedAt(){
+    const orderId = qs("id");
+    if(!orderId) return;
+    localStorage.setItem(keyUpdatedAt(orderId), String(Date.now()));
+  }
+
+  // =========================
+  // ORDER DATA (podgląd)
+  // =========================
+  let orderCache = null;
+
+  async function loadOrder(){
+    const orderId = qs("id");
+    if(!orderId){
+      showWarn("Brak parametru id w URL. Wejdź tu z listy zleceń.");
+      return;
+    }
+
+    const { data, error } = await sb
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .single();
+
+    if(error || !data){
+      showWarn("Nie znaleziono zlecenia lub brak uprawnień.");
+      return;
+    }
+
+    orderCache = data;
+
+    const o = data;
+    const prob = (o.problem_description || o.problem || o.description || "—");
+
+    document.getElementById("orderKv").innerHTML = `
+      <div><i class="fa-solid fa-user"></i><span><b>${escapeHtml(o.customer_name || "—")}</b></span></div>
+      <div><i class="fa-solid fa-phone"></i><span>${escapeHtml(o.phone || "—")}</span></div>
+      <div><i class="fa-solid fa-bicycle"></i><span>${escapeHtml(o.bike_type || "—")}</span></div>
+      <div><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(o.status || "—")}</span></div>
+      <div><i class="fa-solid fa-comment-dots"></i><span>${escapeHtml(prob)}</span></div>
+    `;
+  }
+
+  // =========================
+  // LOCAL SAVE/LOAD
+  // =========================
   function saveLocal(){
     const orderId = qs("id");
     if(!orderId) return;
@@ -470,6 +603,10 @@
     localStorage.setItem(keyNotes(orderId), document.getElementById("notes").value || "");
     localStorage.setItem(keyCostText(orderId), costTextEl.value || "");
     localStorage.setItem(keyCostTotal(orderId), String(currentTotal || 0));
+    touchUpdatedAt();
+
+    // auto-backup też aktualizujemy
+    autoBackupSilent();
 
     showWarn("Zapisano lokalnie ✅", true);
   }
@@ -478,15 +615,21 @@
     const orderId = qs("id");
     if(!orderId) return;
 
-    if(!confirm("Usunąć lokalne notatki i wycenę dla tego zlecenia? (zdjęcia też usuniesz osobno)")) return;
+    if(!confirm("Usunąć lokalne notatki i wycenę dla tego zlecenia? (zdjęcia też usuniesz)")) return;
 
     localStorage.removeItem(keyNotes(orderId));
     localStorage.removeItem(keyCostText(orderId));
     localStorage.removeItem(keyCostTotal(orderId));
+    localStorage.removeItem(keyUpdatedAt(orderId));
+    localStorage.removeItem(keyAutoBackup(orderId));
+    localStorage.removeItem(keyAutoBackupAt(orderId));
 
     document.getElementById("notes").value = "";
     costTextEl.value = "";
     calcSum();
+
+    await dbDeleteAllPhotosForOrder(orderId);
+    await renderPhotos();
 
     showWarn("Wyczyszczono lokalne dane ✅", true);
   }
@@ -498,53 +641,16 @@
     document.getElementById("notes").value = localStorage.getItem(keyNotes(orderId)) || "";
     costTextEl.value = localStorage.getItem(keyCostText(orderId)) || "";
     calcSum();
-  }
 
-  // ===== SMS: kopiuj do schowka + opcjonalnie otwórz SMS =====
-  let orderCache = null;
-
-  async function copySms(){
-    const orderId = qs("id");
-    if(!orderId){
-      showWarn("Brak id w linku – nie mogę zbudować SMS.", false);
-      return;
-    }
-
-    const customer = (orderCache?.customer_name || "").trim();
-    const bike = (orderCache?.bike_type || "").trim();
-    const phone = (orderCache?.phone || "").trim();
-
-    const lines = (costTextEl.value || "").trim();
-    const total = (currentTotal || 0).toFixed(2);
-
-    // Treść SMS – prosto, czytelnie
-    let msg = `JL Pro Bike Serwis\nWycena: ${total} zł`;
-    if(customer) msg += `\nKlient: ${customer}`;
-    if(bike) msg += `\nRower: ${bike}`;
-    if(lines) msg += `\n\nPozycje:\n${lines}`;
-
-    try{
-      await navigator.clipboard.writeText(msg);
-      showWarn("Skopiowano SMS do schowka ✅", true);
-    }catch(e){
-      // fallback dla starszych przeglądarek
-      const ta = document.createElement("textarea");
-      ta.value = msg;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-      showWarn("Skopiowano SMS (tryb awaryjny) ✅", true);
-    }
-
-    // Opcjonalnie: otwórz aplikację SMS z wklejoną treścią (tylko jeśli jest numer)
-    if(phone){
-      const smsUrl = `sms:${encodeURIComponent(phone.replace(/\s+/g,""))}?body=${encodeURIComponent(msg)}`;
-      location.href = smsUrl;
+    // jeśli nie było updatedAt – ustaw przy pierwszym uruchomieniu (żeby retention działał)
+    if(!localStorage.getItem(keyUpdatedAt(orderId))){
+      touchUpdatedAt();
     }
   }
-  window.copySms = copySms;
 
+  // =========================
+  // PHOTOS UI
+  // =========================
   async function addPhotos(){
     const orderId = qs("id");
     if(!orderId) return;
@@ -558,6 +664,10 @@
       await dbPutPhoto(orderId, dataUrl);
     }
     input.value = "";
+
+    touchUpdatedAt();
+    autoBackupSilent(); // auto-backup po dodaniu zdjęć
+
     await renderPhotos();
   }
 
@@ -594,48 +704,378 @@
   async function deletePhoto(id){
     if(!confirm("Usunąć to zdjęcie lokalnie?")) return;
     await dbDeletePhoto(id);
+
+    touchUpdatedAt();
+    autoBackupSilent();
+
     await renderPhotos();
   }
   window.deletePhoto = deletePhoto;
   window.addPhotos = addPhotos;
 
-  async function loadOrder(){
+  // =========================
+  // SMS (kopiuj + otwórz SMS jeśli jest nr)
+  // =========================
+  async function copySms(){
     const orderId = qs("id");
     if(!orderId){
-      showWarn("Brak parametru id w URL. Wejdź tu z listy zleceń.");
+      showWarn("Brak id w linku – nie mogę zbudować SMS.", false);
       return;
     }
 
-    const { data, error } = await sb
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .single();
+    const customer = (orderCache?.customer_name || "").trim();
+    const bike = (orderCache?.bike_type || "").trim();
+    const phone = (orderCache?.phone || "").trim();
 
-    if(error || !data){
-      showWarn("Nie znaleziono zlecenia lub brak uprawnień.");
-      return;
+    const lines = (costTextEl.value || "").trim();
+    const total = (currentTotal || 0).toFixed(2);
+
+    let msg = `JL Pro Bike Serwis\nWycena: ${total} zł`;
+    if(customer) msg += `\nKlient: ${customer}`;
+    if(bike) msg += `\nRower: ${bike}`;
+    if(lines) msg += `\n\nPozycje:\n${lines}`;
+
+    try{
+      await navigator.clipboard.writeText(msg);
+      showWarn("Skopiowano SMS do schowka ✅", true);
+    }catch(e){
+      const ta = document.createElement("textarea");
+      ta.value = msg;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      showWarn("Skopiowano SMS (tryb awaryjny) ✅", true);
     }
 
-    orderCache = data;
+    // Auto-backup po przygotowaniu SMS
+    autoBackupSilent();
 
-    const o = data;
-    const prob = (o.problem_description || o.problem || o.description || "—");
+    // Otwórz aplikację SMS z gotową treścią (jeśli jest numer)
+    if(phone){
+      const smsUrl = `sms:${encodeURIComponent(phone.replace(/\s+/g,""))}?body=${encodeURIComponent(msg)}`;
+      location.href = smsUrl;
+    }
+  }
+  window.copySms = copySms;
 
-    document.getElementById("orderKv").innerHTML = `
-      <div><i class="fa-solid fa-user"></i><span><b>${escapeHtml(o.customer_name || "—")}</b></span></div>
-      <div><i class="fa-solid fa-phone"></i><span>${escapeHtml(o.phone || "—")}</span></div>
-      <div><i class="fa-solid fa-bicycle"></i><span>${escapeHtml(o.bike_type || "—")}</span></div>
-      <div><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(o.status || "—")}</span></div>
-      <div><i class="fa-solid fa-comment-dots"></i><span>${escapeHtml(prob)}</span></div>
-    `;
+  // =========================
+  // BACKUP: export/import
+  // =========================
+  async function buildBackupObject(orderId){
+    const notes = localStorage.getItem(keyNotes(orderId)) || "";
+    const costText = localStorage.getItem(keyCostText(orderId)) || costTextEl.value || "";
+    const total = (localStorage.getItem(keyCostTotal(orderId)) ?? String(currentTotal || 0));
+
+    const photos = await dbListPhotos(orderId);
+    const photoData = photos.map(p => p.dataUrl);
+
+    return {
+      meta: {
+        orderId,
+        customer: orderCache?.customer_name || "",
+        phone: orderCache?.phone || "",
+        bike: orderCache?.bike_type || "",
+        status: orderCache?.status || "",
+        createdAt: orderCache?.created_at || "",
+        exportedAt: new Date().toISOString()
+      },
+      notes,
+      costText,
+      total,
+      photos: photoData
+    };
   }
 
+  async function exportBackup(){
+    const orderId = qs("id");
+    if(!orderId){
+      showWarn("Brak ID zlecenia", false);
+      return;
+    }
+
+    // przed eksportem zapisujemy bieżący stan
+    saveLocal();
+
+    const backup = await buildBackupObject(orderId);
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `JL_backup_${orderId}.json`;
+    a.click();
+
+    showWarn("Backup zapisany (plik) ✅", true);
+  }
+  window.exportBackup = exportBackup;
+
+  async function importBackup(){
+    const input = document.getElementById("importFile");
+    input.onchange = async () => {
+      const file = input.files[0];
+      if(!file) return;
+
+      try{
+        const text = await file.text();
+        const data = JSON.parse(text);
+
+        const orderId = qs("id");
+        if(!orderId){
+          alert("Brak ID w linku.");
+          return;
+        }
+        if(!data?.meta?.orderId || data.meta.orderId !== orderId){
+          alert("Ten backup nie pasuje do aktualnego zlecenia.");
+          return;
+        }
+
+        // zapis localStorage
+        localStorage.setItem(keyNotes(orderId), data.notes || "");
+        localStorage.setItem(keyCostText(orderId), data.costText || "");
+        localStorage.setItem(keyCostTotal(orderId), data.total || "0");
+        touchUpdatedAt();
+
+        // usuń stare zdjęcia i wgraj z backupu
+        await dbDeleteAllPhotosForOrder(orderId);
+        for(const img of (data.photos || [])){
+          await dbPutPhoto(orderId, img);
+        }
+
+        loadLocal();
+        await renderPhotos();
+
+        // po imporcie robimy też auto-backup
+        autoBackupSilent();
+
+        showWarn("Backup przywrócony ✅", true);
+      }catch(e){
+        console.error(e);
+        alert("Błąd importu backupu.");
+      }finally{
+        input.value = "";
+      }
+    };
+
+    input.click();
+  }
+  window.importBackup = importBackup;
+
+  // =========================
+  // AUTO-BACKUP (cichy)
+  // =========================
+  async function autoBackupSilent(){
+    const orderId = qs("id");
+    if(!orderId) return;
+
+    try{
+      // zapis stanu "na pewno"
+      localStorage.setItem(keyNotes(orderId), document.getElementById("notes").value || "");
+      localStorage.setItem(keyCostText(orderId), costTextEl.value || "");
+      localStorage.setItem(keyCostTotal(orderId), String(currentTotal || 0));
+      touchUpdatedAt();
+
+      const backup = await buildBackupObject(orderId);
+      localStorage.setItem(keyAutoBackup(orderId), JSON.stringify(backup));
+      localStorage.setItem(keyAutoBackupAt(orderId), String(Date.now()));
+    }catch(e){
+      // bez alertów – to ma być ciche
+      console.warn("autoBackupSilent failed:", e);
+    }
+  }
+
+  // Auto-backup przy zamknięciu / przejściu w tło
+  window.addEventListener("beforeunload", () => {
+    // bez await – szybkie
+    autoBackupSilent();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if(document.visibilityState === "hidden"){
+      autoBackupSilent();
+    }
+  });
+
+  // =========================
+  // EXPORT PDF (książeczka serwisowa)
+  // =========================
+  async function exportPdf(){
+    const orderId = qs("id");
+    if(!orderId){
+      showWarn("Brak ID zlecenia", false);
+      return;
+    }
+
+    // upewnij się że stan jest zapisany
+    saveLocal();
+
+    const o = orderCache || {};
+    const customer = (o.customer_name || "").trim();
+    const phone = (o.phone || "").trim();
+    const bike = (o.bike_type || "").trim();
+    const status = (o.status || "").trim();
+    const createdAt = (o.created_at ? new Date(o.created_at).toLocaleString("pl-PL") : "");
+    const problem = (o.problem_description || o.problem || o.description || "").trim();
+
+    const notes = (localStorage.getItem(keyNotes(orderId)) || "").trim();
+    const costText = (localStorage.getItem(keyCostText(orderId)) || costTextEl.value || "").trim();
+    const total = (currentTotal || 0).toFixed(2);
+
+    const photos = await dbListPhotos(orderId);
+
+    const win = window.open("", "_blank");
+    const photosHtml = photos.length
+      ? photos.map(p => `<div class="ph"><img src="${p.dataUrl}" /></div>`).join("")
+      : `<div class="muted">Brak zdjęć.</div>`;
+
+    const costLinesHtml = costText
+      ? costText.split("\n").map(l => `<div class="line">${escapeHtml(l)}</div>`).join("")
+      : `<div class="muted">Brak pozycji.</div>`;
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Książeczka serwisowa – JL Pro Bike</title>
+<style>
+  @page{ size:A4; margin:14mm; }
+  body{ font-family: Arial, sans-serif; color:#000; }
+  h1{ margin:0 0 8px; font-size:18px; }
+  h2{ margin:18px 0 8px; font-size:14px; }
+  .box{ border:1px solid #111; border-radius:10px; padding:10px 12px; }
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+  .row{ font-size:12px; line-height:1.35; }
+  .label{ font-weight:700; }
+  .muted{ color:#444; font-size:12px; }
+  .lines{ border:1px dashed #222; padding:8px; border-radius:10px; }
+  .line{ font-size:12px; padding:2px 0; white-space:pre-wrap; }
+  .total{ margin-top:10px; font-size:16px; font-weight:900; text-align:right; }
+  .notes{ white-space:pre-wrap; font-size:12px; }
+  .photos{ display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; }
+  .ph{ border:1px solid #222; border-radius:10px; overflow:hidden; height:90px; }
+  .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .footer{ margin-top:12px; font-size:11px; color:#333; }
+</style>
+</head>
+<body>
+
+<h1>JL Pro Bike Serwis – Książeczka serwisowa</h1>
+
+<div class="box">
+  <div class="grid">
+    <div class="row"><span class="label">Zlecenie ID:</span> ${escapeHtml(orderId)}</div>
+    <div class="row"><span class="label">Status:</span> ${escapeHtml(status || "—")}</div>
+    <div class="row"><span class="label">Klient:</span> ${escapeHtml(customer || "—")}</div>
+    <div class="row"><span class="label">Telefon:</span> ${escapeHtml(phone || "—")}</div>
+    <div class="row"><span class="label">Rower:</span> ${escapeHtml(bike || "—")}</div>
+    <div class="row"><span class="label">Utworzono:</span> ${escapeHtml(createdAt || "—")}</div>
+  </div>
+
+  <h2>Opis problemu (zlecenie)</h2>
+  <div class="row" style="white-space:pre-wrap;">${escapeHtml(problem || "—")}</div>
+
+  <h2>Wycena / pozycje</h2>
+  <div class="lines">${costLinesHtml}</div>
+  <div class="total">SUMA: ${escapeHtml(total)} zł</div>
+
+  <h2>Notatki serwisanta (lokalne)</h2>
+  <div class="notes">${escapeHtml(notes || "—")}</div>
+
+  <h2>Zdjęcia</h2>
+  <div class="photos">${photosHtml}</div>
+
+  <div class="footer">
+    Wygenerowano: ${new Date().toLocaleString("pl-PL")} • JL Pro Bike Serwis
+  </div>
+</div>
+
+<script>
+  window.onload = () => { window.focus(); window.print(); };
+<\/script>
+
+</body>
+</html>
+    `);
+
+    win.document.close();
+  }
+  window.exportPdf = exportPdf;
+
+  // =========================
+  // AUTO-USUWANIE PO X DNIACH
+  // =========================
+  function getRetentionDays(){
+    const v = parseInt(localStorage.getItem(RETENTION_KEY) || "", 10);
+    if(Number.isFinite(v) && v > 0) return v;
+    return DEFAULT_RETENTION_DAYS;
+  }
+
+  function initRetentionUi(){
+    document.getElementById("retentionDays").value = String(getRetentionDays());
+  }
+
+  function saveRetention(){
+    const n = parseInt(document.getElementById("retentionDays").value || "", 10);
+    if(!Number.isFinite(n) || n < 1){
+      alert("Podaj liczbę dni >= 1");
+      return;
+    }
+    localStorage.setItem(RETENTION_KEY, String(n));
+    showWarn("Zapisano auto-usuwanie ✅", true);
+
+    // po zmianie od razu spróbuj wyczyścić stare
+    cleanupExpiredLocalData();
+  }
+  window.saveRetention = saveRetention;
+
+  async function cleanupExpiredLocalData(){
+    const retentionDays = getRetentionDays();
+    const cutoff = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
+
+    // Zbieramy orderId z kluczy jl_local_*
+    const ids = new Set();
+    for(let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+      const m = k.match(/^jl_local_([^_]+)_/);
+      if(m && m[1]) ids.add(m[1]);
+    }
+
+    // Sprawdzamy updatedAt
+    for(const orderId of ids){
+      const updatedAtStr = localStorage.getItem(keyUpdatedAt(orderId));
+      const updatedAt = parseInt(updatedAtStr || "0", 10);
+      if(!updatedAt || updatedAt >= cutoff) continue;
+
+      // Usuń localStorage dla zlecenia
+      localStorage.removeItem(keyNotes(orderId));
+      localStorage.removeItem(keyCostText(orderId));
+      localStorage.removeItem(keyCostTotal(orderId));
+      localStorage.removeItem(keyUpdatedAt(orderId));
+      localStorage.removeItem(keyAutoBackup(orderId));
+      localStorage.removeItem(keyAutoBackupAt(orderId));
+
+      // Usuń zdjęcia z IndexedDB
+      await dbDeleteAllPhotosForOrder(orderId);
+    }
+  }
+
+  // =========================
+  // START
+  // =========================
   (async ()=>{
     await checkAuth();
+    initRetentionUi();
+
+    // sprzątnij stare rzeczy (X dni)
+    await cleanupExpiredLocalData();
+
     await loadOrder();
     loadLocal();
     await renderPhotos();
+
+    // auto-backup na start (żeby mieć bazę)
+    autoBackupSilent();
   })();
 </script>
 </body>
