@@ -15,6 +15,7 @@
   --accentHover:#1d4ed8;
   --bg:#020617;
   --text:#e5e7eb;
+
   --panel: rgba(255,255,255,0.05);
   --panelBorder: rgba(255,255,255,0.10);
   --muted: rgba(229,231,235,0.7);
@@ -39,7 +40,7 @@ header{
   justify-content:space-between;
   align-items:center;
   padding:14px 24px;
-  background:rgba(2,6,23,7);
+  background:rgba(2,6,23,.7);
   backdrop-filter: blur(6px);
   border-bottom:1px solid rgba(255,255,255,0.06);
   gap:14px;
@@ -111,7 +112,7 @@ main{
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 14px;
   overflow:hidden;
-  background: rgba(0,0,0,0.20);
+  background: rgba(0,0,0,0.22);
 }
 
 table{
@@ -149,50 +150,28 @@ tr:hover{ background: rgba(255,255,255,0.04); }
   white-space:nowrap;
 }
 
-/* ===== 1 miniatura 32×32 + badge ===== */
-.photosCell a{
-  text-decoration:none;
-  color:inherit;
+/* ✅ prosta ikonka linku do historii */
+.photoLink{
   display:inline-flex;
   align-items:center;
-  gap:8px;
-}
-
-.thumb{
-  width:32px;
-  height:32px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.14);
-  object-fit:cover;
-  background: rgba(255,255,255,0.06);
-  display:block;
-}
-
-.badge{
-  font-size:12px;
-  color: rgba(229,231,235,0.88);
-  padding:4px 8px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.04);
-  font-weight:800;
-}
-
-.cam{
-  width:32px;
-  height:32px;
-  border-radius:8px;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  border-radius:10px;
   border:1px solid rgba(255,255,255,0.14);
   background: rgba(255,255,255,0.03);
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  text-decoration:none;
+  color:#fff;
   font-size:16px;
+}
+.photoLink:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
 }
 
 @media(max-width:720px){
   main{ padding:110px 16px 60px; }
-  th:nth-child(2), td:nth-child(2){ display:none; } /* Telefon */
+  th:nth-child(2), td:nth-child(2){ display:none; } /* ukryj Telefon */
 }
 </style>
 </head>
@@ -200,17 +179,16 @@ tr:hover{ background: rgba(255,255,255,0.04); }
 <body>
 
 <header>
-  <h1><i class="fa-solid fa-box-archive"></i> Zakończone zlecenia</h1>
-
+  <h1><i class="fa-solid fa-box-archive"></i> Historia zleceń</h1>
   <div class="header-right">
-    <a class="toplink" href="orders.html">← Powrót</a>
+    <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
   </div>
 </header>
 
 <main>
   <div class="box">
-    <div class="page-title">Historia (wydano)</div>
-    <div class="hint">Kliknij miniaturę, aby otworzyć stronę ze zdjęciami.</div>
+    <div class="page-title">Zakończone zlecenia</div>
+    <div class="hint">Lista zleceń ze statusem „wydano”. Kliknij 📷 aby wejść w historię i zdjęcia.</div>
 
     <div class="table-wrap">
       <table>
@@ -219,8 +197,8 @@ tr:hover{ background: rgba(255,255,255,0.04); }
             <th>Klient</th>
             <th>Telefon</th>
             <th>Rower</th>
-            <th>Opis</th>
-            <th>Zdjęcia</th>
+            <th>Opis / wykonane czynności</th>
+            <th>📷</th>
             <th>Zakończone</th>
           </tr>
         </thead>
@@ -231,100 +209,65 @@ tr:hover{ background: rgba(255,255,255,0.04); }
 </main>
 
 <script>
-  const sb = window.supabaseClient;
-  const BUCKET = "order-photos";
-  const SIGN_TTL = 60 * 60; // 1h
+function esc(str){
+  return (str ?? "")
+    .toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
 
-  function esc(str){
-    return (str ?? "")
-      .toString()
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
+async function loadCompletedOrders(){
+  // ✅ Tylko jedno zapytanie = natychmiastowe ładowanie
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("id, customer_name, phone, bike_type, description, completed_at")
+    .eq("status","wydano")
+    .order("completed_at",{ascending:false});
+
+  if(error){
+    alert("Błąd pobierania archiwum: " + error.message);
+    return;
   }
 
-  async function signedUrl(path){
-    const { data, error } = await sb.storage.from(BUCKET).createSignedUrl(path, SIGN_TTL);
-    if(error) return null;
-    return data?.signedUrl || null;
+  const tbody = document.getElementById("ordersTable");
+  tbody.innerHTML = "";
+
+  if(!data || data.length === 0){
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6">Brak zakończonych zleceń</td>
+      </tr>`;
+    return;
   }
 
-  async function loadCompletedOrders(){
-    const { data: orders, error } = await sb
-      .from("orders")
-      .select("id, customer_name, phone, bike_type, description, completed_at")
-      .eq("status","wydano")
-      .order("completed_at", { ascending:false });
+  for(const o of data){
+    const tr = document.createElement("tr");
 
-    if(error){
-      alert("Błąd pobierania archiwum: " + error.message);
-      return;
-    }
+    const link = o.id
+      ? `order-history.html?id=${encodeURIComponent(o.id)}`
+      : "#";
 
-    const tbody = document.getElementById("ordersTable");
-    tbody.innerHTML = "";
+    tr.innerHTML = `
+      <td>${esc(o.customer_name ?? "")}</td>
+      <td>${esc(o.phone ?? "")}</td>
+      <td>${esc(o.bike_type ?? "")}</td>
+      <td class="text">${esc(o.description ?? "")}</td>
+      <td>
+        <a class="photoLink" href="${link}" title="Historia i zdjęcia">📷</a>
+      </td>
+      <td class="date">
+        ${o.completed_at ? new Date(o.completed_at).toLocaleString("pl-PL") : ""}
+      </td>
+    `;
 
-    if(!orders || orders.length === 0){
-      tbody.innerHTML = `<tr><td colspan="6">Brak zakończonych zleceń</td></tr>`;
-      return;
-    }
-
-    // pobierz wszystkie zdjęcia dla widocznych orderów (1 zapytanie)
-    const ids = orders.map(o => o.id).filter(Boolean);
-    const photosMap = new Map(); // order_id -> {count, firstPath}
-
-    if(ids.length){
-      const { data: rows, error: pErr } = await sb
-        .from("order_photos")
-        .select("order_id, path, created_at")
-        .in("order_id", ids)
-        .order("created_at", { ascending:false });
-
-      if(!pErr && rows){
-        for(const r of rows){
-          if(!photosMap.has(r.order_id)){
-            photosMap.set(r.order_id, { count:0, firstPath:r.path });
-          }
-          photosMap.get(r.order_id).count++;
-        }
-      }
-    }
-
-    // render
-    for(const o of orders){
-      const tr = document.createElement("tr");
-      const photoInfo = photosMap.get(o.id); // może być undefined
-
-      let photosCell = `<a href="order-photos.html?id=${encodeURIComponent(o.id)}" title="Otwórz zdjęcia">
-        <span class="cam">📷</span>
-      </a>`;
-
-      if(photoInfo && photoInfo.count > 0 && photoInfo.firstPath){
-        const url = await signedUrl(photoInfo.firstPath);
-        const extra = Math.max(0, photoInfo.count - 1);
-
-        photosCell = `<a href="order-photos.html?id=${encodeURIComponent(o.id)}" title="Otwórz zdjęcia">
-          ${url ? `<img class="thumb" src="${url}" alt="miniatura">` : `<span class="cam">📷</span>`}
-          ${extra > 0 ? `<span class="badge">+${extra}</span>` : `<span class="badge">1</span>`}
-        </a>`;
-      }
-
-      tr.innerHTML = `
-        <td>${esc(o.customer_name ?? "")}</td>
-        <td>${esc(o.phone ?? "")}</td>
-        <td>${esc(o.bike_type ?? "")}</td>
-        <td class="text">${esc(o.description ?? "")}</td>
-        <td class="photosCell">${photosCell}</td>
-        <td class="date">${o.completed_at ? new Date(o.completed_at).toLocaleString("pl-PL") : ""}</td>
-      `;
-
-      tbody.appendChild(tr);
-    }
+    tbody.appendChild(tr);
   }
+}
 
-  loadCompletedOrders();
+loadCompletedOrders();
 </script>
 
 </body>
