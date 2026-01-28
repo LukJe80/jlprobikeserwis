@@ -161,11 +161,11 @@ textarea{ min-height:120px; resize:vertical; }
 .btn.save:hover{ background:var(--accentHover); }
 
 /* przyciski druku w stylu panelu (bez “starych” kolorów) */
-.btn.pdf-in, .btn.pdf-out{
+.btn.pdf-in, .btn.pdf-out, .btn.pdf-book{
   border-color: rgba(255,255,255,0.18);
   color:#fff;
 }
-.btn.pdf-in:hover, .btn.pdf-out:hover{
+.btn.pdf-in:hover, .btn.pdf-out:hover, .btn.pdf-book:hover{
   border-color: rgba(37,99,235,0.55);
   background: rgba(37,99,235,0.14);
   color:#fff;
@@ -232,6 +232,11 @@ textarea{ min-height:120px; resize:vertical; }
 
     <button class="btn pdf-out" onclick="printOut()">
       <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
+    </button>
+
+    <!-- ✅ NOWE: kartka do książeczki serwisowej -->
+    <button class="btn pdf-book" onclick="printBooklet()">
+      <i class="fa-solid fa-book"></i> Książeczka serwisowa
     </button>
 
   </div>
@@ -672,9 +677,121 @@ ${rows}
     win.document.close();
   }
 
+  // ✅ NOWE: “kartka do książeczki serwisowej” (A5)
+  function printBooklet(){
+    const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
+    const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
+
+    let rows = "";
+    let i = 1;
+
+    (costText.value || "").split("\n").forEach(l=>{
+      const m = l.match(/(\d+(?:[.,]\d+)?)/);
+      if(!m) return;
+      const price = parseFloat(m[1].replace(",",".")) || 0;
+      const desc = l.replace(m[1],"").trim();
+
+      rows += `<tr>
+        <td style="width:10mm; text-align:center;">${i++}</td>
+        <td>${escapeHtml(desc)}</td>
+        <td style="width:25mm; text-align:right;">${price.toFixed(2)} zł</td>
+      </tr>`;
+    });
+
+    const win = window.open("","_blank");
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Książeczka serwisowa</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+
+<style>
+@page{ size:A5; margin:10mm; }
+body{ font-family:Arial; color:#000; }
+h2{ margin:0 0 6mm; font-size:18px; text-align:center; }
+.small{ font-size:12px; line-height:1.35; }
+.row{ display:flex; justify-content:space-between; gap:10mm; align-items:flex-start; }
+.box{ border:1px solid #000; padding:6mm; border-radius:6px; }
+.qr{ width:30mm; height:30mm; }
+.qr img{ width:30mm !important; height:30mm !important; display:block; }
+table{ width:100%; border-collapse:collapse; margin-top:6mm; }
+th,td{ border:1px solid #000; padding:4px; font-size:12px; }
+th{ background:#eee; }
+.sum{ margin-top:5mm; font-weight:bold; text-align:right; }
+.sign{ margin-top:8mm; display:flex; justify-content:space-between; gap:10mm; }
+.line{ border-bottom:1px solid #000; height:18px; width:100%; }
+.muted{ color:#333; }
+</style>
+</head>
+<body>
+
+<h2>KSIĄŻECZKA SERWISOWA — JL PRO BIKE SERWIS</h2>
+
+<div class="row">
+  <div class="box" style="flex:1">
+    <div class="small">
+      <b>Data:</b> ${new Date().toLocaleDateString("pl-PL")}<br>
+      <b>Klient:</b> ${escapeHtml(customer.value)}<br>
+      <b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+      <b>Rower:</b> ${escapeHtml(bike.value)}<br>
+      <b>Status:</b> ${escapeHtml(status.value)}
+    </div>
+  </div>
+
+  <div class="box" style="width:44mm; text-align:center">
+    <div class="small muted"><b>Status online</b></div>
+    <div class="qr" id="qr"></div>
+    <div class="small muted" style="margin-top:3mm">Skanuj QR</div>
+  </div>
+</div>
+
+<div class="box" style="margin-top:6mm">
+  <div class="small"><b>Opis zgłoszenia / uwagi:</b></div>
+  <div class="small" style="white-space:pre-line; margin-top:2mm">${escapeHtml(note.value)}</div>
+</div>
+
+<table>
+  <tr>
+    <th style="width:10mm">Lp</th>
+    <th>Czynność / część</th>
+    <th style="width:25mm; text-align:right">Kwota</th>
+  </tr>
+  ${rows || `<tr><td colspan="3" style="text-align:center">Brak pozycji kosztorysu</td></tr>`}
+</table>
+
+<div class="sum">RAZEM: ${currentTotal.toFixed(2)} zł</div>
+
+<div class="sign">
+  <div style="flex:1">
+    <div class="small muted">Podpis serwisu</div>
+    <div class="line"></div>
+  </div>
+  <div style="flex:1">
+    <div class="small muted">Podpis klienta</div>
+    <div class="line"></div>
+  </div>
+</div>
+
+<script>
+  new QRCode(document.getElementById("qr"), { text: ${JSON.stringify(qrUrl)}, width: 113, height: 113 });
+  window.onload = () => { window.focus(); window.print(); };
+<\/script>
+
+</body>
+</html>
+    `);
+
+    win.document.close();
+  }
+
   window.save = save;
   window.printIn = printIn;
   window.printOut = printOut;
+  window.printBooklet = printBooklet;
 
   load();
 });
@@ -682,4 +799,3 @@ ${rows}
 
 </body>
 </html>
-
