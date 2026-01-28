@@ -2,160 +2,92 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Status naprawy</title>
+<title>Status zlecenia</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/supabaseClient.js"></script>
+<script src="supabaseClient.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: radial-gradient(circle at top, #111827, #020617);
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
-}
-
-.card{
-  background: rgba(255,255,255,0.04);
-  border-radius:16px;
-  padding:28px;
-  max-width:420px;
-  width:100%;
-  box-shadow:0 20px 40px rgba(0,0,0,.4);
-}
-
-h1{
+body {
+  background:#020617;
+  color:#e5e7eb;
+  font-family: Arial, sans-serif;
+  padding:30px;
   text-align:center;
-  margin-bottom:12px;
 }
-
-p{
-  text-align:center;
-  opacity:.9;
-}
-
-.status{
-  margin-top:20px;
-  text-align:center;
-  font-size:18px;
-  font-weight:600;
-}
-
-.btn{
-  display:block;
-  margin-top:18px;
-  padding:14px;
-  text-align:center;
+.box {
+  max-width:500px;
+  margin:auto;
+  background:rgba(255,255,255,0.05);
+  padding:24px;
   border-radius:12px;
-  text-decoration:none;
-  font-weight:600;
 }
-
-.btn-service{
-  background:#2563eb;
-  color:#fff;
-}
-
-.btn-service:hover{
-  background:#1d4ed8;
-}
+.status { font-size:22px; font-weight:bold; margin:20px 0; }
+.oczekujące { color:#94a3b8; }
+.nowe { color:#60a5fa; }
+.wtrakcie { color:#f59e0b; }
+.gotowe { color:#22c55e; }
+.wydano { color:#9ca3af; }
+.error { color:#f87171; font-weight:bold; }
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h1>Status naprawy</h1>
-
-  <p id="bike"></p>
+<div class="box" id="box" style="display:none">
+  <h2>Status naprawy</h2>
+  <div id="bike"></div>
   <div class="status" id="status"></div>
-
-  <!-- przycisk widoczny ZAWSZE -->
-  <a id="serviceBtn" class="btn btn-service">
-    🔒 Tryb serwisanta
-  </a>
+  <div id="message"></div>
 </div>
 
-<script>
-const params = new URLSearchParams(location.search);
-const orderId = params.get("id");
+<div class="error" id="error">Nie znaleziono zlecenia</div>
 
-// ---------- sprawdzenie sesji ----------
-async function isServiceLoggedIn(){
-  try{
-    const { data } = await supabaseClient.auth.getSession();
-    return !!data.session;
-  }catch(e){
-    return false;
-  }
+<script>
+const code = new URLSearchParams(location.search).get("code");
+
+function statusText(s) {
+  return {
+    "oczekujące": "Zgłoszenie online",
+    "nowe": "Rower przyjęty",
+    "w trakcie": "Naprawa w toku",
+    "gotowe": "Gotowe do odbioru",
+    "wydano": "Rower wydany"
+  }[s] || s;
 }
 
-// ---------- pobranie zlecenia ----------
-async function loadOrder(){
-  if(!orderId){
-    document.getElementById("status").innerText = "Brak ID zlecenia";
-    return;
-  }
+function statusMessage(s) {
+  return {
+    "oczekujące": "Zgłoszenie zostało wysłane. Przyjedź do serwisu z rowerem.",
+    "nowe": "Rower został przyjęty do serwisu.",
+    "w trakcie": "Pracujemy nad Twoim rowerem.",
+    "gotowe": "Rower jest gotowy do odbioru.",
+    "wydano": "Zlecenie zakończone."
+  }[s] || "";
+}
 
-  const { data, error } = await supabaseClient
+async function load() {
+  if (!code) return;
+
+  const { data } = await supabaseClient
     .from("orders")
-    .select("bike, status")
-    .eq("id", orderId)
+    .select("bike_type,status")
+    .eq("public_code", code)
     .single();
 
-  if(error || !data){
-    document.getElementById("status").innerText = "Nie znaleziono zlecenia";
-    return;
-  }
+  if (!data) return;
 
-  document.getElementById("bike").innerText =
-    "Rower: " + data.bike;
+  box.style.display = "block";
+  error.style.display = "none";
 
-  document.getElementById("status").innerText =
-    statusText(data.status);
+  bike.innerText = "Rower: " + (data.bike_type || "-");
+  status.innerText = statusText(data.status);
+  status.className = "status " + data.status;
+  message.innerText = statusMessage(data.status);
 }
 
-// ---------- tekst statusu ----------
-function statusText(s){
-  switch(s){
-    case "new": return "Zlecenie przyjęte";
-    case "in_progress": return "Rower w trakcie serwisu";
-    case "ready": return "Rower gotowy do odbioru";
-    case "done": return "Zlecenie zakończone";
-    default: return "Status nieznany";
-  }
-}
-
-// ---------- przycisk trybu serwisanta ----------
-(async ()=>{
-  const loggedIn = await isServiceLoggedIn();
-
-  const redirect = encodeURIComponent(
-    location.pathname + location.search
-  );
-
-  if(loggedIn){
-    // jesteś zalogowany → od razu do widoku serwisowego
-    document.getElementById("serviceBtn").innerText =
-      "🛠️ Otwórz notatnik serwisowy";
-
-    document.getElementById("serviceBtn").href =
-      `/order-local.html?id=${orderId}`;
-
-  }else{
-    // brak sesji → login + powrót
-    document.getElementById("serviceBtn").href =
-      `/panel/login.html?redirect=${redirect}`;
-  }
-})();
-
-loadOrder();
+load();
 </script>
-
 </body>
 </html>
