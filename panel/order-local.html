@@ -2,15 +2,12 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Notatnik serwisanta (lokalnie) — JL Pro Bike Serwis</title>
+  <title>Zlecenie (lokalnie) – JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-
-  <!-- ✅ kluczowe: absolutna ścieżka (działa z /panel/) -->
-  <script src="/supabaseClient.js"></script>
+  <script src="supabaseClient.js"></script>
 
   <style>
     :root{
@@ -18,1083 +15,616 @@
       --accentHover:#1d4ed8;
       --bg:#020617;
       --text:#e5e7eb;
-      --muted:#94a3b8;
-      --card:#0b1222;
-      --border:rgba(255,255,255,0.08);
-      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --panel: rgba(255,255,255,0.05);
+      --panelBorder: rgba(255,255,255,0.10);
+      --muted: rgba(229,231,235,0.7);
       --danger:#ef4444;
       --ok:#22c55e;
-      --warn:#f59e0b;
     }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text); }
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      background: radial-gradient(900px 500px at 20% 0%, rgba(37,99,235,.25), transparent 50%),
-                  radial-gradient(900px 500px at 80% 0%, rgba(34,197,94,.10), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-    }
-    a{color:inherit;text-decoration:none}
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:18px 20px;
-      border-bottom:1px solid var(--border);
-      background:rgba(2,6,23,.55);
-      position:sticky; top:0; z-index:10;
-      backdrop-filter: blur(10px);
+    header{
+      position:fixed; top:0; width:100%; z-index:10;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 18px;
+      background:rgba(2,6,23,.78);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,0.06);
     }
     .brand{
-      font-weight:800; letter-spacing:.2px;
+      margin:0; font-size:18px; font-weight:900;
       color:var(--accent);
-      font-size:18px;
+      display:flex; align-items:center; gap:10px;
     }
-    .nav{
-      display:flex; gap:10px; align-items:center;
-    }
-    .nav a{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:10px 14px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:rgba(255,255,255,.03);
-      box-shadow: var(--shadow);
-      font-weight:650;
-    }
-    .nav a:hover{ border-color: rgba(37,99,235,.45); }
-    .wrap{ max-width:1100px; margin:26px auto; padding:0 18px; }
-
-    .hero{
-      border:1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
-      border-radius:22px;
-      padding:20px;
-      box-shadow: var(--shadow);
-    }
-    .hero h1{
-      margin:0;
-      font-size: clamp(22px, 3vw, 34px);
-      line-height:1.2;
+    .right{
       display:flex; gap:12px; align-items:center;
     }
-    .hero h1 i{ color: var(--accent); }
-    .hero p{ margin:10px 0 0; color: var(--muted); line-height:1.5; }
+    .toplink, button.toplink{
+      display:flex; align-items:center; gap:8px;
+      color:#fff; text-decoration:none; font-weight:800; font-size:14px;
+      background:transparent; border:none; cursor:pointer;
+      padding:8px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,0.10);
+    }
+    .toplink:hover{ color:var(--accent); border-color: rgba(37,99,235,0.45); }
+
+    main{
+      max-width:980px;
+      margin:auto;
+      padding:86px 14px 80px;
+    }
+
+    .box{
+      background:var(--panel);
+      border:1px solid var(--panelBorder);
+      border-radius:16px;
+      padding:16px;
+    }
+
+    .head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+      margin-bottom:10px;
+    }
+    h1{ margin:0; font-size:22px; font-weight:900; }
+    .sub{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.35; }
 
     .grid{
+      margin-top:14px;
       display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:16px;
-      margin-top:16px;
+      grid-template-columns: 1fr;
+      gap:12px;
     }
-    @media(max-width:900px){ .grid{grid-template-columns:1fr;} }
+    @media(min-width:900px){
+      .grid{ grid-template-columns: 1.1fr 0.9fr; }
+    }
 
-    .card{
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.03);
-      border-radius:22px;
-      padding:16px;
-      box-shadow: var(--shadow);
+    .panel{
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(0,0,0,0.22);
+      border-radius:16px;
+      padding:14px;
     }
-    .card h2{
+    .panel h2{
       margin:0 0 10px;
-      font-size:18px;
-      display:flex; gap:10px; align-items:center;
+      font-size:16px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#93c5fd;
     }
-    .card h2 i{ color: var(--accent); }
 
-    label{ display:block; color:var(--muted); font-size:.9rem; margin-bottom:6px; }
-    input, textarea, select{
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:8px;
+      font-size:13px;
+      color: rgba(229,231,235,0.92);
+    }
+    .kv div{
+      display:flex; gap:10px; align-items:flex-start;
+    }
+    .kv i{ width:18px; margin-top:1px; color:#93c5fd; }
+    .kv span{ display:block; min-width:0; }
+
+    textarea, input{
       width:100%;
       padding:12px 12px;
       border-radius:14px;
-      border:1px solid var(--border);
-      background:rgba(2,6,23,.55);
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(0,0,0,0.25);
       color:var(--text);
       outline:none;
+      font-family:inherit;
     }
     textarea{ min-height:120px; resize:vertical; }
-    input:focus, textarea:focus, select:focus{
-      border-color: rgba(37,99,235,.55);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    textarea:focus, input:focus{
+      border-color: rgba(37,99,235,0.55);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.16);
     }
 
-    .row{ display:flex; gap:10px; align-items:center; }
-    .row > *{ flex:1; }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
 
     .btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      gap:10px;
+      display:inline-flex; align-items:center; gap:10px;
       padding:12px 14px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      font-weight:700;
-      cursor:pointer;
-      user-select:none;
-    }
-    .btn:hover{ border-color: rgba(37,99,235,.45); }
-    .btn-main{
-      background: linear-gradient(180deg, rgba(37,99,235,.95), rgba(29,78,216,.95));
-      border-color: rgba(37,99,235,.65);
-    }
-    .btn-main:hover{ filter:brightness(1.05); }
-    .btn-danger{
-      background: rgba(239,68,68,.12);
-      border-color: rgba(239,68,68,.30);
-      color: #fecaca;
-    }
-    .btn-warn{
-      background: rgba(245,158,11,.12);
-      border-color: rgba(245,158,11,.30);
-      color: #fde68a;
-    }
-    .btn-ghost{
-      background:transparent;
-    }
-    .btn-mini{ padding:10px 12px; border-radius:12px; font-weight:700; }
-
-    .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
       border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,.03);
-      color:var(--muted);
-      font-weight:700;
-      font-size:.85rem;
+      border:1px solid rgba(255,255,255,0.12);
+      background:rgba(255,255,255,0.05);
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+      text-decoration:none;
     }
-    .badge.ok{ color:#bbf7d0; border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); }
-    .badge.warn{ color:#fde68a; border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.10); }
-    .badge.danger{ color:#fecaca; border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); }
+    .btn:hover{ border-color: rgba(37,99,235,0.45); color: var(--accent); }
+    .btn-main{
+      background: var(--accent);
+      border-color: rgba(37,99,235,0.75);
+    }
+    .btn-main:hover{ background: var(--accentHover); color:#fff; }
 
-    .muted{ color:var(--muted); }
-    .small{ font-size:.88rem; color:var(--muted); line-height:1.45; }
-
-    .items{
-      display:flex; flex-direction:column; gap:10px;
-      margin-top:10px;
-    }
-    .item{
-      display:flex; gap:10px; align-items:center;
-      padding:10px;
-      border:1px solid var(--border);
-      border-radius:16px;
-      background: rgba(255,255,255,.02);
-    }
-    .item .name{ flex:1; font-weight:700; }
-    .item .meta{ color:var(--muted); font-size:.9rem; }
-    .item .price{ font-weight:800; }
-    .item button{
-      border-radius:12px;
-      padding:10px 12px;
-    }
-    .sumrow{
-      display:flex; justify-content:space-between; align-items:center;
+    .warn{
+      margin-top:12px;
       padding:12px 12px;
-      border-radius:16px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.02);
-      margin-top:10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(0,0,0,0.25);
+      color:rgba(229,231,235,0.9);
       font-weight:800;
-    }
-
-    .section-actions{
-      display:flex; flex-wrap:wrap; gap:10px;
-      margin-top:14px;
-    }
-
-    .hr{
-      height:1px; background:var(--border);
-      margin:14px 0;
-    }
-
-    .modalBack{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
       display:none;
-      align-items:center; justify-content:center;
-      padding:18px;
-      z-index:999;
+      gap:10px;
+      align-items:center;
     }
-    .modal{
-      width:min(820px, 100%);
-      border:1px solid var(--border);
-      border-radius:22px;
-      background: rgba(2,6,23,.88);
-      box-shadow: var(--shadow);
-      padding:16px;
-      backdrop-filter: blur(10px);
-    }
-    .modalHeader{
-      display:flex; align-items:center; justify-content:space-between;
+    .warn i{ color: var(--danger); }
+
+    /* --- Kalkulator --- */
+    .calc-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
       gap:10px;
     }
-    .modalHeader h3{ margin:0; font-size:18px; display:flex; gap:10px; align-items:center;}
-    .modalHeader h3 i{ color: var(--accent); }
-    .modalBody{ margin-top:12px; }
-    video{
-      width:100%;
-      border-radius:18px;
-      border:1px solid var(--border);
-      background:#000;
-    }
-    .qrHint{
-      margin-top:12px;
+    .calc-grid .full{ grid-column: 1 / -1; }
+    .total{
+      font-size:22px;
+      font-weight:900;
       padding:12px;
-      border-radius:16px;
-      border:1px dashed rgba(239,68,68,.35);
-      background: rgba(239,68,68,.08);
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(0,0,0,0.25);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .total .val{ color:#a7f3d0; }
+
+    /* --- Zdjęcia --- */
+    .photos{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media(min-width:700px){
+      .photos{ grid-template-columns: repeat(4, 1fr); }
+    }
+    .ph{
+      position:relative;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.10);
+      background:rgba(0,0,0,0.35);
+      aspect-ratio: 1/1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+    .ph img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .ph .x{
+      position:absolute;
+      top:8px;
+      right:8px;
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.18);
+      background:rgba(0,0,0,0.45);
+      color:#fff;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .ph .x:hover{
+      border-color: rgba(239,68,68,0.65);
       color:#fecaca;
-      font-weight:700;
     }
 
-    .pill{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,0.04)}
-    .pill .k{color:var(--muted);font-size:.85rem}
-    .pill .v{font-weight:700}
-    .mini.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    @media(max-width:720px){.mini.grid2{grid-template-columns:1fr}}
+    .hint{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
   </style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="brand">JL Pro Bike Serwis</div>
-    <div class="nav">
-      <a href="/panel/orders-local.html" title="Zlecenia"><i class="fa-solid fa-list"></i> Zlecenia</a>
-      <a href="/" title="Strona główna"><i class="fa-solid fa-house"></i></a>
-    </div>
+<header>
+  <div class="brand">
+    <span>JL Pro Bike Serwis</span>
   </div>
 
-  <div class="wrap">
-    <div class="hero">
-      <h1><i class="fa-solid fa-calculator"></i> Notatnik serwisanta (lokalnie)</h1>
-      <p>
-        Pobiera zlecenie z panelu (po zalogowaniu), ale <b>wycena/notatki/zdjęcia zapisują się tylko w telefonie</b>.
-        <br/>
-        Opcjonalnie możesz wysłać kosztorys do panelu (kolumna <code>costs_text</code>).
-      </p>
-      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <span class="badge warn" id="localBadge"><i class="fa-solid fa-shield-halved"></i> lokalne dane</span>
-        <span class="badge" id="syncBadge"><i class="fa-solid fa-cloud"></i> panel: —</span>
+  <div class="right">
+    <a class="toplink" href="orders-local.html" title="Powrót do listy">
+      <i class="fa-solid fa-arrow-left"></i> Zlecenia
+    </a>
+    <button class="toplink" onclick="logout()" title="Wyloguj">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div class="box">
+    <div class="head">
+      <div>
+        <h1>Notatnik serwisanta (lokalnie)</h1>
+        <p class="sub">
+          Dane zlecenia są tylko do podglądu. <b>Wycena / notatki / zdjęcia</b> zapisują się <b>tylko w telefonie</b> (nie w bazie).
+        </p>
       </div>
     </div>
 
-    <div class="card" style="margin-top:16px; border-color: rgba(239,68,68,.30); background: rgba(239,68,68,.06); display:none;" id="errorBox"></div>
+    <div id="warn" class="warn">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div id="warnText">Błąd.</div>
+    </div>
 
     <div class="grid">
+      <!-- LEWA: PODGLĄD + NOTATKI -->
+      <div class="panel">
+        <h2><i class="fa-solid fa-clipboard-list"></i> Podgląd zlecenia</h2>
+        <div class="kv" id="orderKv"></div>
 
-      <div class="card">
-        <h2><i class="fa-solid fa-clipboard-list"></i> Zlecenie</h2>
+        <div style="height:12px"></div>
+
+        <h2><i class="fa-solid fa-note-sticky"></i> Notatki (lokalnie)</h2>
+        <textarea id="notes" placeholder="Np. trudny klient, uwagi do roweru, co wymaga obserwacji..."></textarea>
+
+        <div style="height:10px"></div>
 
         <div class="row">
+          <button class="btn btn-main" onclick="saveLocal()">
+            <i class="fa-solid fa-floppy-disk"></i> Zapisz lokalnie
+          </button>
+          <button class="btn" onclick="clearLocal()">
+            <i class="fa-solid fa-trash"></i> Wyczyść lokalne dane
+          </button>
+        </div>
+
+        <div class="hint">
+          * Lokalny zapis działa na tym konkretnym telefonie (PWA/przeglądarka). Jeśli odinstalujesz PWA lub wyczyścisz dane przeglądarki — lokalne dane znikną.
+        </div>
+      </div>
+
+      <!-- PRAWA: KALKULATOR + ZDJĘCIA -->
+      <div class="panel">
+        <h2><i class="fa-solid fa-calculator"></i> Wycena (kalkulator)</h2>
+
+        <div class="calc-grid">
           <div>
-            <label>Klient</label>
-            <input id="clientName" placeholder="" readonly>
+            <label style="font-weight:900; font-size:12px; opacity:.9;">Robocizna (zł)</label>
+            <input id="labour" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
           </div>
           <div>
-            <label>Telefon</label>
-            <input id="phone" placeholder="" readonly>
+            <label style="font-weight:900; font-size:12px; opacity:.9;">Części (zł)</label>
+            <input id="parts" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
           </div>
-        </div>
 
-        <div class="row" style="margin-top:10px">
           <div>
-            <label>Rower</label>
-            <input id="bike" placeholder="" readonly>
+            <label style="font-weight:900; font-size:12px; opacity:.9;">Dodatki (zł)</label>
+            <input id="extras" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
           </div>
           <div>
-            <label>Status</label>
-            <input id="status" placeholder="" readonly>
+            <label style="font-weight:900; font-size:12px; opacity:.9;">Rabat (zł)</label>
+            <input id="discount" type="number" inputmode="decimal" placeholder="0" oninput="calcTotal()">
+          </div>
+
+          <div class="full total">
+            <span>Razem</span>
+            <span class="val" id="total">0 zł</span>
+          </div>
+
+          <div class="full">
+            <label style="font-weight:900; font-size:12px; opacity:.9;">Komentarz do wyceny</label>
+            <textarea id="pricingNote" placeholder="Np. dlaczego tyle kosztuje, co było zużyte..."></textarea>
           </div>
         </div>
 
-        <div style="margin-top:10px">
-          <label>Opis zlecenia (z panelu)</label>
-          <textarea id="description" placeholder="" readonly></textarea>
+        <div style="height:12px"></div>
+
+        <h2><i class="fa-solid fa-camera"></i> Zdjęcia (lokalnie)</h2>
+
+        <div class="row">
+          <input id="photoInput" type="file" accept="image/*" capture="environment" multiple />
+          <button class="btn btn-main" onclick="addPhotos()">
+            <i class="fa-solid fa-plus"></i> Dodaj
+          </button>
         </div>
 
-        <div class="hr"></div>
+        <div style="height:10px"></div>
+        <div id="photos" class="photos"></div>
 
-        <div class="small">
-          <b>QR:</b> możesz wkleić link/tekst QR w pole niżej i kliknąć „Otwórz”.
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <input id="qrText" placeholder="wklej link lub kod...">
-          <button class="btn btn-mini" onclick="openFromQrText()"><i class="fa-solid fa-arrow-right"></i> Otwórz</button>
-        </div>
-
-        <div class="section-actions">
-          <button class="btn btn-main" onclick="saveLocal()"><i class="fa-solid fa-floppy-disk"></i> Zapisz lokalnie</button>
-          <button class="btn" onclick="copySMS()"><i class="fa-solid fa-comment-sms"></i> Kopiuj SMS (wycena)</button>
-          <button class="btn" onclick="exportBackup()"><i class="fa-solid fa-file-export"></i> Export backup</button>
-          <button class="btn" onclick="importBackup()"><i class="fa-solid fa-file-import"></i> Import backup</button>
-          <button class="btn" onclick="exportPDF()"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
-          <button class="btn" onclick="openQrModal()"><i class="fa-solid fa-qrcode"></i> Skanuj QR</button>
-          <button class="btn btn-danger" onclick="clearLocal()"><i class="fa-solid fa-trash"></i> Wyczyść lokalne dane</button>
-        </div>
-
-        <div class="small" style="margin-top:10px">
-          • Auto-backup zapisuje się cicho w telefonie przy wyjściu z ekranu / zamknięciu.
-          • „Export backup” tworzy plik .json (możesz go wysłać na komputer).
-          • „Export PDF” otwiera wydruk — w drukowaniu wybierasz „Zapisz jako PDF”.
-        </div>
-
-        <div style="margin-top:12px" class="row">
-          <div style="max-width:220px">
-            <label>Auto-usuwanie po (dni)</label>
-            <input id="ttlDays" type="number" min="1" value="60">
-          </div>
-          <button class="btn btn-mini" onclick="saveTtl()"><i class="fa-solid fa-check"></i> Zapisz</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2><i class="fa-solid fa-pen-to-square"></i> Notatki i kosztorys</h2>
-
-        <div>
-          <label>Notatki (tylko telefon)</label>
-          <textarea id="notes" placeholder="np. trudny klient, uwagi, co było zużyte..."></textarea>
-        </div>
-
-        <div style="margin-top:12px">
-          <h2 style="margin:0 0 10px; font-size:18px; display:flex; gap:10px; align-items:center;">
-            <i class="fa-solid fa-list-check"></i> Pozycje (lokalnie)
-          </h2>
-
-          <div class="row">
-            <input id="itemName" placeholder="np. linka przerzutki">
-            <input id="itemPrice" placeholder="cena (zł)" type="number" step="0.01">
-          </div>
-
-          <div class="row" style="margin-top:10px">
-            <select id="itemType">
-              <option value="czynność">czynność</option>
-              <option value="część">część</option>
-            </select>
-            <button class="btn btn-main" onclick="addItem()"><i class="fa-solid fa-plus"></i> Dodaj</button>
-          </div>
-
-          <div class="items" id="items"></div>
-          <div class="sumrow">
-            <span>Suma</span>
-            <span id="sum">0 zł</span>
-          </div>
-        </div>
-
-        <div class="hr"></div>
-
-        <h2 style="margin:0 0 10px; font-size:18px; display:flex; gap:10px; align-items:center;">
-          <i class="fa-solid fa-cloud"></i> Kosztorys z panelu (online)
-        </h2>
-
-        <div class="small">
-          Pobiera i wysyła kosztorys do panelu (<code>costs_text</code> + pola liczbowe). To <b>nie zmienia</b> notatek/zdjęć w telefonie.
-        </div>
-
-        <div class="section-actions" style="margin-top:10px">
-          <button class="btn btn-mini" onclick="pullCostsFromPanel()"><i class="fa-solid fa-download"></i> Pobierz z panelu</button>
-          <button class="btn btn-mini btn-warn" onclick="pushCostsToPanel()"><i class="fa-solid fa-upload"></i> Wyślij do panelu</button>
-        </div>
-
-        <div style="margin-top:10px">
-          <label>Kosztorys (panel: costs_text)</label>
-          <textarea id="panelCosts" readonly></textarea>
-        <div class="mini grid2" style="margin-top:10px">
-          <div class="pill"><span class="k">Robocizna (panel)</span><span class="v" id="panelLabor">—</span></div>
-          <div class="pill"><span class="k">Części (panel)</span><span class="v" id="panelParts">—</span></div>
-          <div class="pill"><span class="k">Suma (panel)</span><span class="v" id="panelTotal">—</span></div>
-          <div class="pill"><span class="k">Wycena (panel)</span><span class="v" id="panelEstimate">—</span></div>
-        </div>
-    
-        </div>
-
-        <div class="card" style="margin-top:12px; display:none" id="syncBox"></div>
-      </div>
-
-    </div>
-
-    <div class="card" style="margin-top:16px">
-      <h2><i class="fa-solid fa-camera"></i> Zdjęcia (tylko telefon)</h2>
-
-      <div class="small">
-        Zdjęcia zapisują się lokalnie (w pamięci przeglądarki). Najlepiej dodawaj kilka sztuk na zlecenie.
-      </div>
-
-      <div class="row" style="margin-top:10px">
-        <!-- ✅ bez capture=environment -> wybór z galerii (gotowe zdjęcia) -->
-        <input id="photoInput" type="file" accept="image/*" multiple />
-        <button class="btn btn-main" onclick="addPhotos()">
-          <i class="fa-solid fa-plus"></i> Dodaj
-        </button>
-      </div>
-
-      <div id="photos" style="margin-top:12px; display:grid; grid-template-columns:repeat(3,1fr); gap:10px;"></div>
-    </div>
-
-  </div>
-
-  <!-- QR Modal -->
-  <div class="modalBack" id="qrModal">
-    <div class="modal">
-      <div class="modalHeader">
-        <h3><i class="fa-solid fa-qrcode"></i> Skanuj kod QR</h3>
-        <button class="btn btn-danger btn-mini" onclick="closeQrModal()"><i class="fa-solid fa-xmark"></i> Zamknij</button>
-      </div>
-
-      <div class="modalBody">
-        <div class="small">
-          Celuj w kod QR z zawieszki / telefonu. Jeśli QR zawiera link do statusu (np. <code>.../order-status.html?id=123</code>),
-          to zostanie automatycznie otwarty w notatniku.
-          <br/>
-          Uwaga: kamera działa tylko na HTTPS + po udzieleniu zgody w przeglądarce.
-        </div>
-
-        <div style="margin-top:12px">
-          <video id="qrVideo"></video>
-        <canvas id="qrCanvas" style="display:none"></canvas>
-        </div>
-
-        <div class="qrHint" id="qrErr" style="display:none">
-          Sprawdź: HTTPS, zgoda na kamerę, oraz czy nie otwierasz w przeglądarce Facebook/Messenger.
-        </div>
-
-        <div class="section-actions">
-          <button class="btn btn-main" onclick="startQrScan()"><i class="fa-solid fa-camera"></i> Start</button>
-          <button class="btn" onclick="stopQrScan()"><i class="fa-solid fa-stop"></i> Stop</button>
+        <div class="hint">
+          * Zdjęcia są trzymane w <b>IndexedDB</b> w telefonie. To nadal lokalnie — nie idą do bazy.
         </div>
       </div>
     </div>
   </div>
+</main>
 
 <script>
-  // ===== Helpers
-  const $ = (id) => document.getElementById(id);
-  const params = new URLSearchParams(location.search);
-  const orderId = params.get("id");
-  const orderCode = params.get("code"); // public_code
-  const storageKey = (idOrCode) => `jl_local_order_${idOrCode}`;
-  const ttlKey = "jl_local_ttl_days";
+  const sb = window.supabaseClient;
 
-  let orderRow = null;
-  let items = [];
-  let photos = []; // dataURLs
-  let qrStream = null;
-  let qrLoopTimer = null;
-  let qrScanning = false;
-
-  function showError(msg){
-    const box = $("errorBox");
-    box.style.display = "block";
-    box.innerHTML = `<b><i class="fa-solid fa-triangle-exclamation"></i> ${msg}</b>`;
-  }
-  function clearError(){
-    const box = $("errorBox");
-    box.style.display = "none";
-    box.innerHTML = "";
+  function qs(name){
+    const u = new URL(location.href);
+    return u.searchParams.get(name);
   }
 
-  function setSyncBadge(text, cls=""){
-    const b = $("syncBadge");
-    b.className = "badge " + (cls||"");
-    b.innerHTML = `<i class="fa-solid fa-cloud"></i> ${text}`;
+  async function checkAuth(){
+    const { data:{session} } = await sb.auth.getSession();
+    if(!session){
+      location.href = "login.html";
+      return null;
+    }
+    return session;
   }
 
-  function showSync(msg, type=""){
-    const box = $("syncBox");
-    box.style.display = "block";
-    box.className = "card";
-    box.style.borderColor = type==="ok" ? "rgba(34,197,94,.35)" : type==="danger" ? "rgba(239,68,68,.35)" : "rgba(245,158,11,.35)";
-    box.style.background = type==="ok" ? "rgba(34,197,94,.08)" : type==="danger" ? "rgba(239,68,68,.08)" : "rgba(245,158,11,.08)";
-    box.innerHTML = `<b>${msg}</b>`;
-    setTimeout(()=>{ box.style.display="none"; }, 4000);
+  async function logout(){
+    await sb.auth.signOut();
+    location.href = "login.html";
   }
 
-  function money(n){ return `${Number(n||0).toFixed(0)} zł`; }
-
-  function sum(){
-    return items.reduce((a,it)=>a+(Number(it.price)||0),0);
-  }
-  function sumByType(type){
-    return items.filter(it => (it.type||"").toLowerCase() === type).reduce((a,it)=>a+(Number(it.price)||0),0);
+  function showWarn(msg){
+    const w = document.getElementById("warn");
+    const t = document.getElementById("warnText");
+    t.textContent = msg;
+    w.style.display = "flex";
   }
 
-  function renderItems(){
-    const wrap = $("items");
-    wrap.innerHTML = "";
-    items.forEach((it, idx)=>{
-      const div = document.createElement("div");
-      div.className = "item";
-      div.innerHTML = `
-        <div style="flex:1">
-          <div class="name">${escapeHtml(it.name)}</div>
-          <div class="meta">${escapeHtml(it.type || "")}</div>
-        </div>
-        <div class="price">${money(it.price)}</div>
-        <button class="btn btn-danger btn-mini" onclick="removeItem(${idx})"><i class="fa-solid fa-trash"></i></button>
-      `;
-      wrap.appendChild(div);
-    });
-    $("sum").textContent = money(sum());
+  function escapeHtml(str){
+    return (str ?? "")
+      .toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
-  function addItem(){
-    const name = $("itemName").value.trim();
-    const price = Number($("itemPrice").value || 0);
-    const type = $("itemType").value;
-    if(!name){ return; }
-    items.push({ name, price, type });
-    $("itemName").value = "";
-    $("itemPrice").value = "";
-    renderItems();
-  }
-  function removeItem(i){
-    items.splice(i,1);
-    renderItems();
-  }
+  // ===== Local keys =====
+  function keyBase(orderId){ return `jl_local_${orderId}`; }
+  function keyNotes(orderId){ return `${keyBase(orderId)}_notes`; }
+  function keyCalc(orderId){ return `${keyBase(orderId)}_calc`; }
+  function keyPricingNote(orderId){ return `${keyBase(orderId)}_pricingNote`; }
 
-  function escapeHtml(s){
-    return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
+  // ===== IndexedDB for photos =====
+  const DB_NAME = "jl_local_orders";
+  const DB_STORE = "photos";
 
-  // ===== Local storage (with TTL)
-  function getTtlDays(){
-    return Number(localStorage.getItem(ttlKey) || $("ttlDays").value || 60);
-  }
-  function saveTtl(){
-    localStorage.setItem(ttlKey, String(Number($("ttlDays").value || 60)));
-    showSync("Zapisano auto-usuwanie.", "ok");
-  }
-  function cleanupExpired(){
-    const ttl = getTtlDays();
-    const now = Date.now();
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if(!k || !k.startsWith("jl_local_order_")) continue;
-      try{
-        const obj = JSON.parse(localStorage.getItem(k) || "{}");
-        if(obj && obj._ts && (now - obj._ts) > ttl*24*60*60*1000){
-          localStorage.removeItem(k);
+  function openDb(){
+    return new Promise((resolve, reject)=>{
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = ()=>{
+        const db = req.result;
+        if(!db.objectStoreNames.contains(DB_STORE)){
+          const store = db.createObjectStore(DB_STORE, { keyPath: "id" }); // id = `${orderId}__${photoId}`
+          store.createIndex("orderId", "orderId", { unique:false });
         }
-      }catch(e){}
-    }
+      };
+      req.onsuccess = ()=> resolve(req.result);
+      req.onerror = ()=> reject(req.error);
+    });
   }
 
-  function saveLocal(silent=false){
-    if(!orderRow){
-      showSync("Brak zlecenia do zapisu.", "danger");
-      return;
-    }
-    const key = storageKey(orderRow.public_code || orderRow.id || orderId || orderCode || "unknown");
-    const obj = {
-      _ts: Date.now(),
-      notes: $("notes").value || "",
-      items,
-      photos
+  function uid(){
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  async function dbPutPhoto(orderId, dataUrl){
+    const db = await openDb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(DB_STORE, "readwrite");
+      const store = tx.objectStore(DB_STORE);
+      const rec = { id: `${orderId}__${uid()}`, orderId, dataUrl, createdAt: Date.now() };
+      store.put(rec);
+      tx.oncomplete = ()=> resolve(rec);
+      tx.onerror = ()=> reject(tx.error);
+    });
+  }
+
+  async function dbListPhotos(orderId){
+    const db = await openDb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(DB_STORE, "readonly");
+      const store = tx.objectStore(DB_STORE);
+      const idx = store.index("orderId");
+      const req = idx.getAll(orderId);
+      req.onsuccess = ()=> resolve((req.result || []).sort((a,b)=>b.createdAt-a.createdAt));
+      req.onerror = ()=> reject(req.error);
+    });
+  }
+
+  async function dbDeletePhoto(id){
+    const db = await openDb();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(DB_STORE, "readwrite");
+      tx.objectStore(DB_STORE).delete(id);
+      tx.oncomplete = ()=> resolve();
+      tx.onerror = ()=> reject(tx.error);
+    });
+  }
+
+  // ===== UI =====
+  function calcTotal(){
+    const labour = parseFloat(document.getElementById("labour").value || "0") || 0;
+    const parts = parseFloat(document.getElementById("parts").value || "0") || 0;
+    const extras = parseFloat(document.getElementById("extras").value || "0") || 0;
+    const discount = parseFloat(document.getElementById("discount").value || "0") || 0;
+    const total = Math.max(0, (labour + parts + extras - discount));
+    document.getElementById("total").textContent = `${total.toFixed(0)} zł`;
+  }
+
+  function saveLocal(){
+    const orderId = qs("id");
+    if(!orderId) return;
+
+    localStorage.setItem(keyNotes(orderId), document.getElementById("notes").value || "");
+
+    const calc = {
+      labour: document.getElementById("labour").value || "",
+      parts: document.getElementById("parts").value || "",
+      extras: document.getElementById("extras").value || "",
+      discount: document.getElementById("discount").value || ""
     };
-    localStorage.setItem(key, JSON.stringify(obj));
-    if(!silent) showSync("Zapisano lokalnie w telefonie.", "ok");
+    localStorage.setItem(keyCalc(orderId), JSON.stringify(calc));
+    localStorage.setItem(keyPricingNote(orderId), document.getElementById("pricingNote").value || "");
+
+    // mała informacja (bez alertów)
+    showWarn("Zapisano lokalnie ✅ (to komunikat informacyjny – możesz go zignorować)");
+    document.getElementById("warn").style.borderColor = "rgba(34,197,94,0.55)";
+    document.getElementById("warn").querySelector("i").style.color = "var(--ok)";
+  }
+
+  async function clearLocal(){
+    const orderId = qs("id");
+    if(!orderId) return;
+
+    if(!confirm("Usunąć lokalne notatki i wycenę dla tego zlecenia? (zdjęcia też usuniesz osobno)")) return;
+
+    localStorage.removeItem(keyNotes(orderId));
+    localStorage.removeItem(keyCalc(orderId));
+    localStorage.removeItem(keyPricingNote(orderId));
+
+    document.getElementById("notes").value = "";
+    document.getElementById("labour").value = "";
+    document.getElementById("parts").value = "";
+    document.getElementById("extras").value = "";
+    document.getElementById("discount").value = "";
+    document.getElementById("pricingNote").value = "";
+    calcTotal();
+
+    showWarn("Wyczyszczono lokalne dane ✅");
+    document.getElementById("warn").style.borderColor = "rgba(34,197,94,0.55)";
+    document.getElementById("warn").querySelector("i").style.color = "var(--ok)";
   }
 
   function loadLocal(){
-    if(!orderRow) return;
-    const key = storageKey(orderRow.public_code || orderRow.id || orderId || orderCode || "unknown");
-    const raw = localStorage.getItem(key);
-    if(!raw) return;
-    try{
-      const obj = JSON.parse(raw);
-      $("notes").value = obj.notes || "";
-      items = Array.isArray(obj.items) ? obj.items : [];
-      photos = Array.isArray(obj.photos) ? obj.photos : [];
-      renderItems();
-      renderPhotos();
-      $("localBadge").className = "badge ok";
-      $("localBadge").innerHTML = `<i class="fa-solid fa-shield-halved"></i> lokalne dane: zapisane`;
-    }catch(e){}
+    const orderId = qs("id");
+    if(!orderId) return;
+
+    document.getElementById("notes").value = localStorage.getItem(keyNotes(orderId)) || "";
+
+    const calcRaw = localStorage.getItem(keyCalc(orderId));
+    if(calcRaw){
+      try{
+        const c = JSON.parse(calcRaw);
+        document.getElementById("labour").value = c.labour ?? "";
+        document.getElementById("parts").value = c.parts ?? "";
+        document.getElementById("extras").value = c.extras ?? "";
+        document.getElementById("discount").value = c.discount ?? "";
+      }catch(e){}
+    }
+    document.getElementById("pricingNote").value = localStorage.getItem(keyPricingNote(orderId)) || "";
+    calcTotal();
   }
 
-  function clearLocal(){
-    if(!orderRow) return;
-    const key = storageKey(orderRow.public_code || orderRow.id || orderId || orderCode || "unknown");
-    localStorage.removeItem(key);
-    $("notes").value = "";
-    items = [];
-    photos = [];
-    renderItems();
-    renderPhotos();
-    $("localBadge").className = "badge warn";
-    $("localBadge").innerHTML = `<i class="fa-solid fa-shield-halved"></i> lokalne dane`;
-    showSync("Usunięto lokalne dane.", "ok");
-  }
+  async function addPhotos(){
+    const orderId = qs("id");
+    if(!orderId) return;
 
-  // ===== Backup import/export
-  function exportBackup(){
-    if(!orderRow) return;
-    const obj = {
-      version: 1,
-      order: {
-        id: orderRow.id,
-        public_code: orderRow.public_code,
-        client: orderRow.client_name,
-        phone: orderRow.phone,
-        bike: orderRow.bike,
-      },
-      data: {
-        notes: $("notes").value || "",
-        items,
-        photos
-      },
-      ts: Date.now()
-    };
-    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `jl-backup-${(orderRow.public_code||orderRow.id||"order")}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
-  function importBackup(){
-    const inp = document.createElement("input");
-    inp.type = "file";
-    inp.accept = "application/json";
-    inp.onchange = () => {
-      const file = inp.files[0];
-      if(!file) return;
-      const r = new FileReader();
-      r.onload = () => {
-        try{
-          const obj = JSON.parse(r.result);
-          $("notes").value = obj?.data?.notes || "";
-          items = Array.isArray(obj?.data?.items) ? obj.data.items : [];
-          photos = Array.isArray(obj?.data?.photos) ? obj.data.photos : [];
-          renderItems();
-          renderPhotos();
-          saveLocal(true);
-          showSync("Zaimportowano backup.", "ok");
-        }catch(e){
-          showSync("Niepoprawny plik backup.", "danger");
-        }
-      };
-      r.readAsText(file);
-    };
-    inp.click();
-  }
-
-  // ===== Photos (local)
-  function addPhotos(){
-    const inp = $("photoInput");
-    const files = Array.from(inp.files || []);
+    const input = document.getElementById("photoInput");
+    const files = Array.from(input.files || []);
     if(!files.length) return;
-    let left = files.length;
 
-    files.forEach(file=>{
+    // konwersja do dataURL (dla IndexedDB)
+    for(const f of files){
+      const dataUrl = await fileToDataUrl(f);
+      await dbPutPhoto(orderId, dataUrl);
+    }
+    input.value = "";
+    await renderPhotos();
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject)=>{
       const r = new FileReader();
-      r.onload = () => {
-        photos.push(r.result);
-        left--;
-        if(left===0){
-          renderPhotos();
-          saveLocal(true);
-          showSync("Dodano zdjęcia (lokalnie).", "ok");
-          inp.value = "";
-        }
-      };
+      r.onload = ()=> resolve(r.result);
+      r.onerror = ()=> reject(r.error);
       r.readAsDataURL(file);
     });
   }
 
-  function renderPhotos(){
-    const box = $("photos");
-    box.innerHTML = "";
-    photos.forEach((src, idx)=>{
-      const wrap = document.createElement("div");
-      wrap.style.position = "relative";
-      wrap.innerHTML = `
-        <img src="${src}" style="width:100%; height:140px; object-fit:cover; border-radius:16px; border:1px solid var(--border);" />
-        <button class="btn btn-danger btn-mini" style="position:absolute; top:8px; right:8px" onclick="removePhoto(${idx})">
-          <i class="fa-solid fa-trash"></i>
-        </button>
+  async function renderPhotos(){
+    const orderId = qs("id");
+    if(!orderId) return;
+    const items = await dbListPhotos(orderId);
+    const wrap = document.getElementById("photos");
+    wrap.innerHTML = "";
+
+    items.forEach(it=>{
+      const div = document.createElement("div");
+      div.className = "ph";
+      div.innerHTML = `
+        <img src="${it.dataUrl}" alt="zdjęcie">
+        <div class="x" title="Usuń" onclick="event.stopPropagation(); deletePhoto('${it.id}')">
+          <i class="fa-solid fa-xmark"></i>
+        </div>
       `;
-      box.appendChild(wrap);
-    });
-  }
-  function removePhoto(i){
-    photos.splice(i,1);
-    renderPhotos();
-    saveLocal(true);
-  }
-
-  // ===== SMS content (copy)
-  function formatCostsTextFromItems(){
-    if(!items.length) return "";
-    const lines = items.map(it => `- ${it.type}: ${it.name} — ${Number(it.price||0).toFixed(0)} zł`);
-    return lines.join("\n") + `\n\nSuma: ${Number(sum()).toFixed(0)} zł`;
-  }
-
-  function copySMS(){
-    if(!orderRow) return;
-    const client = orderRow.client_name || "Klient";
-    const bike = orderRow.bike || "Rower";
-    const total = Number(sum()).toFixed(0);
-    const text =
-`JL Pro Bike Serwis
-${client} — ${bike}
-
-Kosztorys:
-${formatCostsTextFromItems()}
-
-Kontakt: jlprobikeserwis.bike`;
-
-    navigator.clipboard.writeText(text).then(()=>{
-      showSync("Skopiowano treść SMS do schowka.", "ok");
-    }).catch(()=>{
-      showSync("Nie udało się skopiować (brak uprawnień).", "danger");
+      div.onclick = ()=> window.open(it.dataUrl, "_blank");
+      wrap.appendChild(div);
     });
   }
 
-  // ===== PDF export (print)
-  function exportPDF(){
-    window.print();
+  async function deletePhoto(id){
+    if(!confirm("Usunąć to zdjęcie lokalnie?")) return;
+    await dbDeletePhoto(id);
+    await renderPhotos();
   }
+  window.deletePhoto = deletePhoto;
 
-  // ===== Panel sync (costs_text + pola liczbowe)
-  async function pullCostsFromPanel(){
-    if(!orderRow) return;
-    try{
-      setSyncBadge("panel: pobieranie...", "warn");
-      const field = orderRow.public_code ? "public_code" : "id";
-      const value = orderRow.public_code || orderRow.id;
-      const { data, error } = await supabaseClient
-        .from("orders")
-        .select("costs_text, labor_cost, parts_cost, total_cost, price_estimate")
-        .eq(field, value)
-        .limit(1);
-
-      if(error) throw error;
-
-      const row = (data && data[0]) ? data[0] : {};
-      const costs = row.costs_text || "";
-      $("panelCosts").value = (costs || "").trim();
-
-      // liczby z panelu (jeśli są)
-      const labor = (row.labor_cost ?? "");
-      const parts = (row.parts_cost ?? "");
-      const total = (row.total_cost ?? "");
-      const est   = (row.price_estimate ?? "");
-
-      if($("panelLabor")) $("panelLabor").textContent = (labor===""? "—" : `${labor} zł`);
-      if($("panelParts")) $("panelParts").textContent = (parts===""? "—" : `${parts} zł`);
-      if($("panelTotal")) $("panelTotal").textContent = (total===""? "—" : `${total} zł`);
-      if($("panelEstimate")) $("panelEstimate").textContent = (est===""? "—" : `${est} zł`);
-
-      // jeśli lokalnie nie ma pozycji, spróbuj autouzupełnić z costs_text
-      if(!items.length && costs){
-        autofillItemsFromCostsText(costs);
-      }
-
-      setSyncBadge("panel: OK", "ok");
-      showSync("Pobrano kosztorys z panelu.", "ok");
-
-    }catch(e){
-      console.error(e);
-      setSyncBadge("panel: błąd", "danger");
-      showSync("Błąd pobierania kosztorysu z panelu. Sprawdź logowanie.", "danger");
-    }
-  }
-
-  async function pushCostsToPanel(){
-    if(!orderRow) return;
-    try{
-      setSyncBadge("panel: wysyłka...", "warn");
-
-      const field = orderRow.public_code ? "public_code" : "id";
-      const value = orderRow.public_code || orderRow.id;
-
-      const labor = sumByType("czynność");
-    const parts = sumByType("część");
-    const total = sum();
-    const payload = {
-      costs_text: formatCostsTextFromItems(),
-      labor_cost: labor,
-      parts_cost: parts,
-      total_cost: total,
-      price_estimate: total
-    };
-
-      const { error } = await supabaseClient
-        .from("orders")
-        .update(payload)
-        .eq(field, value);
-
-      if(error) throw error;
-
-      $("panelCosts").value = payload.costs_text;
-      if($("panelLabor")) $("panelLabor").textContent = `${payload.labor_cost} zł`;
-      if($("panelParts")) $("panelParts").textContent = `${payload.parts_cost} zł`;
-      if($("panelTotal")) $("panelTotal").textContent = `${payload.total_cost} zł`;
-      if($("panelEstimate")) $("panelEstimate").textContent = `${payload.price_estimate} zł`;
-
-      setSyncBadge("panel: OK", "ok");
-      showSync("Zapisano kosztorys do panelu (costs_text + pola liczbowe).", "ok");
-
-    }catch(e){
-      console.error(e);
-      setSyncBadge("panel: błąd", "danger");
-      showSync("Błąd wysyłki do panelu. Sprawdź logowanie / uprawnienia.", "danger");
-    }
-  }
-
-  // próba zapełnienia listy pozycji z costs_text (jeśli format jest linijkowy)
-  function autofillItemsFromCostsText(costsText){
-    try{
-      const lines = (costsText||"").split("\n").map(s=>s.trim()).filter(Boolean);
-      const parsed = [];
-      for(const ln of lines){
-        // spodziewany format: "- typ: nazwa — 123 zł"
-        const m = ln.match(/^-?\s*(czynność|część)\s*:\s*(.*?)\s*[—-]\s*([0-9]+)\s*zł/i);
-        if(m){
-          parsed.push({ type: m[1].toLowerCase(), name: m[2].trim(), price: Number(m[3]) });
-        }
-      }
-      if(parsed.length){
-        items = parsed;
-        renderItems();
-        showSync("Uzupełniono lokalne pozycje na podstawie costs_text.", "ok");
-      }
-    }catch(e){}
-  }
-
-  // ===== QR helpers
-  function openFromQrText(){
-    const txt = $("qrText").value.trim();
-    if(!txt) return;
-    const parsed = extractCodeOrIdFromText(txt);
-    if(!parsed){
-      showSync("Nie rozpoznano kodu/linku.", "danger");
-      return;
-    }
-    if(parsed.field === "public_code"){
-      location.href = `/panel/order-local.html?code=${encodeURIComponent(parsed.value)}`;
-    }else{
-      location.href = `/panel/order-local.html?id=${encodeURIComponent(parsed.value)}`;
-    }
-  }
-
-  function extractCodeOrIdFromText(text){
-    // 1) jeśli to URL, spróbuj wyciągnąć parametry
-    try{
-      if(text.startsWith("http://") || text.startsWith("https://")){
-        const u = new URL(text);
-        const code = u.searchParams.get("code");
-        const id = u.searchParams.get("id");
-        if(code) return { field:"public_code", value: code };
-        if(id) return { field:"id", value: id };
-      }
-    }catch(e){}
-
-    // 2) jeśli wygląda na UUID -> traktuj jako code (public_code) lub id? u Ciebie public_code też jest uuid.
-    const uuid = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-    if(uuid) return { field:"public_code", value: uuid[0] };
-
-    // 3) fallback: cokolwiek krótkiego jako code
-    if(text.length >= 4 && text.length <= 64){
-      return { field:"public_code", value: text };
-    }
-    return null;
-  }
-
-  function openQrModal(){
-    $("qrModal").style.display = "flex";
-  }
-  function closeQrModal(){
-    stopQrScan();
-    $("qrModal").style.display = "none";
-  }
-
-async function startQrScan(){
-    // Bardziej kompatybilne skanowanie: jsQR (działa szerzej niż BarcodeDetector)
-    try{
-      const video = $("qrVideo");
-      const canvas = $("qrCanvas");
-      const ctx = canvas.getContext("2d", { willReadFrequently:true });
-
-      $("qrErr").style.display = "none";
-
-      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-        $("qrErr").style.display = "block";
-        $("qrErr").textContent = "Brak dostępu do kamery (getUserMedia). Otwórz w Chrome i na HTTPS.";
-        return;
-      }
-
-      // zatrzymaj poprzedni stream jeśli był
-      stopQrScan();
-
-      qrStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-        audio: false
-      });
-
-      video.srcObject = qrStream;
-      video.setAttribute("playsinline","true");
-      await video.play();
-
-      // dopasuj canvas do wideo
-      const tick = () => {
-        if(!qrScanning) return;
-
-        if(video.readyState === video.HAVE_ENOUGH_DATA){
-          canvas.width = video.videoWidth || 640;
-          canvas.height = video.videoHeight || 480;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-          const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
-
-          if(code && code.data){
-            const txt = code.data.trim();
-            handleQrText(txt);
-            stopQrScan();
-            return;
-          }
-        }
-
-        requestAnimationFrame(tick);
-      };
-
-      qrScanning = true;
-      requestAnimationFrame(tick);
-
-    }catch(e){
-      console.error(e);
-      $("qrErr").style.display = "block";
-      $("qrErr").textContent = "Nie udało się uruchomić kamery. Sprawdź: HTTPS + zgoda na kamerę + nie otwieraj w przeglądarce Facebook/Messenger.";
-    }
-  }
-
-  function stopQrScan(){
-    qrScanning = false;
-    if(qrLoopTimer){
-      clearInterval(qrLoopTimer);
-      qrLoopTimer = null;
-    }
-    if(qrStream){
-      qrStream.getTracks().forEach(t=>t.stop());
-      qrStream = null;
-    }
-    const video = $("qrVideo");
-    if(video) video.srcObject = null;
-  }
-
-  function handleQrText(text){
-    const parsed = extractCodeOrIdFromText(text);
-    if(!parsed || !parsed.value){
-      $("qrErr").style.display = "block";
-      $("qrErr").textContent = "Nie rozpoznano QR. QR powinien zawierać link albo sam kod/id.";
-      return;
-    }
-    // extractCodeOrIdFromText zwraca:
-    // - field: "public_code" (gdy QR ma parametr code lub wygląda jak UUID)
-    // - field: "id" (gdy to zwykły identyfikator)
-    if(parsed.field === "public_code"){
-      window.location.href = `/panel/order-local.html?code=${encodeURIComponent(parsed.value)}`;
-      return;
-    }
-    window.location.href = `/panel/order-local.html?id=${encodeURIComponent(parsed.value)}`;
-  }
-
-
-  // ===== Load order from panel (Supabase)
   async function loadOrder(){
-    clearError();
-    cleanupExpired();
-
-    $("ttlDays").value = localStorage.getItem(ttlKey) || "60";
-
-    if(!window.supabaseClient){
-      showError("Brak supabaseClient.js. Sprawdź ścieżkę: /supabaseClient.js");
+    const orderId = qs("id");
+    if(!orderId){
+      showWarn("Brak parametru id w URL. Wejdź tu z listy zleceń.");
       return;
     }
 
-    try{
-      setSyncBadge("panel: łączenie...", "warn");
+    const { data, error } = await sb
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .single();
 
-      // musi być sesja (logowanie w panelu)
-      const { data: sess } = await supabaseClient.auth.getSession();
-      const isLogged = !!(sess && sess.session);
-      if(!isLogged){
-        setSyncBadge("panel: niezalogowano", "danger");
-        showError("Nie jesteś zalogowany do panelu. Otwórz /panel/login.html i zaloguj się, potem wróć tutaj.");
-        return;
-      }
-
-      // odczyt po id lub public_code
-      let query = supabaseClient.from("orders")
-        .select("id, public_code, client_name, phone, bike, status, description, costs_text, labor_cost, parts_cost, total_cost, price_estimate");
-
-      if(orderCode){
-        query = query.eq("public_code", orderCode).limit(1);
-      }else if(orderId){
-        query = query.eq("id", orderId).limit(1);
-      }else{
-        setSyncBadge("panel: brak parametru", "danger");
-        showError("Brak parametru ?id= lub ?code= w linku.");
-        return;
-      }
-
-      const { data, error } = await query;
-      if(error) throw error;
-      if(!data || !data.length){
-        setSyncBadge("panel: brak", "danger");
-        showError("Nie znaleziono zlecenia lub brak uprawnień.");
-        return;
-      }
-
-      orderRow = data[0];
-
-      $("clientName").value = orderRow.client_name || "";
-      $("phone").value = orderRow.phone || "";
-      $("bike").value = orderRow.bike || "";
-      $("status").value = orderRow.status || "";
-      $("description").value = orderRow.description || "";
-
-      setSyncBadge("panel: OK", "ok");
-
-      // załaduj lokalne dane (jeśli są)
-      loadLocal();
-
-      // pokaż kosztorys panelowy (jeśli jest)
-      if(orderRow.costs_text){
-        $("panelCosts").value = (orderRow.costs_text||"").trim();
-      }
-      if($("panelLabor")) $("panelLabor").textContent = (orderRow.labor_cost==null? "—" : `${orderRow.labor_cost} zł`);
-      if($("panelParts")) $("panelParts").textContent = (orderRow.parts_cost==null? "—" : `${orderRow.parts_cost} zł`);
-      if($("panelTotal")) $("panelTotal").textContent = (orderRow.total_cost==null? "—" : `${orderRow.total_cost} zł`);
-      if($("panelEstimate")) $("panelEstimate").textContent = (orderRow.price_estimate==null? "—" : `${orderRow.price_estimate} zł`);
-
-      // auto-fill pozycji z panelu jeśli lokalnie pusto
-      if(!items.length && orderRow.costs_text){
-        autofillItemsFromCostsText(orderRow.costs_text);
-      }
-
-    }catch(e){
-      console.error(e);
-      setSyncBadge("panel: błąd", "danger");
-      showError("Błąd ładowania zlecenia. Sprawdź konsolę.");
+    if(error || !data){
+      showWarn("Nie znaleziono zlecenia lub brak uprawnień.");
+      return;
     }
+
+    const o = data;
+    const prob = (o.problem_description || o.problem || o.description || "—");
+
+    document.getElementById("orderKv").innerHTML = `
+      <div><i class="fa-solid fa-user"></i><span><b>${escapeHtml(o.customer_name || "—")}</b></span></div>
+      <div><i class="fa-solid fa-phone"></i><span>${escapeHtml(o.phone || "—")}</span></div>
+      <div><i class="fa-solid fa-bicycle"></i><span>${escapeHtml(o.bike_type || "—")}</span></div>
+      <div><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(o.status || "—")}</span></div>
+      <div><i class="fa-solid fa-comment-dots"></i><span>${escapeHtml(prob)}</span></div>
+    `;
   }
 
-  // Auto-backup przy wyjściu / zmianie karty
-  window.addEventListener("beforeunload", ()=> saveLocal(true));
-  document.addEventListener("visibilitychange", ()=>{
-    if(document.visibilityState === "hidden") saveLocal(true);
-  });
-
-  // Start
-  loadOrder();
+  (async ()=>{
+    await checkAuth();
+    await loadOrder();
+    loadLocal();
+    await renderPhotos();
+  })();
 </script>
-
 </body>
 </html>
