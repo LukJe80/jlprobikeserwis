@@ -1,980 +1,685 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Notatnik serwisanta (lokalnie) — JL Pro Bike Serwis</title>
+<meta charset="UTF-8">
+<title>Edycja zlecenia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- ✅ absolutna ścieżka (działa z /panel/) -->
-  <script src="/supabaseClient.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
 
-  <style>
-    :root{
-      --accent:#2563eb;
-      --accentHover:#1d4ed8;
-      --bg:#020617;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --card:#0b1222;
-      --border:rgba(255,255,255,0.08);
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --danger:#ef4444;
-      --ok:#22c55e;
-      --warn:#f59e0b;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background: radial-gradient(1200px 600px at 20% 10%, rgba(37,99,235,.18), transparent 60%),
-                  radial-gradient(900px 500px at 80% 20%, rgba(34,197,94,.08), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-    }
-    a{color:inherit; text-decoration:none}
-    .topbar{
-      position:sticky; top:0; z-index:10;
-      backdrop-filter: blur(10px);
-      background: rgba(2,6,23,.6);
-      border-bottom:1px solid var(--border);
-      padding:12px 16px;
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px;
-    }
-    .brand{
-      font-weight:800; letter-spacing:.2px;
-      color:#60a5fa;
-      font-size:20px;
-    }
-    .actions{display:flex; gap:10px; align-items:center}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.03);
-      padding:10px 12px;
-      border-radius:999px;
-      box-shadow: var(--shadow);
-      font-weight:700;
-    }
-    .pill i{opacity:.9}
-    .pill:hover{border-color: rgba(96,165,250,.35)}
-    .wrap{max-width:1100px; margin:18px auto; padding:0 14px 40px}
-    .hero{
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow: var(--shadow);
-      padding:18px 18px 14px;
-    }
-    .hero h1{
-      margin:0 0 8px;
-      font-size:30px;
-      letter-spacing:.2px;
-      display:flex; gap:10px; align-items:center;
-    }
-    .hero p{
-      margin:0;
-      color:var(--muted);
-      line-height:1.45;
-      font-size:15px;
-    }
-    .badges{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-    .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.03);
-      color:var(--muted);
-      font-weight:700;
-      font-size:13px;
-    }
-    .badge.ok{color:#86efac; border-color: rgba(34,197,94,.22)}
-    .badge.err{color:#fca5a5; border-color: rgba(239,68,68,.25)}
-    .grid{
-      margin-top:14px;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:14px;
-    }
-    @media (max-width: 920px){
-      .grid{grid-template-columns:1fr}
-    }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow: var(--shadow);
-      padding:16px;
-      position:relative;
-    }
-    .section-title{
-      display:flex; align-items:center; justify-content:space-between;
-      margin:0 0 10px;
-      font-weight:900;
-      letter-spacing:.2px;
-      color:#cbd5e1;
-      gap:10px;
-    }
-    .section-title span{display:flex; align-items:center; gap:10px}
-    .muted{color:var(--muted); font-size:13px; line-height:1.4}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .row.nowrap{flex-wrap:nowrap}
-    .field{
-      display:flex; flex-direction:column; gap:6px;
-      flex:1;
-      min-width:160px;
-    }
-    label{font-size:12px; color:var(--muted); font-weight:800; letter-spacing:.25px}
-    input, textarea, select{
-      width:100%;
-      border:1px solid var(--border);
-      background: rgba(2,6,23,.55);
-      color:var(--text);
-      border-radius:14px;
-      padding:12px 12px;
-      outline:none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
-    }
-    textarea{min-height:120px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
-    input[readonly], textarea[readonly]{opacity:.9}
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      gap:10px;
-      border:1px solid var(--border);
-      background: rgba(255,255,255,.04);
-      color:var(--text);
-      padding:12px 14px;
-      border-radius:14px;
-      font-weight:900;
-      cursor:pointer;
-      box-shadow: var(--shadow);
-      user-select:none;
-    }
-    .btn:hover{border-color: rgba(96,165,250,.35)}
-    .btn-main{
-      background: linear-gradient(180deg, rgba(37,99,235,.95), rgba(29,78,216,.9));
-      border-color: rgba(37,99,235,.55);
-    }
-    .btn-main:hover{filter:brightness(1.03)}
-    .btn-danger{
-      background: rgba(239,68,68,.10);
-      border-color: rgba(239,68,68,.35);
-      color:#fecaca;
-    }
-    .btn-ok{
-      background: rgba(34,197,94,.10);
-      border-color: rgba(34,197,94,.35);
-      color:#bbf7d0;
-    }
-    .notice{
-      margin-top:12px;
-      border:1px solid rgba(239,68,68,.25);
-      background: rgba(239,68,68,.07);
-      color:#fecaca;
-      padding:12px 12px;
-      border-radius:14px;
-      font-weight:800;
-    }
-    .notice.ok{
-      border-color: rgba(34,197,94,.25);
-      background: rgba(34,197,94,.08);
-      color:#bbf7d0;
-    }
-    .notice.warn{
-      border-color: rgba(245,158,11,.25);
-      background: rgba(245,158,11,.10);
-      color:#fde68a;
-    }
-    .sumRow{
-      margin-top:10px;
-      display:flex;
-      align-items:center;
-      justify-content:flex-end;
-      font-weight:1000;
-      letter-spacing:.3px;
-      font-size:28px;
-      text-shadow: 0 10px 24px rgba(0,0,0,.35);
-    }
-    .sumRow small{
-      margin-right:10px;
-      font-size:13px;
-      color:var(--muted);
-      font-weight:900;
-      letter-spacing:.25px;
-      text-transform:uppercase;
-      align-self:flex-end;
-      margin-bottom:6px;
-    }
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
 
-    /* Modal QR */
-    .modal{
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      align-items:center; justify-content:center;
-      padding:16px;
-      z-index:50;
-    }
-    .modal.open{display:flex}
-    .modalCard{
-      width:min(720px, 96vw);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow: var(--shadow);
-      padding:16px;
-    }
-    .modalTop{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    #qrVideo{
-      width:100%;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:#000;
-      max-height: 55vh;
-      object-fit:cover;
-    }
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
-  </style>
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+  --muted: rgba(229,231,235,0.7);
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* ===== HEADER (jak panel) ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:14px;
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.toplink{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+  opacity:.92;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+}
+.toplink:hover{ color:var(--accent); }
+
+/* ===== LAYOUT (zamiast flex center) ===== */
+.wrapper{
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 120px 24px 80px; /* miejsce na header */
+}
+
+/* ===== BOX ===== */
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 16px;
+  padding: 26px;
+}
+
+h1.page-title{
+  margin:0 0 14px;
+  font-size:26px;
+  font-weight:900;
+}
+
+/* ===== FORM ===== */
+label{
+  display:block;
+  font-weight:800;
+  color:#93c5fd;
+  margin-top:14px;
+}
+
+/* ✅ CZCIONKA W POLACH MA BYĆ CZARNA */
+input,select,textarea{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color:#000;
+  font-size:16px;
+  margin-top:6px;
+}
+
+textarea{ min-height:120px; resize:vertical; }
+
+.sum{
+  text-align:right;
+  font-size:22px;
+  font-weight:900;
+  margin:14px 0 22px;
+}
+
+/* ===== BUTTONS (spójne z projektem, bez zmiany onclick) ===== */
+.btn{
+  width:100%;
+  padding:16px;
+  font-size:16px;
+  font-weight:900;
+  border-radius:999px;
+  cursor:pointer;
+  margin-bottom:12px;
+
+  border:2px solid var(--accent);
+  background:transparent;
+  color:var(--accent);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.btn:hover{
+  background:var(--accent);
+  color:#fff;
+}
+
+.btn.save{
+  background:var(--accent);
+  color:#fff;
+}
+.btn.save:hover{ background:var(--accentHover); }
+
+/* przyciski druku w stylu panelu (bez “starych” kolorów) */
+.btn.pdf-in, .btn.pdf-out{
+  border-color: rgba(255,255,255,0.18);
+  color:#fff;
+}
+.btn.pdf-in:hover, .btn.pdf-out:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
+  color:#fff;
+}
+
+.back{
+  margin-top:20px;
+  color:#60a5fa;
+  cursor:pointer;
+  text-align:center;
+  font-weight:800;
+}
+.back:hover{ color:var(--accent); }
+</style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="brand">JL Pro Bike Serwis</div>
 
-    <div class="actions">
-      <a class="pill" href="/panel/orders-local.html" title="Lista zleceń (lokalny notatnik)">
-        <i class="fa-solid fa-list"></i> Zlecenia
-      </a>
-      <a class="pill" href="/panel/orders.html" title="Panel (online)">
-        <i class="fa-solid fa-cloud"></i> Panel
-      </a>
-      <button class="pill" onclick="openQrModal()" title="Skanuj kod QR">
-        <i class="fa-solid fa-qrcode"></i>
-      </button>
-    </div>
+<header>
+  <h1><i class="fa-solid fa-pen-to-square"></i> Edycja zlecenia</h1>
+  <div class="header-right">
+    <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
   </div>
+</header>
 
-  <div class="wrap">
-    <div class="hero">
-      <h1><i class="fa-solid fa-clipboard"></i> Notatnik serwisanta (lokalnie)</h1>
-      <p>
-        Pobiera zlecenie z panelu (po zalogowaniu), ale <b>wycena/notatki/zdjęcia zapisują się tylko w telefonie</b>.
-        <span class="mono">Nic nie zmienia się w bazie</span> (chyba że klikniesz „Zapisz do panelu (kosztorys)” — wtedy wysyła tylko <span class="mono">costs_text</span>.
-      </p>
+<div class="wrapper">
+  <div class="box">
 
-      <div class="badges">
-        <span id="badgeLocal" class="badge"><i class="fa-solid fa-shield"></i> lokalne dane</span>
-        <span id="badgePanel" class="badge"><i class="fa-solid fa-cloud"></i> panel: …</span>
-      </div>
+    <h1 class="page-title">Edycja zlecenia</h1>
 
-      <div id="topError" class="notice" style="display:none;"></div>
-    </div>
+    <label>Status</label>
+    <select id="status">
+      <option>oczekujące</option>
+      <option>nowe</option>
+      <option>w trakcie</option>
+      <option>gotowe</option>
+      <option>wydano</option>
+    </select>
 
-    <div class="grid">
-      <!-- LEWA: dane zlecenia -->
-      <div class="card">
-        <div class="section-title">
-          <span><i class="fa-solid fa-file-lines"></i> Zlecenie</span>
-          <span class="muted" id="orderIdLabel"></span>
-        </div>
+    <label>Klient</label>
+    <input id="customer">
 
-        <div class="row">
-          <div class="field">
-            <label>Klient</label>
-            <input id="fCustomer" readonly />
-          </div>
-          <div class="field">
-            <label>Telefon</label>
-            <input id="fPhone" readonly />
-          </div>
-        </div>
+    <label>Telefon</label>
+    <input id="phone">
 
-        <div class="row">
-          <div class="field">
-            <label>Rower</label>
-            <input id="fBike" readonly />
-          </div>
-          <div class="field">
-            <label>Status</label>
-            <input id="fStatus" readonly />
-          </div>
-        </div>
+    <label>Rower</label>
+    <input id="bike">
 
-        <div class="field">
-          <label>Opis zgłoszenia klienta</label>
-          <textarea id="fIssue" readonly></textarea>
-        </div>
+    <label>Opis zgłoszenia klienta</label>
+    <textarea id="note"></textarea>
 
-        <div class="notice warn" style="margin-top:12px;">
-          <i class="fa-solid fa-qrcode"></i>
-          QR: możesz wkleić link/tekst QR w polu w oknie skanera i kliknąć „Otwórz”.
-        </div>
-      </div>
+    <label>Koszt (roboczy – do wydania roweru)</label>
+    <textarea id="costText" placeholder="np. detka 25&#10;regulacja przerzutek 40"></textarea>
 
-      <!-- PRAWA: JEDEN wspólny kalkulator (jak edit-order) -->
-      <div class="card">
-        <div class="section-title">
-          <span><i class="fa-solid fa-calculator"></i> Kalkulator (lokalnie) — notatki + koszt</span>
-        </div>
+    <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
 
-        <div class="field">
-          <label>Notatki (tylko telefon)</label>
-          <textarea id="notesText" placeholder="np. trudny klient, co było zużyte, uwagi..."></textarea>
-        </div>
+    <button class="btn save" onclick="save()">
+      <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
+    </button>
 
-        <div class="row">
-          <div class="field" style="flex:2">
-            <label>Dodaj pozycję</label>
-            <input id="itemName" placeholder="np. serwis kompletny" />
-          </div>
-          <div class="field" style="max-width:150px">
-            <label>Cena (zł)</label>
-            <input id="itemPrice" inputmode="decimal" placeholder="np. 350" />
-          </div>
-          <div class="field" style="max-width:160px">
-            <label>Typ</label>
-            <select id="itemType">
-              <option value="czynność">czynność</option>
-              <option value="część">część</option>
-            </select>
-          </div>
-          <div class="field" style="max-width:140px; align-self:flex-end">
-            <button class="btn btn-main" onclick="addLineFromQuickAdd()">
-              <i class="fa-solid fa-plus"></i> Dodaj
-            </button>
-          </div>
-        </div>
+    <button class="btn pdf-in" onclick="printIn()">
+      <i class="fa-solid fa-print"></i> Drukuj kartę przyjęcia
+    </button>
 
-        <div class="field" style="margin-top:8px;">
-          <label>Koszt (roboczy – do wydania roweru)</label>
-          <textarea id="costText" placeholder="Każda linia może mieć kwotę, np.:
-serwis kompletny 350 zł
-serwis koła 100"></textarea>
-          <div class="muted" style="margin-top:6px;">
-            Suma liczy się automatycznie z liczb w liniach (obsługuje też 350.50 / 350,50).
-          </div>
-        </div>
+    <button class="btn pdf-out" onclick="printOut()">
+      <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
+    </button>
 
-        <div class="sumRow">
-          <small>SUMA:</small>
-          <div id="sumValue">0.00 zł</div>
-        </div>
-
-        <div class="row" style="margin-top:12px;">
-          <button class="btn" onclick="saveLocal()"><i class="fa-solid fa-floppy-disk"></i> Zapisz lokalnie</button>
-          <button class="btn" onclick="copySms()"><i class="fa-solid fa-comment-sms"></i> Kopiuj SMS (wycena)</button>
-          <button class="btn btn-danger" onclick="clearLocal()"><i class="fa-solid fa-trash"></i> Wyczyść lokalne dane</button>
-        </div>
-
-        <!-- Panel sync -->
-        <div class="notice" style="margin-top:14px;">
-          <div class="section-title" style="margin:0 0 8px;">
-            <span><i class="fa-solid fa-cloud-arrow-down"></i> Kosztorys z panelu (Supabase)</span>
-          </div>
-
-          <textarea id="panelCosts" readonly placeholder="Tu pojawi się costs_text z panelu (jeśli istnieje)"></textarea>
-
-          <div class="row" style="margin-top:10px;">
-            <button class="btn" onclick="pullCostsFromPanel()">
-              <i class="fa-solid fa-rotate"></i> Pobierz z panelu
-            </button>
-            <button class="btn" onclick="importPanelCostsToLocal()">
-              <i class="fa-solid fa-download"></i> Wczytaj do lokalnego kosztorysu
-            </button>
-            <button class="btn btn-main" onclick="pushCostsToPanel()">
-              <i class="fa-solid fa-cloud-arrow-up"></i> Zapisz do panelu (kosztorys)
-            </button>
-          </div>
-
-          <div id="syncNotice" class="notice" style="display:none; margin-top:10px;"></div>
-        </div>
-
-        <!-- Backup / PDF / Auto-usuwanie -->
-        <div class="row" style="margin-top:14px;">
-          <button class="btn" onclick="exportBackup()"><i class="fa-solid fa-file-export"></i> Eksport backup</button>
-          <button class="btn" onclick="importBackup()"><i class="fa-solid fa-file-import"></i> Import backup</button>
-          <button class="btn" onclick="exportPdf()"><i class="fa-solid fa-file-pdf"></i> Export PDF</button>
-        </div>
-
-        <div class="row" style="margin-top:12px;">
-          <div class="field" style="max-width:240px">
-            <label>Auto-usuwanie po (dni)</label>
-            <input id="ttlDays" type="number" min="1" step="1" value="60" />
-          </div>
-          <div class="field" style="max-width:200px; align-self:flex-end">
-            <button class="btn btn-ok" onclick="saveTtl()"><i class="fa-solid fa-check"></i> Zapisz</button>
-          </div>
-        </div>
-
-        <div class="muted" style="margin-top:10px;">
-          • Auto-backup zapisuje się w telefonie przy wyjściu z ekranu / zamknięciu.
-          • „Eksport backup” tworzy plik .json (możesz go wysłać na komputer).
-          • „Export PDF” otwiera wydruk — w drukowaniu wybierasz „Zapisz jako PDF”.
-        </div>
-      </div>
-    </div>
   </div>
-
-  <!-- MODAL QR -->
-  <div id="qrModal" class="modal">
-    <div class="modalCard">
-      <div class="modalTop">
-        <div class="section-title" style="margin:0;">
-          <span><i class="fa-solid fa-qrcode"></i> Skanuj kod QR</span>
-        </div>
-        <button class="btn btn-danger" onclick="closeQrModal()"><i class="fa-solid fa-xmark"></i> Zamknij</button>
-      </div>
-
-      <p class="muted" style="margin:0 0 10px;">
-        Celuj w kod QR z zawieszki/telefonu. Jeśli QR zawiera link do statusu (np. <span class="mono">.../order-status.html?id=123</span>) to zostanie otwarty.
-      </p>
-
-      <video id="qrVideo" playsinline></video>
-
-      <div id="qrHint" class="notice warn" style="margin-top:10px; display:none;"></div>
-
-      <div class="row" style="margin-top:10px;">
-        <div class="field" style="flex:2; min-width:220px;">
-          <label>Jeśli kamera/QR nie działa — wklej link/tekst z QR</label>
-          <input id="qrPaste" placeholder="np. https://jlprobikeserwis.bike/order-status.html?id=..." />
-        </div>
-        <div class="field" style="max-width:170px; align-self:flex-end">
-          <button class="btn btn-main" onclick="openFromPastedQr()"><i class="fa-solid fa-arrow-right"></i> Otwórz</button>
-        </div>
-      </div>
-    </div>
-  </div>
+</div>
 
 <script>
-  // -----------------------------
-  // Helpers
-  // -----------------------------
-  const qs = new URLSearchParams(location.search);
-  const orderId = qs.get("id") || "";
-  const LOCAL_PREFIX = "jl_local_order_";
-  const TTL_KEY = "jl_local_ttl_days";
+document.addEventListener("DOMContentLoaded", ()=>{
 
-  function el(id){ return document.getElementById(id); }
-  function setNotice(id, text, type){
-    const n = el(id);
-    n.style.display = "block";
-    n.className = "notice" + (type ? (" " + type) : "");
-    n.textContent = text;
-  }
-  function hideNotice(id){ el(id).style.display = "none"; el(id).textContent=""; }
+  const id = new URLSearchParams(location.search).get("id");
 
-  function normalizeNumber(s){
-    if(!s) return null;
-    const t = String(s).replace(/\s/g,'').replace(',', '.');
-    const v = Number(t);
-    return Number.isFinite(v) ? v : null;
-  }
+  const status   = document.getElementById("status");
+  const customer = document.getElementById("customer");
+  const phone    = document.getElementById("phone");
+  const bike     = document.getElementById("bike");
+  const note     = document.getElementById("note");
+  const costText = document.getElementById("costText");
+  const sumEl    = document.getElementById("sum");
 
-  function moneyPLN(v){
-    return (v || 0).toFixed(2) + " zł";
-  }
+  const COST_TEXT_COLUMN = "costs_text";
 
-  // Wyciąga kwoty z każdej linii i sumuje
-  function calcSumFromText(text){
-    if(!text) return 0;
-    const lines = text.split(/\r?\n/);
-    let sum = 0;
-    for(const line of lines){
-      // znajdź ostatnią liczbę w linii (350 / 350.50 / 350,50)
-      const m = line.match(/(\d+(?:[.,]\d{1,2})?)/g);
-      if(!m || !m.length) continue;
-      const last = m[m.length-1];
-      const val = normalizeNumber(last);
-      if(val !== null) sum += val;
-    }
-    return sum;
+  let currentTotal = 0;
+
+  // ✅ do SMS: zapamiętujemy poprzedni status i kod publiczny (jeśli jest)
+  let previousStatus = null;
+  let publicCode = "";
+
+  function escapeHtml(str){
+    return (str ?? "")
+      .toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
-  function updateSumUI(){
-    const sum = calcSumFromText(el("costText").value);
-    el("sumValue").textContent = moneyPLN(sum);
-  }
-
-  function localKey(){
-    return LOCAL_PREFIX + (orderId || "NO_ID");
-  }
-
-  function loadLocal(){
-    try{
-      const raw = localStorage.getItem(localKey());
-      if(!raw) return { notes:"", costText:"", photos:[], createdAt: Date.now(), updatedAt: Date.now() };
-      const data = JSON.parse(raw);
-      return Object.assign({ notes:"", costText:"", photos:[], createdAt: Date.now(), updatedAt: Date.now() }, data);
-    }catch(e){
-      return { notes:"", costText:"", photos:[], createdAt: Date.now(), updatedAt: Date.now() };
-    }
-  }
-
-  function saveLocal(){
-    if(!orderId){
-      setNotice("topError", "Brak ID zlecenia w linku (?id=...).", "warn");
-      return;
-    }
-    const data = loadLocal();
-    data.notes = el("notesText").value || "";
-    data.costText = el("costText").value || "";
-    data.updatedAt = Date.now();
-    localStorage.setItem(localKey(), JSON.stringify(data));
-    setNotice("topError", "Zapisano lokalnie ✅", "ok");
-    setTimeout(()=>hideNotice("topError"), 1400);
-    updateBadges();
-  }
-
-  function clearLocal(){
-    if(!orderId) return;
-    localStorage.removeItem(localKey());
-    el("notesText").value = "";
-    el("costText").value = "";
-    updateSumUI();
-    setNotice("topError", "Wyczyszczono lokalne dane.", "warn");
-    setTimeout(()=>hideNotice("topError"), 1400);
-    updateBadges();
-  }
-
-  // dopisuje pozycję do costText (jak w edit-order)
-  function addLineFromQuickAdd(){
-    const name = (el("itemName").value || "").trim();
-    const price = (el("itemPrice").value || "").trim();
-    const type = el("itemType").value;
-
-    if(!name || !price){
-      setNotice("topError", "Uzupełnij nazwę i cenę.", "warn");
-      setTimeout(()=>hideNotice("topError"), 1400);
-      return;
-    }
-    const v = normalizeNumber(price);
-    if(v === null){
-      setNotice("topError", "Nieprawidłowa cena.", "warn");
-      setTimeout(()=>hideNotice("topError"), 1400);
-      return;
-    }
-
-    const prefix = (type === "część") ? "część:" : "czynność:";
-    const line = `${prefix} ${name} ${v} zł`;
-
-    const t = el("costText");
-    t.value = (t.value ? (t.value.trimEnd() + "\n") : "") + line + "\n";
-    el("itemName").value = "";
-    el("itemPrice").value = "";
-    updateSumUI();
-  }
-
-  function copySms(){
-    const customer = el("fCustomer").value || "Klient";
-    const bike = el("fBike").value || "Rower";
-    const sum = calcSumFromText(el("costText").value);
-    const costs = (el("costText").value || "").trim();
-
-    let msg = `JL Pro Bike Serwis\n${customer}\n${bike}\n\nWycena:\n`;
-    msg += costs ? costs + "\n" : "(brak pozycji)\n";
-    msg += `\nSUMA: ${moneyPLN(sum)}`;
-
-    navigator.clipboard.writeText(msg).then(()=>{
-      setNotice("topError", "SMS skopiowany ✅ (wklej w aplikacji Wiadomości)", "ok");
-      setTimeout(()=>hideNotice("topError"), 1600);
-    }).catch(()=>{
-      setNotice("topError", "Nie udało się skopiować (blokada przeglądarki).", "warn");
+  function calcSum(){
+    let s = 0;
+    (costText.value || "").split("\n").forEach(l=>{
+      const m = l.match(/(\d+(?:[.,]\d+)?)/);
+      if(m) s += parseFloat(m[1].replace(",",".")); 
     });
+    currentTotal = s;
+    sumEl.textContent = s.toFixed(2);
   }
+  costText.addEventListener("input", calcSum);
 
-  // -----------------------------
-  // TTL / Auto-usuwanie
-  // -----------------------------
-  function loadTtl(){
-    const v = localStorage.getItem(TTL_KEY);
-    if(v) el("ttlDays").value = v;
-  }
-  function saveTtl(){
-    const d = parseInt(el("ttlDays").value || "60", 10);
-    if(!Number.isFinite(d) || d < 1){
-      setNotice("topError", "TTL musi być >= 1.", "warn");
-      setTimeout(()=>hideNotice("topError"), 1400);
-      return;
+  // ✅ normalizacja telefonu do formatu 48XXXXXXXXX
+  function normalizePhoneToPL48(raw){
+    const digits = String(raw || "").replace(/\D/g, "");
+    if(!digits) return "";
+
+    if(digits.startsWith("48") && digits.length === 11) return digits;
+    if(digits.length === 9) return "48" + digits;
+
+    if(digits.endsWith(digits.slice(-9)) && digits.length > 11){
+      return "48" + digits.slice(-9);
     }
-    localStorage.setItem(TTL_KEY, String(d));
-    setNotice("topError", "Zapisano TTL ✅", "ok");
-    setTimeout(()=>hideNotice("topError"), 1400);
+    return digits;
   }
 
-  function cleanupExpired(){
-    const ttl = parseInt(localStorage.getItem(TTL_KEY) || "60", 10);
-    const maxAge = ttl * 24 * 60 * 60 * 1000;
-    const now = Date.now();
+  // ✅ SMS tylko przy statusie "gotowe"
+  async function sendSmsGotowe(){
+    const to = normalizePhoneToPL48(phone.value);
+    if(!to) return { ok:false, skipped:true, reason:"no_phone" };
 
-    for(let i=0;i<localStorage.length;i++){
-      const k = localStorage.key(i);
-      if(!k || !k.startsWith(LOCAL_PREFIX)) continue;
-      try{
-        const data = JSON.parse(localStorage.getItem(k) || "{}");
-        const updatedAt = data.updatedAt || data.createdAt || 0;
-        if(updatedAt && (now - updatedAt) > maxAge){
-          localStorage.removeItem(k);
-        }
-      }catch(e){}
-    }
+    const msg = publicCode
+      ? `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior. Kod: ${publicCode}`
+      : `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior.`;
+
+    const r = await fetch("/api/sms/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, message: msg })
+    });
+
+    const j = await r.json().catch(()=>({ ok:false, error:"Invalid JSON response" }));
+    return j;
   }
 
-  // -----------------------------
-  // Backup JSON
-  // -----------------------------
-  function exportBackup(){
-    if(!orderId){
-      setNotice("topError", "Brak ID zlecenia w linku (?id=...).", "warn");
-      return;
-    }
-    const data = loadLocal();
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `backup-order-${orderId}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
+  async function load(){
+    const { data, error } = await supabaseClient
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-  function importBackup(){
-    const input = document.createElement("input");
-    input.type="file";
-    input.accept="application/json";
-    input.onchange = () => {
-      const file = input.files && input.files[0];
-      if(!file) return;
-      const r = new FileReader();
-      r.onload = () => {
-        try{
-          const data = JSON.parse(String(r.result || "{}"));
-          if(!orderId){
-            setNotice("topError", "Otwórz najpierw konkretne zlecenie (?id=...).", "warn");
-            return;
-          }
-          data.updatedAt = Date.now();
-          localStorage.setItem(localKey(), JSON.stringify(data));
-          applyLocalToUI();
-          setNotice("topError", "Import zakończony ✅", "ok");
-          setTimeout(()=>hideNotice("topError"), 1500);
-          updateBadges();
-        }catch(e){
-          setNotice("topError", "Nieprawidłowy plik backup.", "warn");
-        }
-      };
-      r.readAsText(file);
-    };
-    input.click();
-  }
-
-  // PDF: prosto przez print (najmniej roboty, jak u Ciebie)
-  function exportPdf(){
-    window.print();
-  }
-
-  // -----------------------------
-  // Supabase: pobranie zlecenia + sync costs_text
-  // -----------------------------
-  async function ensureLoggedIn(){
-    try{
-      const { data } = await supabaseClient.auth.getSession();
-      return !!(data && data.session);
-    }catch(e){
-      return false;
-    }
-  }
-
-  async function loadOrderFromPanel(){
-    if(!orderId){
-      setNotice("topError", "Brak ID zlecenia w linku (?id=...).", "warn");
-      el("badgePanel").classList.add("err");
-      el("badgePanel").textContent = "panel: brak id";
+    if(error){
+      alert("Błąd pobierania danych: " + error.message);
       return;
     }
 
-    const logged = await ensureLoggedIn();
-    if(!logged){
-      el("badgePanel").classList.add("err");
-      el("badgePanel").textContent = "panel: brak logowania";
-      setNotice("topError", "Nie jesteś zalogowany do panelu. Zaloguj się w /panel/login.html i wróć tutaj.", "warn");
-      return;
-    }
+    status.value   = data.status ?? "oczekujące";
+    customer.value = data.customer_name ?? "";
+    phone.value    = data.phone ?? "";
+    bike.value     = data.bike_type ?? "";
+    note.value     = data.description ?? "";
 
-    try{
-      // minimalny zestaw kolumn + fallbacki
-      const { data, error } = await supabaseClient
-        .from("orders")
-        .select("id, customer_name, phone, bike_type, issue_desc, status, costs_text")
-        .eq("id", orderId)
-        .single();
-
-      if(error) throw error;
-
-      el("orderIdLabel").textContent = data.id ? ("ID: " + data.id) : "";
-      el("fCustomer").value = data.customer_name || "";
-      el("fPhone").value = data.phone || "";
-      el("fBike").value = data.bike_type || "";
-      el("fStatus").value = data.status || "";
-      el("fIssue").value = data.issue_desc || "";
-
-      el("panelCosts").value = data.costs_text || "";
-
-      el("badgePanel").classList.remove("err");
-      el("badgePanel").classList.add("ok");
-      el("badgePanel").textContent = "panel: OK";
-
-      hideNotice("topError");
-    }catch(e){
-      console.error("loadOrderFromPanel error:", e);
-      el("badgePanel").classList.add("err");
-      el("badgePanel").textContent = "panel: błąd";
-      setNotice("topError", "Błąd ładowania zlecenia z panelu. Sprawdź konsolę.", "");
-    }
-  }
-
-  async function pullCostsFromPanel(){
-    if(!orderId) return;
-    const logged = await ensureLoggedIn();
-    if(!logged){
-      setSync("Brak logowania — wejdź w /panel/login.html", "warn");
-      return;
-    }
-    try{
-      const { data, error } = await supabaseClient
-        .from("orders")
-        .select("costs_text")
-        .eq("id", orderId)
-        .single();
-      if(error) throw error;
-
-      el("panelCosts").value = data.costs_text || "";
-      setSync("Pobrano costs_text z panelu ✅", "ok");
-    }catch(e){
-      console.error(e);
-      setSync("Błąd pobierania z panelu (sprawdź RLS/kolumnę costs_text).", "warn");
-    }
-  }
-
-  function importPanelCostsToLocal(){
-    const txt = el("panelCosts").value || "";
-    if(!txt.trim()){
-      setSync("W panelu brak costs_text.", "warn");
-      return;
-    }
-    el("costText").value = txt.trim() + "\n";
-    updateSumUI();
-    setSync("Wczytano kosztorys z panelu do lokalnego ✅", "ok");
-  }
-
-  async function pushCostsToPanel(){
-    if(!orderId) return;
-    const logged = await ensureLoggedIn();
-    if(!logged){
-      setSync("Brak logowania — wejdź w /panel/login.html", "warn");
-      return;
-    }
-    try{
-      const costs = (el("costText").value || "").trim();
-      const { error } = await supabaseClient
-        .from("orders")
-        .update({ costs_text: costs })
-        .eq("id", orderId);
-
-      if(error) throw error;
-
-      setSync("Zapisano kosztorys do panelu ✅ (costs_text)", "ok");
-      await pullCostsFromPanel();
-    }catch(e){
-      console.error(e);
-      setSync("Błąd zapisu do panelu (sprawdź RLS dla update).", "warn");
-    }
-  }
-
-  function setSync(msg, type){
-    const box = el("syncNotice");
-    box.style.display="block";
-    box.className = "notice " + (type || "");
-    box.textContent = msg;
-    setTimeout(()=>{ box.style.display="none"; }, 2200);
-  }
-
-  function updateBadges(){
-    if(!orderId){
-      el("badgeLocal").textContent = "lokalne dane: brak id";
-      return;
-    }
-    const raw = localStorage.getItem(localKey());
-    if(raw){
-      el("badgeLocal").classList.add("ok");
-      el("badgeLocal").textContent = "lokalne dane: zapisane";
+    if(Object.prototype.hasOwnProperty.call(data, COST_TEXT_COLUMN)){
+      costText.value = data[COST_TEXT_COLUMN] ?? "";
     }else{
-      el("badgeLocal").classList.remove("ok");
-      el("badgeLocal").textContent = "lokalne dane: puste";
+      costText.value = "";
     }
+
+    previousStatus = status.value;
+    publicCode = data.public_code ?? "";
+
+    calcSum();
   }
 
-  function applyLocalToUI(){
-    const data = loadLocal();
-    el("notesText").value = data.notes || "";
-    el("costText").value = data.costText || "";
-    updateSumUI();
-  }
+  async function save(){
+    calcSum();
 
-  // Auto-backup przy wyjściu
-  window.addEventListener("beforeunload", () => {
-    try{ saveLocal(); }catch(e){}
-  });
+    const newStatus = status.value;
 
-  // -----------------------------
-  // QR Scan (kamera + BarcodeDetector)
-  // -----------------------------
-  let qrStream = null;
-  let qrLoopStop = false;
+    const payload = {
+      status: newStatus,
+      customer_name: customer.value,
+      phone: phone.value,
+      bike_type: bike.value,
+      description: note.value,
 
-  function openQrModal(){
-    el("qrModal").classList.add("open");
-    startQrScan();
-  }
-  function closeQrModal(){
-    el("qrModal").classList.remove("open");
-    stopQrScan();
-  }
+      labor_cost: currentTotal,
+      parts_cost: 0,
+      total_cost: currentTotal
+    };
 
-  async function startQrScan(){
-    qrLoopStop = false;
-    el("qrHint").style.display="none";
-    const video = el("qrVideo");
+    const { error } = await supabaseClient
+      .from("orders")
+      .update(payload)
+      .eq("id", id);
 
-    // Desktop często nie ma kamery → pokaż hint
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      el("qrHint").style.display="block";
-      el("qrHint").textContent = "Ta przeglądarka nie wspiera kamery. Wklej link/tekst z QR w pole niżej.";
+    if(error){
+      alert("Błąd zapisu: " + error.message);
       return;
     }
 
-    // BarcodeDetector nie zawsze dostępny
-    const hasDetector = ("BarcodeDetector" in window);
-    if(!hasDetector){
-      el("qrHint").style.display="block";
-      el("qrHint").textContent = "Brak BarcodeDetector w tej przeglądarce. Wklej link/tekst z QR w pole niżej.";
+    const { error: costErr } = await supabaseClient
+      .from("orders")
+      .update({ [COST_TEXT_COLUMN]: costText.value })
+      .eq("id", id);
+
+    if(costErr){
+      const msg = (costErr.message || "").toLowerCase();
+      if(msg.includes("could not find") || msg.includes("schema cache")){
+        alert("Zapisano poprawnie ✅ (status + dane + sumy). Lista pozycji nie zapisana, bo brak kolumny tekstowej w bazie.");
+      }else{
+        alert("Zapisano sumy ✅, ale błąd zapisu listy pozycji: " + costErr.message);
+      }
+      previousStatus = newStatus;
       return;
     }
 
-    try{
-      qrStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false
-      });
-      video.srcObject = qrStream;
-      await video.play();
-
-      const detector = new BarcodeDetector({ formats: ["qr_code"] });
-
-      const tick = async () => {
-        if(qrLoopStop) return;
-        try{
-          const barcodes = await detector.detect(video);
-          if(barcodes && barcodes.length){
-            const value = barcodes[0].rawValue || "";
-            if(value){
-              stopQrScan();
-              openFromQrValue(value);
-              return;
-            }
-          }
-        }catch(e){
-          // jeśli detekcja failuje — pokaż hint
-          el("qrHint").style.display="block";
-          el("qrHint").textContent = "Nie mogę odczytać QR. Spróbuj jaśniej / bliżej lub wklej link ręcznie.";
+    let smsNote = "";
+    const shouldSendSms = (newStatus === "gotowe" && previousStatus !== "gotowe");
+    if(shouldSendSms){
+      try{
+        const smsRes = await sendSmsGotowe();
+        if(smsRes && smsRes.ok){
+          smsNote = "\nSMS: wysłano ✅";
+        }else{
+          smsNote = "\nSMS: nie wysłano (sprawdź konfigurację/test-mode) ⚠️";
+          console.warn("SMSAPI response:", smsRes);
         }
-        requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-
-    }catch(e){
-      console.error("getUserMedia error:", e);
-      el("qrHint").style.display="block";
-      el("qrHint").textContent = "Brak zgody na kamerę / kamera niedostępna. Wklej link/tekst z QR w pole niżej.";
+      }catch(e){
+        smsNote = "\nSMS: błąd wysyłki ⚠️";
+        console.warn("SMSAPI error:", e);
+      }
     }
+
+    previousStatus = newStatus;
+    alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)" + smsNote);
   }
 
-  function stopQrScan(){
-    qrLoopStop = true;
-    const video = el("qrVideo");
-    try{ video.pause(); }catch(e){}
-    if(qrStream){
-      qrStream.getTracks().forEach(t => t.stop());
-      qrStream = null;
-    }
-    try{ video.srcObject = null; }catch(e){}
+  function printIn(){
+    const win = window.open("","_blank");
+
+    // ✅ QR ma prowadzić do statusu, a nie być “gołym UUID”
+    const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
+    const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Karta przyjęcia</title>
+
+<!-- ✅ Lokalna generacja QR w przeglądarce (to nie generator online) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+
+<style>
+@page{ size:A4; margin:0; }
+html, body{
+  width:210mm;
+  height:297mm;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+}
+*{ box-sizing:border-box; }
+body{ font-family:Arial; color:#000; }
+
+.page{
+  width:210mm;
+  height:297mm;
+  padding:15mm;
+  box-sizing:border-box;
+}
+
+.main{ height:165mm; }
+
+h2{
+  margin:0 0 8mm;
+  text-align:center;
+  width:100%;
+  font-size:20px;
+}
+
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10mm;
+}
+
+.left-info{
+  font-size:12px;
+  line-height:1.35;
+}
+
+.qrbox{
+  width:40mm;
+  height:40mm;
+}
+.qrbox img{
+  width:40mm !important;
+  height:40mm !important;
+  display:block;
+}
+
+.sep{
+  border-top:2px dashed #000;
+  margin:8mm 0 6mm;
+}
+
+.tag-wrap{
+  height:90mm;
+  display:flex;
+  justify-content:flex-start;
+  align-items:flex-start;
+  margin-top:0mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.tag{
+  width:180mm;
+  height:85mm;
+  border:2px solid #000;
+  position:relative;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.hole{
+  position:absolute;
+  left:10mm;
+  top:50%;
+  transform:translateY(-50%);
+  width:18px;
+  height:18px;
+  border:2px solid #000;
+  border-radius:50%;
+}
+
+.tag-content{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) rotate(-90deg);
+  transform-origin:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8mm;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
+.tag-text{
+  font-size:12px;
+  line-height:1.25;
+  text-align:center;
+  white-space:pre-line;
+  font-weight:700;
+}
+.tag-text small{ font-weight:400; }
+
+.tag-qr{
+  width:40mm;
+  height:40mm;
+}
+.tag-qr img{
+  width:40mm !important;
+  height:40mm !important;
+  display:block;
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="main">
+
+    <h2>KARTA PRZYJĘCIA – SERWIS ROWEROWY</h2>
+
+    <div class="header">
+      <div class="left-info">
+        <b>Klient:</b> ${escapeHtml(customer.value)}<br>
+        <b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+        <b>Rower:</b> ${escapeHtml(bike.value)}<br>
+        <b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+      </div>
+
+      <div class="qrbox" id="qrTop"></div>
+    </div>
+
+    <div style="margin-top:10mm; font-size:12px;">
+      <b>Opis zgłoszenia:</b><br><br>
+      <div style="white-space:pre-line;">${escapeHtml(note.value)}</div>
+    </div>
+
+    <div style="margin-top:18mm; font-size:12px;">
+      <b>Podpis klienta:</b> _____________________
+    </div>
+
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="tag-wrap">
+    <div class="tag">
+      <div class="hole"></div>
+
+      <div class="tag-content">
+        <div class="tag-text">
+          ZAWIESZKA – SERWIS<br>
+          <small>
+            Klient: ${escapeHtml(customer.value)}<br>
+            Tel: ${escapeHtml(phone.value)}<br>
+            Rower: ${escapeHtml(bike.value)}<br>
+            Data: ${new Date().toLocaleDateString("pl-PL")}
+          </small>
+        </div>
+
+        <div class="tag-qr" id="qrTag"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const qrUrl = ${JSON.stringify(qrUrl)};
+  function makeQr(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = "";
+    new QRCode(el, { text: qrUrl, width: 151, height: 151 });
   }
 
-  function openFromPastedQr(){
-    const v = (el("qrPaste").value || "").trim();
-    if(!v){
-      el("qrHint").style.display="block";
-      el("qrHint").textContent = "Wklej link/tekst QR.";
-      return;
-    }
-    openFromQrValue(v);
-  }
+  window.onload = () => {
+    makeQr("qrTop");
+    makeQr("qrTag");
+    window.focus();
+    window.print();
+  };
+<\/script>
 
-  function openFromQrValue(value){
-    // jeśli QR ma URL do order-status → otwieramy go
-    // jeśli ma ?id=... → przechodzimy do order-local dla tego id
-    const txt = String(value).trim();
-
-    // 1) wykryj id w query
-    const idMatch = txt.match(/[?&]id=([0-9a-fA-F-]{8,})/);
-    if(idMatch && idMatch[1]){
-      const newId = idMatch[1];
-      location.href = `/panel/order-local.html?id=${encodeURIComponent(newId)}`;
-      return;
-    }
-
-    // 2) jeśli to link http(s) - otwórz
-    if(/^https?:\/\//i.test(txt)){
-      location.href = txt;
-      return;
-    }
-
-    // 3) fallback: jeśli tekst wygląda jak uuid
-    if(/^[0-9a-fA-F-]{30,}$/.test(txt)){
-      location.href = `/panel/order-local.html?id=${encodeURIComponent(txt)}`;
-      return;
-    }
-
-    el("qrHint").style.display="block";
-    el("qrHint").textContent = "Nie rozpoznaję QR. Wklej link ze statusem lub UUID (id).";
-  }
-
-  // -----------------------------
-  // Init
-  // -----------------------------
-  document.addEventListener("DOMContentLoaded", async () => {
-    loadTtl();
-    cleanupExpired();
-
-    // live suma
-    el("costText").addEventListener("input", updateSumUI);
-
-    // wczytaj lokalne
-    applyLocalToUI();
-    updateBadges();
-
-    // wczytaj z panelu (jeśli zalogowany)
-    await loadOrderFromPanel();
-
-    // jeśli w panelu jest costs_text, pokaż (już ustawione w loadOrderFromPanel)
-    // nie nadpisujemy lokalnego, chyba że user kliknie "Wczytaj do lokalnego"
-  });
-</script>
 </body>
 </html>
+    `);
+
+    win.document.close();
+  }
+
+  function printOut(){
+    let rows="";
+    let i=1;
+
+    (costText.value || "").split("\n").forEach(l=>{
+      const m=l.match(/(\d+(?:[.,]\d+)?)/);
+      if(!m) return;
+      const price = parseFloat(m[1].replace(",",".")) || 0;
+      const desc = l.replace(m[1],"").trim();
+
+      rows += `<tr>
+        <td>${i++}</td>
+        <td>${escapeHtml(desc)}</td>
+        <td style="text-align:right">${price.toFixed(2)} zł</td>
+      </tr>`;
+    });
+
+    const win=window.open("","_blank");
+    win.document.write(`
+<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">
+<title>Wydanie roweru</title>
+<style>
+body{font-family:Arial;padding:30px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #000;padding:6px}
+th{background:#eee}
+.sum{text-align:right;font-weight:bold;margin-top:10px}
+</style></head><body>
+
+<h2 style="text-align:center">WYDANIE ROWERU – ROZLICZENIE</h2>
+<p>
+<b>Klient:</b> ${escapeHtml(customer.value)}<br>
+<b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+<b>Rower:</b> ${escapeHtml(bike.value)}<br>
+<b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+</p>
+
+<table>
+<tr><th>Lp</th><th>Czynność</th><th>Cena</th></tr>
+${rows}
+</table>
+
+<div class="sum">DO ZAPŁATY: ${currentTotal.toFixed(2)} zł</div>
+<p>Podpis klienta: _____________________</p>
+
+<script>
+  window.onload = () => { window.focus(); window.print(); };
+<\/script>
+
+</body></html>`);
+    win.document.close();
+  }
+
+  window.save = save;
+  window.printIn = printIn;
+  window.printOut = printOut;
+
+  load();
+});
+</script>
+
+</body>
+</html>
+
