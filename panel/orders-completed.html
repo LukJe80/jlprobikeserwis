@@ -157,6 +157,34 @@ tr:hover{ background: rgba(255,255,255,0.04); }
   white-space:nowrap;
 }
 
+/* ===== MINIATURKI 32x32 pod opisem ===== */
+.thumbs{
+  margin-top:8px;
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.thumb{
+  width:32px;
+  height:32px;
+  border-radius:6px;
+  object-fit:cover;
+  display:block;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+.more{
+  font-size:12px;
+  color: rgba(229,231,235,0.80);
+  padding:4px 8px;
+  border-radius:999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+}
+
 @media(max-width:720px){
   main{ padding:110px 16px 60px; }
   th:nth-child(2), td:nth-child(2){ display:none; } /* ukryj telefon */
@@ -197,18 +225,40 @@ tr:hover{ background: rgba(255,255,255,0.04); }
 </main>
 
 <script>
+function escapeHtml(str){
+  return (str ?? "")
+    .toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+// Bucket w Supabase Storage ze zdjęciami zleceń:
+const PHOTOS_BUCKET = "order-photos";
+
+// Ile miniaturek maksymalnie pokazać w wierszu:
+const MAX_THUMBS = 6;
+
+// Podpisywanie URL (sekundy):
+const SIGNED_URL_TTL = 60 * 60; // 1h
+
 async function loadCompletedOrders(){
-  const { data, error } = await supabaseClient
+  const { data: orders, error } = await supabaseClient
     .from("orders")
     .select(`
+      id,
       customer_name,
       phone,
       bike_type,
       description,
-      completed_at
+      completed_at,
+      updated_at
     `)
     .eq("status","wydano")
-    .order("completed_at",{ascending:false});
+    .order("completed_at",{ascending:false})
+    .order("updated_at",{ascending:false});
 
   if(error){
     alert("Błąd pobierania archiwum: " + error.message);
@@ -218,7 +268,7 @@ async function loadCompletedOrders(){
   const tbody = document.getElementById("ordersTable");
   tbody.innerHTML = "";
 
-  if(!data || data.length === 0){
+  if(!orders || orders.length === 0){
     tbody.innerHTML = `
       <tr>
         <td colspan="5">Brak zakończonych zleceń</td>
@@ -226,23 +276,103 @@ async function loadCompletedOrders(){
     return;
   }
 
-  data.forEach(o=>{
+  // 1) Przygotuj mapę zdjęć dla wszystkich order_id (jedno zapytanie)
+  const orderIds = orders.map(o => o.id).filter(Boolean);
+  const photosByOrderId = await fetchPhotosMap(orderIds);
+
+  // 2) Render tabeli
+  orders.forEach(o=>{
     const tr = document.createElement("tr");
 
+    const desc = escapeHtml(o.description ?? "");
+    const completed = o.completed_at
+      ? new Date(o.completed_at).toLocaleString("pl-PL")
+      : "";
+
+    const thumbsHtml = buildThumbsHtml(photosByOrderId.get(o.id) || []);
+
     tr.innerHTML = `
-      <td>${o.customer_name ?? ""}</td>
-      <td>${o.phone ?? ""}</td>
-      <td>${o.bike_type ?? ""}</td>
-      <td class="text">${o.description ?? ""}</td>
-      <td class="date">
-        ${o.completed_at
-          ? new Date(o.completed_at).toLocaleString("pl-PL")
-          : ""}
+      <td>${escapeHtml(o.customer_name ?? "")}</td>
+      <td>${escapeHtml(o.phone ?? "")}</td>
+      <td>${escapeHtml(o.bike_type ?? "")}</td>
+      <td class="text">
+        ${desc}
+        ${thumbsHtml}
       </td>
+      <td class="date">${completed}</td>
     `;
 
     tbody.appendChild(tr);
   });
+}
+
+// Pobiera zdjęcia dla listy order_id i zwraca Map(order_id -> [{path, signedUrl}...])
+async function fetchPhotosMap(orderIds){
+  const map = new Map();
+  if(!orderIds || orderIds.length === 0) return map;
+
+  // Jeśli nie masz tabeli order_photos jeszcze — strona nadal będzie działać (bez miniaturek)
+  const { data: rows, error } = await supabaseClient
+    .from("order_photos")
+    .select("order_id, path, created_at")
+    .in("order_id", orderIds)
+    .order("created_at", { ascending: false });
+
+  if(error || !rows){
+    // Ciszej: nie straszmy użytkownika alertem, bo miniaturki to dodatek
+    console.warn("order_photos fetch error (miniaturki wyłączone):", error?.message || error);
+    return map;
+  }
+
+  // Zbierz ścieżki w mapie
+  for(const r of rows){
+    if(!map.has(r.order_id)) map.set(r.order_id, []);
+    map.get(r.order_id).push({ path: r.path });
+  }
+
+  // Podpisz URL-e (signed) — działa, jeśli jesteś zalogowany i bucket jest prywatny
+  // Jeśli bucket jest publiczny, można to uprościć, ale signed URL jest bezpieczniejsze.
+  for(const [orderId, list] of map.entries()){
+    const limited = list.slice(0, MAX_THUMBS + 20); // bez przesady
+    const paths = limited.map(x => x.path).filter(Boolean);
+
+    // Pobieramy signed URL-e pojedynczo (mało, więc OK)
+    const signed = [];
+    for(const p of paths){
+      try{
+        const { data, error: sErr } = await supabaseClient
+          .storage
+          .from(PHOTOS_BUCKET)
+          .createSignedUrl(p, SIGNED_URL_TTL);
+
+        if(!sErr && data?.signedUrl){
+          signed.push({ path: p, url: data.signedUrl });
+        }
+      }catch(e){
+        // ignoruj
+      }
+    }
+
+    map.set(orderId, signed);
+  }
+
+  return map;
+}
+
+function buildThumbsHtml(photos){
+  if(!photos || photos.length === 0) return "";
+
+  const shown = photos.slice(0, MAX_THUMBS);
+  const remaining = Math.max(0, photos.length - shown.length);
+
+  const imgs = shown
+    .filter(p => p.url)
+    .map(p => `<img class="thumb" src="${p.url}" alt="zdjęcie" loading="lazy">`)
+    .join("");
+
+  const more = remaining > 0 ? `<span class="more">+${remaining}</span>` : "";
+
+  return `<div class="thumbs">${imgs}${more}</div>`;
 }
 
 async function logout(){
@@ -254,6 +384,4 @@ loadCompletedOrders();
 </script>
 
 </body>
-
 </html>
-
