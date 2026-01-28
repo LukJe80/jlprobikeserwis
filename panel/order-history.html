@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Historia zlecenia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabaseClient.js"></script>
+
+<style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+  --muted: rgba(229,231,235,0.7);
+  --card: rgba(0,0,0,0.20);
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===== HEADER ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color: var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.toplink{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
+  font-size:14px;
+  opacity:.92;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.toplink:hover{ color: var(--accent); }
+
+/* ===== MAIN ===== */
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:120px 30px 80px;
+}
+
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.page-title{
+  margin:0 0 6px;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.hint{
+  font-size:13px;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:14px;
+  margin-top:12px;
+}
+
+.card{
+  background: var(--card);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:14px;
+  padding:16px;
+}
+
+.card h3{
+  margin:0 0 10px;
+  font-size:14px;
+  color:#93c5fd;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+}
+
+.kv{
+  display:grid;
+  grid-template-columns: 140px 1fr;
+  gap:10px 14px;
+  font-size:14px;
+}
+.kv .k{
+  color: rgba(229,231,235,0.75);
+  font-weight:800;
+}
+.kv .v{
+  color: rgba(229,231,235,0.95);
+  font-weight:700;
+  overflow-wrap:anywhere;
+}
+
+pre.note{
+  margin:0;
+  white-space:pre-wrap;
+  font-family: inherit;
+  font-size:14px;
+  color: rgba(229,231,235,0.95);
+  line-height:1.45;
+}
+
+/* ===== GALLERY ===== */
+.gallery{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap:12px;
+}
+
+.tile{
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.18);
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.tile img{
+  width:100%;
+  height:170px;
+  object-fit:cover;
+  display:block;
+  background: rgba(255,255,255,0.04);
+}
+
+.tile .cap{
+  padding:10px;
+  font-size:12px;
+  color: var(--muted);
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  color: rgba(229,231,235,0.9);
+  font-weight:800;
+  font-size:12px;
+}
+
+.msg{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(229,231,235,0.9);
+  font-size:13px;
+  white-space:pre-line;
+  display:none;
+}
+
+@media(max-width:900px){
+  .grid{ grid-template-columns: 1fr; }
+}
+@media(max-width:720px){
+  main{ padding:110px 16px 60px; }
+  .gallery{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .tile img{ height:150px; }
+  .kv{ grid-template-columns: 120px 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1><i class="fa-solid fa-receipt"></i> Historia zlecenia</h1>
+  <div class="header-right">
+    <a class="toplink" href="orders-completed.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
+  </div>
+</header>
+
+<main>
+  <div class="box">
+    <div class="page-title" id="title">Zlecenie</div>
+    <div class="hint" id="subtitle">Ładowanie…</div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Dane</h3>
+        <div class="kv" id="kv"></div>
+      </div>
+
+      <div class="card">
+        <h3>Opis / wykonane czynności</h3>
+        <pre class="note" id="desc">—</pre>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h3>Kosztorys</h3>
+        <pre class="note" id="costsText">—</pre>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <span class="badge" id="bLabor"><i class="fa-solid fa-person-digging"></i> Robocizna: —</span>
+          <span class="badge" id="bParts"><i class="fa-solid fa-gear"></i> Części: —</span>
+          <span class="badge" id="bTotal"><i class="fa-solid fa-sack-dollar"></i> Suma: —</span>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: 1 / -1;">
+        <h3>Zdjęcia</h3>
+        <div class="hint" id="photoHint">Ładowanie zdjęć…</div>
+        <div class="gallery" id="gallery"></div>
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const BUCKET = "order-photos";
+const SIGN_TTL = 60 * 60; // 1h
+
+const qs = new URLSearchParams(location.search);
+const orderId = qs.get("id");
+
+const titleEl = document.getElementById("title");
+const subtitleEl = document.getElementById("subtitle");
+const kvEl = document.getElementById("kv");
+const descEl = document.getElementById("desc");
+const costsTextEl = document.getElementById("costsText");
+const bLabor = document.getElementById("bLabor");
+const bParts = document.getElementById("bParts");
+const bTotal = document.getElementById("bTotal");
+const galleryEl = document.getElementById("gallery");
+const photoHint = document.getElementById("photoHint");
+const msgEl = document.getElementById("msg");
+
+function esc(str){
+  return (str ?? "")
+    .toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function showMsg(text){
+  msgEl.style.display = "block";
+  msgEl.textContent = text;
+}
+
+function money(v){
+  const n = Number(v);
+  if(!Number.isFinite(n)) return "—";
+  return n.toFixed(2) + " zł";
+}
+
+async function requireLogin(){
+  try{
+    const { data } = await supabaseClient.auth.getSession();
+    if(!data?.session){
+      // jeśli logowanie jest gdzie indziej, podmień to na właściwy plik
+      location.href = "login.html";
+      return false;
+    }
+    return true;
+  }catch(e){
+    return true; // nie blokuj na siłę
+  }
+}
+
+async function loadOrder(){
+  if(!orderId){
+    subtitleEl.textContent = "Błąd: brak parametru ?id=...";
+    showMsg("Nieprawidłowy link. Otwórz z archiwum (Zakończone zlecenia).");
+    return;
+  }
+
+  titleEl.textContent = "Zlecenie: " + orderId;
+  subtitleEl.textContent = "Pobieranie danych…";
+
+  const ok = await requireLogin();
+  if(!ok) return;
+
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select(`
+      id,
+      status,
+      customer_name,
+      phone,
+      bike_type,
+      description,
+      costs_text,
+      labor_cost,
+      parts_cost,
+      total_cost,
+      completed_at
+    `)
+    .eq("id", orderId)
+    .single();
+
+  if(error){
+    subtitleEl.textContent = "Błąd pobierania zlecenia.";
+    showMsg("Supabase error: " + error.message);
+    return;
+  }
+
+  subtitleEl.textContent = "Status: " + (data.status ?? "—");
+
+  // Dane (KV)
+  const rows = [
+    ["Klient", data.customer_name ?? "—"],
+    ["Telefon", data.phone ?? "—"],
+    ["Rower", data.bike_type ?? "—"],
+    ["Status", data.status ?? "—"],
+    ["Zakończone", data.completed_at ? new Date(data.completed_at).toLocaleString("pl-PL") : "—"]
+  ];
+
+  kvEl.innerHTML = rows.map(([k,v]) => `
+    <div class="k">${esc(k)}</div>
+    <div class="v">${esc(v)}</div>
+  `).join("");
+
+  // Opis
+  descEl.textContent = (data.description && String(data.description).trim()) ? data.description : "—";
+
+  // Kosztorys
+  costsTextEl.textContent = (data.costs_text && String(data.costs_text).trim()) ? data.costs_text : "—";
+  bLabor.innerHTML = `<i class="fa-solid fa-person-digging"></i> Robocizna: ${esc(money(data.labor_cost))}`;
+  bParts.innerHTML = `<i class="fa-solid fa-gear"></i> Części: ${esc(money(data.parts_cost))}`;
+  bTotal.innerHTML = `<i class="fa-solid fa-sack-dollar"></i> Suma: ${esc(money(data.total_cost))}`;
+
+  await loadPhotos();
+}
+
+async function signedUrl(path){
+  const { data, error } = await supabaseClient.storage
+    .from(BUCKET)
+    .createSignedUrl(path, SIGN_TTL);
+
+  if(error) return null;
+  return data?.signedUrl || null;
+}
+
+async function loadPhotos(){
+  photoHint.textContent = "Pobieranie zdjęć…";
+  galleryEl.innerHTML = "";
+
+  const { data: rows, error } = await supabaseClient
+    .from("order_photos")
+    .select("id, path, created_at")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending:false });
+
+  if(error){
+    photoHint.textContent = "Błąd pobierania zdjęć.";
+    showMsg("order_photos error: " + error.message);
+    return;
+  }
+
+  const count = rows ? rows.length : 0;
+  if(count === 0){
+    photoHint.textContent = "Brak zdjęć dla tego zlecenia.";
+    return;
+  }
+
+  photoHint.textContent = "Liczba zdjęć: " + count;
+
+  for(const r of rows){
+    const url = await signedUrl(r.path);
+    const created = r.created_at ? new Date(r.created_at).toLocaleString("pl-PL") : "";
+
+    const tile = document.createElement("div");
+    tile.className = "tile";
+
+    tile.innerHTML = `
+      ${url
+        ? `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="zdjęcie"></a>`
+        : `<img alt="brak dostępu">`
+      }
+      <div class="cap">
+        <span>${esc(created)}</span>
+        <span class="badge"><i class="fa-solid fa-image"></i> foto</span>
+      </div>
+    `;
+
+    galleryEl.appendChild(tile);
+  }
+}
+
+loadOrder();
+</script>
+
+</body>
+</html>
