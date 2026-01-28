@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Fallback QR dekoder (gdy BarcodeDetector nie działa / brak wsparcia) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
   <!-- ✅ kluczowe: absolutna ścieżka (działa z /panel/) -->
   <script src="/supabaseClient.js"></script>
 
@@ -242,6 +245,11 @@
       border:1px solid rgba(255,255,255,0.10);
       background:#000;
     }
+    .minihelp{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:8px;
+    }
   </style>
 </head>
 
@@ -312,7 +320,7 @@
           <div style="margin-top:12px;" class="notice">
             <b>QR:</b> możesz wkleić link/tekst QR w pole niżej i kliknąć „Otwórz”.
             <div class="row" style="margin-top:10px;">
-              <input id="qrTextManual" placeholder="Wklej tu link z QR (np. .../order-status.html?code=...)" />
+              <input id="qrTextManual" placeholder="Wklej tu link z QR (np. .../order-status.html?id=... lub ?code=...)" />
               <button class="btn" onclick="openFromQrText()"><i class="fa-solid fa-arrow-right"></i> Otwórz</button>
             </div>
           </div>
@@ -397,6 +405,7 @@
         <div id="qrErr" class="notice bad" style="display:none"></div>
 
         <video id="qrVideo" playsinline></video>
+        <div class="minihelp">Tip: trzymaj QR w dobrej ostrości i odległości ~15–30 cm.</div>
 
         <div class="row" style="margin-top:12px;">
           <button class="btn btn-main" onclick="startQrScan()"><i class="fa-solid fa-camera"></i> Uruchom kamerę</button>
@@ -404,7 +413,7 @@
         </div>
 
         <div class="notice" style="margin-top:12px;">
-          Jeśli kamera nie rusza: wejdź w ustawienia telefonu → uprawnienia → przeglądarka → <b>Kamera: Zezwól</b>.
+          Jeśli kamera nie rusza: ustawienia telefonu → uprawnienia → przeglądarka → <b>Kamera: Zezwól</b>.
         </div>
       </div>
     </div>
@@ -417,11 +426,16 @@
   const ORDER_TABLE = "orders";
 
   let order = null;
-  let orderKey = null; // klucz lokalny (code/id)
+  let orderKey = null;   // klucz lokalny (code/id)
   let orderMatch = null; // { field: 'public_code'|'id', value: '...' }
 
   let qrStream = null;
   let qrLoopTimer = null;
+  let qrRaf = null;
+
+  // canvas do jsQR
+  const qrCanvas = document.createElement("canvas");
+  const qrCtx = qrCanvas.getContext("2d", { willReadFrequently: true });
 
   function $(id){ return document.getElementById(id); }
 
@@ -441,6 +455,9 @@
     el.textContent = msg;
   }
 
+  // ==============================
+  // URL parsing (NAJWAŻNIEJSZA POPRAWKA)
+  // ==============================
   function parseQuery(){
     const p = new URLSearchParams(location.search);
 
@@ -448,19 +465,14 @@
     const code = (p.get("code") || "").trim();
     const id = (p.get("id") || "").trim();
 
-    // Jeśli masz code -> zawsze public_code
+    // code zawsze -> public_code
     if(code){
       return { field:"public_code", value: code, key: "code:"+code };
     }
 
-    // jeśli id wygląda jak UUID -> potraktuj jak public_code (bo QR/kliencki kod)
+    // id zawsze -> id (u Ciebie UUID = id w tabeli)
     if(id){
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-      if(isUuid){
-        return { field:"public_code", value:id, key:"code:"+id };
-      }
-      // w innym wypadku traktuj jako id (liczba / string)
-      return { field:"id", value: isNaN(Number(id)) ? id : Number(id), key:"id:"+id };
+      return { field:"id", value: id, key:"id:"+id };
     }
 
     return null;
@@ -483,25 +495,24 @@
 
     orderMatch = parseQuery();
     if(!orderMatch){
-      showTop("Brak parametru w linku. Dodaj ?code=... (zalecane) albo ?id=...", "bad");
+      showTop("Brak parametru w linku. Dodaj ?id=... (zalecane) albo ?code=...", "bad");
       return;
     }
     orderKey = orderMatch.key;
 
     const ok = await ensureLoggedIn();
     if(!ok){
-      showTop("Nie jesteś zalogowany w panelu. Otwórz najpierw login/panel i zaloguj się, potem wróć tutaj.", "bad");
+      showTop("Nie jesteś zalogowany w panelu. Otwórz login/panel, zaloguj się i wróć tutaj.", "bad");
       return;
     }
 
     try{
-      const q = supabaseClient
+      const { data, error } = await supabaseClient
         .from(ORDER_TABLE)
         .select("id, public_code, customer_name, phone, bike_type, bike_brand, description, status, costs_text")
         .eq(orderMatch.field, orderMatch.value)
         .limit(1);
 
-      const { data, error } = await q;
       if(error) throw error;
 
       if(!data || !data.length){
@@ -528,7 +539,7 @@
 
     }catch(e){
       console.error(e);
-      showTop("Błąd ładowania zlecenia. Sprawdź konsolę.", "bad");
+      showTop("Błąd ładowania zlecenia. Sprawdź konsolę (F12).", "bad");
     }
   }
 
@@ -590,7 +601,7 @@
   }
 
   // ==============================
-  // Items calculator (like edit-order: list + sum)
+  // Items calculator
   // ==============================
   let items = [];
 
@@ -674,20 +685,20 @@
   }
 
   function tryAutofillItemsFromCostsText(text){
-    // próba "best effort": wyciąga liczby z końca linii
     const lines = String(text||"").split("\n").map(l=>l.trim()).filter(Boolean);
     const parsed = [];
     for(const line of lines){
       if(/^suma\s*:/i.test(line)) continue;
-      // przykłady:
-      // "część: linka — 25 zł"
-      // "regulacja przerzutki 40"
       const m = line.match(/(.+?)(?:—|:)?\s*([0-9]+(?:[.,][0-9]+)?)\s*zł?$/i);
       if(m){
         const namePart = m[1].replace(/^(czynność|część)\s*:\s*/i,"").trim();
-        const price = Number(m[2].replace(",","."));
+        const price = Number(m[2].replace(",",".")); // 12,5 -> 12.5
         const typeMatch = line.match(/^(czynność|część)\s*:/i);
-        parsed.push({ name: namePart, price: isFinite(price)?price:0, type: typeMatch ? typeMatch[1].toLowerCase() : "czynność" });
+        parsed.push({
+          name: namePart,
+          price: isFinite(price)?price:0,
+          type: typeMatch ? typeMatch[1].toLowerCase() : "czynność"
+        });
       }
     }
     if(parsed.length){
@@ -771,7 +782,6 @@ Suma: ${s} zł`;
       await navigator.clipboard.writeText(msg);
       showSync("Skopiowano treść SMS do schowka.", "ok");
     }catch{
-      // fallback
       const ta = document.createElement("textarea");
       ta.value = msg;
       document.body.appendChild(ta);
@@ -794,99 +804,147 @@ Suma: ${s} zł`;
     $("qrModal").classList.remove("open");
   }
 
-  function extractCodeOrIdFromText(text){
+  function extractMatchFromText(text){
     const t = String(text||"").trim();
     if(!t) return null;
 
-    // jeśli to URL - wyciągnij parametry
+    // Jeśli to URL - wyciągnij parametry
     try{
       const url = new URL(t);
       const sp = url.searchParams;
       const code = (sp.get("code") || "").trim();
       const id = (sp.get("id") || "").trim();
       if(code) return { field:"public_code", value: code, key:"code:"+code };
-      if(id){
-        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-        if(isUuid) return { field:"public_code", value:id, key:"code:"+id };
-        return { field:"id", value: isNaN(Number(id)) ? id : Number(id), key:"id:"+id };
-      }
+      if(id)   return { field:"id", value: id, key:"id:"+id };
     }catch(e){
-      // nie URL — lecimy dalej
+      // nie URL
     }
 
-    // jeśli wygląda jak UUID -> traktuj jako public_code
-    if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)){
-      return { field:"public_code", value:t, key:"code:"+t };
+    // Jeśli ktoś wkleił "code:XYZ"
+    if(/^code:/i.test(t)){
+      const c = t.replace(/^code:/i,"").trim();
+      if(c) return { field:"public_code", value:c, key:"code:"+c };
     }
 
-    // jeśli liczba -> id
-    if(/^\d+$/.test(t)){
-      return { field:"id", value:Number(t), key:"id:"+t };
-    }
-
-    return null;
+    // Domyślnie: traktujemy jako ID (bo u Ciebie UUID = id)
+    return { field:"id", value:t, key:"id:"+t };
   }
 
   function openFromQrText(){
     const t = $("qrTextManual").value;
-    const m = extractCodeOrIdFromText(t);
+    const m = extractMatchFromText(t);
     if(!m){
-      showSync("Nie rozpoznałem kodu/linku. Wklej URL z ?code=... albo sam kod.", "bad");
+      showSync("Nie rozpoznałem kodu/linku. Wklej URL z ?id=... lub ?code=...", "bad");
       return;
     }
     const param = (m.field==="public_code") ? "code" : "id";
     location.href = `order-local.html?${param}=${encodeURIComponent(m.value)}`;
   }
 
+  function showQrErr(msg){
+    $("qrErr").style.display = "block";
+    $("qrErr").textContent = msg;
+  }
+
   async function startQrScan(){
     $("qrErr").style.display = "none";
 
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      $("qrErr").style.display = "block";
-      $("qrErr").textContent = "Ta przeglądarka nie wspiera kamery (getUserMedia). Otwórz w Chrome/Samsung Internet.";
+      showQrErr("Ta przeglądarka nie wspiera kamery (getUserMedia). Otwórz w Chrome/Samsung Internet.");
       return;
     }
 
     try{
-      // ✅ ważne: wywołane po kliknięciu, inaczej przeglądarka blokuje
       qrStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
+        video: {
+          facingMode: "environment",
+          width: { ideal: 1280 },
+          height:{ ideal: 720 }
+        },
         audio: false
       });
 
       const video = $("qrVideo");
       video.srcObject = qrStream;
+
       await video.play();
 
-      // BarcodeDetector (Chrome/Android) — najlepsze
+      // czekamy aż video ma dane
+      await waitForVideoReady(video);
+
+      // 1) jeśli działa BarcodeDetector — użyj
       if("BarcodeDetector" in window){
         const detector = new BarcodeDetector({ formats: ["qr_code"] });
         qrLoopTimer = setInterval(async ()=>{
           try{
+            if(video.readyState < 2) return;
             const codes = await detector.detect(video);
             if(codes && codes.length){
-              const raw = codes[0].rawValue;
-              const m = extractCodeOrIdFromText(raw);
-              if(m){
-                stopQrScan();
-                closeQrModal();
-                const param = (m.field==="public_code") ? "code" : "id";
-                location.href = `order-local.html?${param}=${encodeURIComponent(m.value)}`;
-              }
+              handleQrRaw(codes[0].rawValue);
             }
-          }catch{}
-        }, 350);
-      }else{
-        // Fallback: bez BarcodeDetector
-        $("qrErr").style.display = "block";
-        $("qrErr").textContent = "Brak wsparcia BarcodeDetector. Użyj wbudowanego skanera aparatu / Google Lens i wklej link w pole ręczne.";
+          }catch(e){
+            // ignoruj
+          }
+        }, 250);
       }
+
+      // 2) równolegle odpal fallback jsQR (działa nawet gdy BD coś nie łapie)
+      startJsQrLoop(video);
 
     }catch(e){
       console.error(e);
-      $("qrErr").style.display = "block";
-      $("qrErr").textContent = "Nie udało się uruchomić kamery. Sprawdź: HTTPS, zgoda na kamerę, oraz czy nie otwierasz w Facebook/Messenger.";
+      showQrErr("Nie udało się uruchomić kamery. Sprawdź: HTTPS, zgoda na kamerę, oraz czy nie otwierasz w Facebook/Messenger.");
     }
+  }
+
+  function handleQrRaw(raw){
+    const m = extractMatchFromText(raw);
+    if(!m) return;
+    stopQrScan();
+    closeQrModal();
+    const param = (m.field==="public_code") ? "code" : "id";
+    location.href = `order-local.html?${param}=${encodeURIComponent(m.value)}`;
+  }
+
+  function waitForVideoReady(video){
+    return new Promise((resolve)=>{
+      if(video.readyState >= 2) return resolve();
+      const onReady = ()=>{
+        if(video.readyState >= 2){
+          video.removeEventListener("loadeddata", onReady);
+          resolve();
+        }
+      };
+      video.addEventListener("loadeddata", onReady);
+    });
+  }
+
+  function startJsQrLoop(video){
+    const loop = ()=>{
+      try{
+        if(!qrStream || video.readyState < 2){
+          qrRaf = requestAnimationFrame(loop);
+          return;
+        }
+        const w = video.videoWidth || 0;
+        const h = video.videoHeight || 0;
+        if(w && h){
+          qrCanvas.width = w;
+          qrCanvas.height = h;
+          qrCtx.drawImage(video, 0, 0, w, h);
+          const img = qrCtx.getImageData(0, 0, w, h);
+          const code = jsQR(img.data, w, h, { inversionAttempts: "attemptBoth" });
+          if(code && code.data){
+            handleQrRaw(code.data);
+            return;
+          }
+        }
+      }catch(e){
+        // ignoruj
+      }
+      qrRaf = requestAnimationFrame(loop);
+    };
+    qrRaf = requestAnimationFrame(loop);
   }
 
   function stopQrScan(){
@@ -894,13 +952,17 @@ Suma: ${s} zł`;
       clearInterval(qrLoopTimer);
       qrLoopTimer = null;
     }
+    if(qrRaf){
+      cancelAnimationFrame(qrRaf);
+      qrRaf = null;
+    }
     if(qrStream){
       qrStream.getTracks().forEach(t=>t.stop());
       qrStream = null;
     }
     const video = $("qrVideo");
     if(video){
-      video.pause();
+      try{ video.pause(); }catch{}
       video.srcObject = null;
     }
   }
@@ -909,7 +971,6 @@ Suma: ${s} zł`;
   // Init
   // ==============================
   window.addEventListener("beforeunload", ()=>{
-    // cichy autosave lokalny
     try{ saveLocal(); }catch{}
   });
 
