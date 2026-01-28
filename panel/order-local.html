@@ -9,6 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabaseClient.js"></script>
 
+  <!-- ✅ Skaner QR (minimalnie, bez ruszania bazy) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.10/html5-qrcode.min.js"></script>
+
   <style>
     :root{
       --accent:#2563eb;
@@ -31,14 +34,16 @@
       background:rgba(2,6,23,.78);
       backdrop-filter: blur(6px);
       border-bottom:1px solid rgba(255,255,255,0.06);
+      gap:12px;
     }
     .brand{
       margin:0; font-size:18px; font-weight:900;
       color:var(--accent);
       display:flex; align-items:center; gap:10px;
+      white-space:nowrap;
     }
     .right{
-      display:flex; gap:12px; align-items:center;
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
     }
     .toplink, button.toplink{
       display:flex; align-items:center; gap:8px;
@@ -335,6 +340,10 @@
             <i class="fa-solid fa-file-pdf"></i> Eksport PDF
           </button>
 
+          <button class="btn" onclick="openScanner()">
+            <i class="fa-solid fa-qrcode"></i> Skanuj QR
+          </button>
+
           <button class="btn" onclick="clearLocal()">
             <i class="fa-solid fa-trash"></i> Wyczyść lokalne dane
           </button>
@@ -383,11 +392,12 @@
         <h2><i class="fa-solid fa-camera"></i> Zdjęcia (lokalnie)</h2>
 
         <div class="row">
-  <input id="photoInput" type="file" accept="image/*" multiple />
-  <button class="btn btn-main" onclick="addPhotos()">
-    <i class="fa-solid fa-plus"></i> Dodaj
-  </button>
-      </div>
+          <!-- ✅ bez capture="environment" → domyślnie galeria/plik + opcja aparatu zależnie od telefonu -->
+          <input id="photoInput" type="file" accept="image/*" multiple />
+          <button class="btn btn-main" onclick="addPhotos()">
+            <i class="fa-solid fa-plus"></i> Dodaj
+          </button>
+        </div>
 
         <div style="height:10px"></div>
         <div id="photos" class="photos"></div>
@@ -400,13 +410,27 @@
   </div>
 </main>
 
+<!-- ✅ Modal skanera QR (minimum kodu, bez ingerencji w resztę) -->
+<div id="scannerModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9999; padding:16px;">
+  <div style="max-width:520px; margin:40px auto; background:#0b1220; border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px;">
+      <div style="font-weight:900;">Skanuj kod QR</div>
+      <button class="btn" onclick="closeScanner()"><i class="fa-solid fa-xmark"></i> Zamknij</button>
+    </div>
+    <div id="qrReader" style="width:100%;"></div>
+    <div style="opacity:.8; font-size:13px; margin-top:10px;">
+      Celuj w kod QR z zawieszki / telefonu. Jeśli QR zawiera link ze statusem, też zadziała.
+    </div>
+  </div>
+</div>
+
 <script>
   const sb = window.supabaseClient;
 
   // =========================
   // USTAWIENIA
   // =========================
-  const DEFAULT_RETENTION_DAYS = 60; // <-- tu zmienisz "X dni" jeśli chcesz domyślnie inaczej
+  const DEFAULT_RETENTION_DAYS = 60; // domyślne X dni
   const RETENTION_KEY = "jl_local_retention_days";
 
   // =========================
@@ -459,9 +483,15 @@
   function keyCostTotal(orderId){ return `${keyBase(orderId)}_costTotal`; }
   function keyUpdatedAt(orderId){ return `${keyBase(orderId)}_updatedAt`; }
 
-  // auto-backup (cichy) – trzymamy JSON w localStorage (bez pobierania pliku)
+  // auto-backup (cichy) – trzymamy JSON w localStorage
   function keyAutoBackup(orderId){ return `${keyBase(orderId)}_autobackup_json`; }
   function keyAutoBackupAt(orderId){ return `${keyBase(orderId)}_autobackup_at`; }
+
+  function touchUpdatedAt(){
+    const orderId = qs("id");
+    if(!orderId) return;
+    localStorage.setItem(keyUpdatedAt(orderId), String(Date.now()));
+  }
 
   // =========================
   // INDEXEDDB PHOTOS
@@ -550,12 +580,6 @@
     touchUpdatedAt();
   });
 
-  function touchUpdatedAt(){
-    const orderId = qs("id");
-    if(!orderId) return;
-    localStorage.setItem(keyUpdatedAt(orderId), String(Date.now()));
-  }
-
   // =========================
   // ORDER DATA (podgląd)
   // =========================
@@ -564,7 +588,7 @@
   async function loadOrder(){
     const orderId = qs("id");
     if(!orderId){
-      showWarn("Brak parametru id w URL. Wejdź tu z listy zleceń.");
+      showWarn("Brak parametru id w URL. Wejdź tu z listy zleceń albo użyj Skanuj QR.");
       return;
     }
 
@@ -605,9 +629,7 @@
     localStorage.setItem(keyCostTotal(orderId), String(currentTotal || 0));
     touchUpdatedAt();
 
-    // auto-backup też aktualizujemy
     autoBackupSilent();
-
     showWarn("Zapisano lokalnie ✅", true);
   }
 
@@ -642,7 +664,6 @@
     costTextEl.value = localStorage.getItem(keyCostText(orderId)) || "";
     calcSum();
 
-    // jeśli nie było updatedAt – ustaw przy pierwszym uruchomieniu (żeby retention działał)
     if(!localStorage.getItem(keyUpdatedAt(orderId))){
       touchUpdatedAt();
     }
@@ -666,7 +687,7 @@
     input.value = "";
 
     touchUpdatedAt();
-    autoBackupSilent(); // auto-backup po dodaniu zdjęć
+    autoBackupSilent();
 
     await renderPhotos();
   }
@@ -707,7 +728,6 @@
 
     touchUpdatedAt();
     autoBackupSilent();
-
     await renderPhotos();
   }
   window.deletePhoto = deletePhoto;
@@ -748,10 +768,8 @@
       showWarn("Skopiowano SMS (tryb awaryjny) ✅", true);
     }
 
-    // Auto-backup po przygotowaniu SMS
     autoBackupSilent();
 
-    // Otwórz aplikację SMS z gotową treścią (jeśli jest numer)
     if(phone){
       const smsUrl = `sms:${encodeURIComponent(phone.replace(/\s+/g,""))}?body=${encodeURIComponent(msg)}`;
       location.href = smsUrl;
@@ -794,7 +812,6 @@
       return;
     }
 
-    // przed eksportem zapisujemy bieżący stan
     saveLocal();
 
     const backup = await buildBackupObject(orderId);
@@ -829,13 +846,11 @@
           return;
         }
 
-        // zapis localStorage
         localStorage.setItem(keyNotes(orderId), data.notes || "");
         localStorage.setItem(keyCostText(orderId), data.costText || "");
         localStorage.setItem(keyCostTotal(orderId), data.total || "0");
         touchUpdatedAt();
 
-        // usuń stare zdjęcia i wgraj z backupu
         await dbDeleteAllPhotosForOrder(orderId);
         for(const img of (data.photos || [])){
           await dbPutPhoto(orderId, img);
@@ -844,9 +859,7 @@
         loadLocal();
         await renderPhotos();
 
-        // po imporcie robimy też auto-backup
         autoBackupSilent();
-
         showWarn("Backup przywrócony ✅", true);
       }catch(e){
         console.error(e);
@@ -868,7 +881,6 @@
     if(!orderId) return;
 
     try{
-      // zapis stanu "na pewno"
       localStorage.setItem(keyNotes(orderId), document.getElementById("notes").value || "");
       localStorage.setItem(keyCostText(orderId), costTextEl.value || "");
       localStorage.setItem(keyCostTotal(orderId), String(currentTotal || 0));
@@ -878,14 +890,11 @@
       localStorage.setItem(keyAutoBackup(orderId), JSON.stringify(backup));
       localStorage.setItem(keyAutoBackupAt(orderId), String(Date.now()));
     }catch(e){
-      // bez alertów – to ma być ciche
       console.warn("autoBackupSilent failed:", e);
     }
   }
 
-  // Auto-backup przy zamknięciu / przejściu w tło
   window.addEventListener("beforeunload", () => {
-    // bez await – szybkie
     autoBackupSilent();
   });
 
@@ -905,7 +914,6 @@
       return;
     }
 
-    // upewnij się że stan jest zapisany
     saveLocal();
 
     const o = orderCache || {};
@@ -1022,8 +1030,6 @@
     }
     localStorage.setItem(RETENTION_KEY, String(n));
     showWarn("Zapisano auto-usuwanie ✅", true);
-
-    // po zmianie od razu spróbuj wyczyścić stare
     cleanupExpiredLocalData();
   }
   window.saveRetention = saveRetention;
@@ -1032,7 +1038,6 @@
     const retentionDays = getRetentionDays();
     const cutoff = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
 
-    // Zbieramy orderId z kluczy jl_local_*
     const ids = new Set();
     for(let i=0; i<localStorage.length; i++){
       const k = localStorage.key(i);
@@ -1041,13 +1046,11 @@
       if(m && m[1]) ids.add(m[1]);
     }
 
-    // Sprawdzamy updatedAt
     for(const orderId of ids){
       const updatedAtStr = localStorage.getItem(keyUpdatedAt(orderId));
       const updatedAt = parseInt(updatedAtStr || "0", 10);
       if(!updatedAt || updatedAt >= cutoff) continue;
 
-      // Usuń localStorage dla zlecenia
       localStorage.removeItem(keyNotes(orderId));
       localStorage.removeItem(keyCostText(orderId));
       localStorage.removeItem(keyCostTotal(orderId));
@@ -1055,10 +1058,66 @@
       localStorage.removeItem(keyAutoBackup(orderId));
       localStorage.removeItem(keyAutoBackupAt(orderId));
 
-      // Usuń zdjęcia z IndexedDB
       await dbDeleteAllPhotosForOrder(orderId);
     }
   }
+
+  // =========================
+  // SKANER QR (minimum zmian)
+  // =========================
+  let qrScanner = null;
+
+  function extractIdFromQr(text){
+    // 1) jeśli to link z parametrem ?id=
+    try{
+      const u = new URL(text);
+      const id = u.searchParams.get("id");
+      if(id) return id;
+    }catch(e){}
+
+    // 2) jeśli to tekst zawiera id=...
+    const m = String(text).match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if(m && m[1]) return m[1];
+
+    // 3) jeśli QR zawiera samo ID
+    const t = String(text).trim();
+    if(/^[a-zA-Z0-9_-]{6,}$/.test(t)) return t;
+
+    return null;
+  }
+
+  async function openScanner(){
+    document.getElementById("scannerModal").style.display = "block";
+
+    if(!qrScanner){
+      qrScanner = new Html5Qrcode("qrReader");
+    }
+
+    await qrScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 260, height: 260 } },
+      (decodedText) => {
+        const id = extractIdFromQr(decodedText);
+        if(!id) return;
+
+        closeScanner(true);
+        // ✅ plik jest w /panel/, więc używamy ścieżki względnej
+        window.location.href = `order-local.html?id=${encodeURIComponent(id)}`;
+      }
+    );
+  }
+
+  async function closeScanner(skipHide){
+    try{
+      if(qrScanner && qrScanner.isScanning){
+        await qrScanner.stop();
+      }
+    }catch(e){}
+
+    document.getElementById("scannerModal").style.display = "none";
+  }
+  window.openScanner = openScanner;
+  window.closeScanner = closeScanner;
 
   // =========================
   // START
@@ -1066,18 +1125,14 @@
   (async ()=>{
     await checkAuth();
     initRetentionUi();
-
-    // sprzątnij stare rzeczy (X dni)
     await cleanupExpiredLocalData();
 
     await loadOrder();
     loadLocal();
     await renderPhotos();
 
-    // auto-backup na start (żeby mieć bazę)
     autoBackupSilent();
   })();
 </script>
 </body>
 </html>
-
