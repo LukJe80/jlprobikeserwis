@@ -9,30 +9,53 @@
 <script src="supabaseClient.js"></script>
 
 <style>
-body {
-  background:#020617;
-  color:#e5e7eb;
-  font-family: Arial, sans-serif;
-  padding:30px;
-  text-align:center;
-}
-.box {
-  max-width:500px;
-  margin:auto;
-  background:rgba(255,255,255,0.05);
-  padding:24px;
-  border-radius:12px;
-}
-.status { font-size:22px; font-weight:bold; margin:20px 0; }
+  body {
+    background:#020617;
+    color:#e5e7eb;
+    font-family: Arial, sans-serif;
+    padding:30px;
+    text-align:center;
+  }
+  .box {
+    max-width:520px;
+    margin:auto;
+    background:rgba(255,255,255,0.05);
+    padding:24px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  h2{ margin:0 0 10px; }
+  .status { font-size:22px; font-weight:bold; margin:18px 0 10px; }
+  .oczekujące { color:#94a3b8; }
+  .nowe { color:#60a5fa; }
+  .wtrakcie { color:#f59e0b; }
+  .gotowe { color:#22c55e; }
+  .wydano { color:#9ca3af; }
+  .error { color:#f87171; font-weight:bold; }
 
-/* klasy bez spacji */
-.oczekujące { color:#94a3b8; }
-.nowe { color:#60a5fa; }
-.wtrakcie { color:#f59e0b; }
-.gotowe { color:#22c55e; }
-.wydano { color:#9ca3af; }
+  .hint{
+    margin-top:14px;
+    color:rgba(229,231,235,0.75);
+    font-size:13px;
+    line-height:1.45;
+  }
 
-.error { color:#f87171; font-weight:bold; }
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    margin-top:14px;
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.06);
+    color:#e5e7eb;
+    text-decoration:none;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .btn:hover{ border-color: rgba(37,99,235,0.6); }
 </style>
 </head>
 
@@ -43,84 +66,112 @@ body {
   <div id="bike"></div>
   <div class="status" id="status"></div>
   <div id="message"></div>
+
+  <div class="hint" id="hint"></div>
+  <a class="btn" id="openServiceBtn" href="#" style="display:none;">Otwórz jako serwisant</a>
 </div>
 
 <div class="error" id="error">Nie znaleziono zlecenia</div>
 
 <script>
-const code = new URLSearchParams(location.search).get("code");
+  // ✅ USTAW TO:
+  // jeśli Twój plik serwisanta jest gdzie indziej, zmień ścieżkę poniżej
+  const SERVICE_PAGE = "/panel/order-local.html"; // np. "/panel/order-local.html" lub "/panel/order-local/index.html"
 
-function statusText(s) {
-  return {
-    "oczekujące": "Zgłoszenie online",
-    "nowe": "Rower przyjęty",
-    "w trakcie": "Naprawa w toku",
-    "gotowe": "Gotowe do odbioru",
-    "wydano": "Rower wydany"
-  }[s] || s;
-}
+  const code = new URLSearchParams(location.search).get("code");
 
-function statusMessage(s) {
-  return {
-    "oczekujące": "Zgłoszenie zostało wysłane. Przyjedź do serwisu z rowerem.",
-    "nowe": "Rower został przyjęty do serwisu.",
-    "w trakcie": "Pracujemy nad Twoim rowerem.",
-    "gotowe": "Rower jest gotowy do odbioru.",
-    "wydano": "Zlecenie zakończone."
-  }[s] || "";
-}
-
-/* mapowanie statusu na klasę CSS (bez spacji) */
-function statusClass(s){
-  return {
-    "oczekujące": "oczekujące",
-    "nowe": "nowe",
-    "w trakcie": "wtrakcie",
-    "gotowe": "gotowe",
-    "wydano": "wydano"
-  }[s] || "";
-}
-
-/* ✅ 1 QR: jeśli zalogowany serwisant -> przekieruj do panel/order-local */
-async function tryRedirectToService(orderId){
-  try{
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if(!session) return false;
-
-    // jesteś zalogowany -> idź do widoku serwisanta (lokalnego)
-    location.href = `/panel/order-local.html?id=${encodeURIComponent(orderId)}`;
-    return true;
-  }catch(e){
-    return false;
+  function statusText(s) {
+    return {
+      "oczekujące": "Zgłoszenie online",
+      "nowe": "Rower przyjęty",
+      "w trakcie": "Naprawa w toku",
+      "gotowe": "Gotowe do odbioru",
+      "wydano": "Rower wydany"
+    }[s] || s;
   }
-}
 
-async function load() {
-  if (!code) return;
+  function statusMessage(s) {
+    return {
+      "oczekujące": "Zgłoszenie zostało wysłane. Przyjedź do serwisu z rowerem.",
+      "nowe": "Rower został przyjęty do serwisu.",
+      "w trakcie": "Pracujemy nad Twoim rowerem.",
+      "gotowe": "Rower jest gotowy do odbioru.",
+      "wydano": "Zlecenie zakończone."
+    }[s] || "";
+  }
 
-  const { data, error: sbErr } = await supabaseClient
-    .from("orders")
-    .select("id,bike_type,status")
-    .eq("public_code", code)
-    .single();
+  function toClass(s){
+    if(s === "w trakcie") return "wtrakcie";
+    return s || "";
+  }
 
-  if (sbErr || !data) return;
+  async function isServiceLoggedIn(){
+    try{
+      const { data } = await supabaseClient.auth.getSession();
+      return !!(data && data.session);
+    }catch(e){
+      return false;
+    }
+  }
 
-  // ✅ jeśli zalogowany serwisant -> przekieruj i koniec
-  const redirected = await tryRedirectToService(data.id);
-  if(redirected) return;
+  async function loadClientView(){
+    if (!code) return;
 
-  // ✅ klient (niezalogowany) -> pokaż status
-  box.style.display = "block";
-  error.style.display = "none";
+    const { data } = await supabaseClient
+      .from("orders")
+      .select("bike_type,status")
+      .eq("public_code", code)
+      .single();
 
-  bike.innerText = "Rower: " + (data.bike_type || "-");
-  status.innerText = statusText(data.status);
-  status.className = "status " + statusClass(data.status);
-  message.innerText = statusMessage(data.status);
-}
+    if (!data) return;
 
-load();
+    box.style.display = "block";
+    error.style.display = "none";
+
+    bike.innerText = "Rower: " + (data.bike_type || "-");
+    status.innerText = statusText(data.status);
+
+    const cls = toClass(data.status);
+    status.className = "status " + cls;
+
+    message.innerText = statusMessage(data.status);
+  }
+
+  async function main(){
+    if(!code){
+      error.textContent = "Brak kodu w linku.";
+      return;
+    }
+
+    // 1) jeśli serwisant zalogowany → przekieruj
+    const logged = await isServiceLoggedIn();
+
+    if(logged){
+      const target = `${SERVICE_PAGE}?code=${encodeURIComponent(code)}`;
+
+      // pokaż przycisk awaryjny + automatyczny redirect
+      box.style.display = "block";
+      error.style.display = "none";
+      bike.innerText = "Tryb serwisanta";
+      status.innerText = "Zalogowano ✅";
+      status.className = "status gotowe";
+      message.innerText = "Przekierowuję do widoku serwisanta…";
+      hint.innerText = "Jeśli przekierowanie nie zadziała, kliknij przycisk poniżej.";
+      openServiceBtn.style.display = "inline-flex";
+      openServiceBtn.href = target;
+
+      // krótka zwłoka żeby UI zdążył się wyrenderować
+      setTimeout(()=>{ location.replace(target); }, 300);
+      return;
+    }
+
+    // 2) w przeciwnym razie → klient
+    hint.innerText = "";
+    await loadClientView();
+  }
+
+  main();
 </script>
+
 </body>
 </html>
