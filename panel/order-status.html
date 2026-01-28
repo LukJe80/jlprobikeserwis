@@ -24,11 +24,14 @@ body {
   border-radius:12px;
 }
 .status { font-size:22px; font-weight:bold; margin:20px 0; }
+
+/* klasy bez spacji */
 .oczekujące { color:#94a3b8; }
 .nowe { color:#60a5fa; }
 .wtrakcie { color:#f59e0b; }
 .gotowe { color:#22c55e; }
 .wydano { color:#9ca3af; }
+
 .error { color:#f87171; font-weight:bold; }
 </style>
 </head>
@@ -67,23 +70,53 @@ function statusMessage(s) {
   }[s] || "";
 }
 
+/* mapowanie statusu na klasę CSS (bez spacji) */
+function statusClass(s){
+  return {
+    "oczekujące": "oczekujące",
+    "nowe": "nowe",
+    "w trakcie": "wtrakcie",
+    "gotowe": "gotowe",
+    "wydano": "wydano"
+  }[s] || "";
+}
+
+/* ✅ 1 QR: jeśli zalogowany serwisant -> przekieruj do panel/order-local */
+async function tryRedirectToService(orderId){
+  try{
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session) return false;
+
+    // jesteś zalogowany -> idź do widoku serwisanta (lokalnego)
+    location.href = `/panel/order-local.html?id=${encodeURIComponent(orderId)}`;
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
 async function load() {
   if (!code) return;
 
-  const { data } = await supabaseClient
+  const { data, error: sbErr } = await supabaseClient
     .from("orders")
-    .select("bike_type,status")
+    .select("id,bike_type,status")
     .eq("public_code", code)
     .single();
 
-  if (!data) return;
+  if (sbErr || !data) return;
 
+  // ✅ jeśli zalogowany serwisant -> przekieruj i koniec
+  const redirected = await tryRedirectToService(data.id);
+  if(redirected) return;
+
+  // ✅ klient (niezalogowany) -> pokaż status
   box.style.display = "block";
   error.style.display = "none";
 
   bike.innerText = "Rower: " + (data.bike_type || "-");
   status.innerText = statusText(data.status);
-  status.className = "status " + data.status;
+  status.className = "status " + statusClass(data.status);
   message.innerText = statusMessage(data.status);
 }
 
