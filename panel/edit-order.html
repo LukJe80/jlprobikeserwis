@@ -425,7 +425,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
 <meta charset="utf-8">
 <title>Karta przyjęcia</title>
 
-<!-- ✅ Lokalna generacja QR w przeglądarce (to nie generator online) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 
 <style>
@@ -677,36 +676,32 @@ ${rows}
     win.document.close();
   }
 
-  // ✅ NOWE: “kartka do książeczki serwisowej” (A5)
+  // ✅ NOWE: “kartka do książeczki serwisowej” (A5) — BEZ CEN
   function printBooklet(){
-  // ✅ QR do statusu klienta (public_code jeśli jest, inaczej id)
-  const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
-  const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
+    const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
+    const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
 
-  // ✅ Lista WYMIENIONYCH CZĘŚCI / WYKONANYCH CZYNNOŚCI (bez cen)
-  // Bazujemy na costText: każda linia może mieć cenę → usuwamy liczby, zostawiamy opis.
-  const items = (costText.value || "")
-    .split("\n")
-    .map(l => l.trim())
-    .filter(Boolean)
-    .map(l => {
-      // usuń pierwszą liczbę (np. "25" lub "25,50") i zostaw opis
-      const m = l.match(/(\d+(?:[.,]\d+)?)/);
-      if(m){
-        const desc = l.replace(m[1], "").trim();
-        return desc || l.trim();
-      }
-      return l.trim();
-    })
-    .filter(Boolean);
+    const items = (costText.value || "")
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => {
+        const m = l.match(/(\d+(?:[.,]\d+)?)/);
+        if(m){
+          const desc = l.replace(m[1], "").trim();
+          return desc || l.trim();
+        }
+        return l.trim();
+      })
+      .filter(Boolean);
 
-  const itemsHtml = items.length
-    ? `<ul>${items.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>`
-    : `<div class="small muted">Brak wpisów.</div>`;
+    const itemsHtml = items.length
+      ? `<ul>${items.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>`
+      : `<div class="small muted">Brak wpisów.</div>`;
 
-  const win = window.open("","_blank");
+    const win = window.open("","_blank");
 
-  win.document.write(`
+    win.document.write(`
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -720,42 +715,33 @@ ${rows}
 body{ font-family:Arial; color:#000; }
 h2{ margin:0 0 6mm; font-size:18px; text-align:center; }
 .small{ font-size:12px; line-height:1.35; }
-.row{ display:flex; justify-content:space-between; gap:10mm; align-items:flex-start; }
-.box{ border:1px solid #000; padding:6mm; border-radius:6px; }
-.qr{ width:30mm; height:30mm; }
-.qr img{ width:30mm !important; height:30mm !important; display:block; }
 .muted{ color:#333; }
 
-.field{
-  margin-top:4mm;
-  display:flex;
-  align-items:flex-end;
-  gap:8mm;
-}
+.row{ display:flex; justify-content:space-between; gap:10mm; align-items:flex-start; }
+.box{ border:1px solid #000; padding:6mm; border-radius:6px; }
+
+.field{ margin-top:4mm; display:flex; align-items:flex-end; gap:8mm; }
 .label{ font-weight:bold; }
-.line{
-  flex:1;
-  border-bottom:1px solid #000;
-  height:18px;
-}
+.line{ flex:1; border-bottom:1px solid #000; height:18px; }
 
-.sectionTitle{
-  font-weight:bold;
-  margin:0 0 2mm;
-}
+.sectionTitle{ font-weight:bold; margin:0 0 2mm; }
 
-ul{
-  margin:2mm 0 0 18px;
-  padding:0;
-}
+ul{ margin:2mm 0 0 18px; padding:0; }
 li{ margin:1mm 0; }
 
-.sign{
-  margin-top:8mm;
+/* ✅ QR: wyśrodkowanie + przesunięcie o 3mm w prawo */
+.qrWrap{
+  width:44mm;
+  text-align:center;
   display:flex;
-  justify-content:space-between;
-  gap:10mm;
+  flex-direction:column;
+  align-items:center;
+  margin-left: 3mm; /* <-- TUTAJ KALIBRACJA: zmień np. 2mm / 4mm */
 }
+.qr{ width:30mm; height:30mm; display:flex; align-items:center; justify-content:center; }
+.qr img{ width:30mm !important; height:30mm !important; display:block; }
+
+.sign{ margin-top:8mm; display:flex; justify-content:space-between; gap:10mm; }
 </style>
 </head>
 <body>
@@ -777,7 +763,7 @@ li{ margin:1mm 0; }
     </div>
   </div>
 
-  <div class="box" style="width:44mm; text-align:center">
+  <div class="box qrWrap">
     <div class="small muted"><b>Status online</b></div>
     <div class="qr" id="qr"></div>
     <div class="small muted" style="margin-top:3mm">Skanuj QR</div>
@@ -812,10 +798,9 @@ li{ margin:1mm 0; }
 
 </body>
 </html>
-  `);
+    `);
 
-  win.document.close();
-}
+    win.document.close();
   }
 
   window.save = save;
@@ -829,4 +814,3 @@ li{ margin:1mm 0; }
 
 </body>
 </html>
-
