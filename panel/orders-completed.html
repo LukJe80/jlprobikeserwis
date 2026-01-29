@@ -21,6 +21,8 @@
   --muted: rgba(229,231,235,0.7);
 
   --danger:#ef4444;
+  --warn:#f59e0b;
+  --ok:#22c55e;
 }
 
 *{ box-sizing:border-box; }
@@ -122,7 +124,7 @@ main{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width: 860px;              /* ✅ żeby kolumny się nie zgniatały */
+  min-width: 920px;              /* ✅ minimalnie szerzej (dochodzi 🔔) */
 }
 
 th,td{
@@ -200,6 +202,62 @@ tr:hover{ background: rgba(255,255,255,0.04); }
   font-size:18px;
 }
 
+/* 🔔 PRZYPOMNIENIA – kafelek */
+.remCell{
+  width:1%;
+  white-space:nowrap;
+}
+
+.remBtn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.03);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  cursor:default;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.remBtn i{
+  font-size:18px;
+}
+
+.remBtn.ok{
+  border-color: rgba(34,197,94,0.35);
+}
+.remBtn.ok i{ color: var(--ok); }
+.remBtn.ok:hover{
+  border-color: rgba(34,197,94,0.55);
+  background: rgba(34,197,94,0.10);
+}
+
+.remBtn.warn{
+  border-color: rgba(245,158,11,0.35);
+}
+.remBtn.warn i{ color: var(--warn); }
+.remBtn.warn:hover{
+  border-color: rgba(245,158,11,0.55);
+  background: rgba(245,158,11,0.10);
+}
+
+.remBtn.danger{
+  border-color: rgba(239,68,68,0.35);
+}
+.remBtn.danger i{ color: var(--danger); }
+.remBtn.danger:hover{
+  border-color: rgba(239,68,68,0.55);
+  background: rgba(239,68,68,0.10);
+}
+
+.remDash{
+  opacity:.65;
+  font-size:14px;
+}
+
 /* tel – ciaśniej */
 @media(max-width:720px){
   main{ padding:110px 16px 60px; }
@@ -223,6 +281,7 @@ tr:hover{ background: rgba(255,255,255,0.04); }
     <div class="page-title">Zakończone zlecenia</div>
     <div class="hint">
       <b>i</b> = szczegóły / historia • <i class="fa-solid fa-rotate-left"></i> = wznowienie z tym samym kodem QR (kontynuacja historii).
+      <br><i class="fa-solid fa-bell"></i> = przypomnienie (kolor zależy od % czasu do następnego serwisu).
       <br>Na telefonie możesz przewijać tabelę w bok.
     </div>
 
@@ -235,6 +294,7 @@ tr:hover{ background: rgba(255,255,255,0.04); }
             <th>Rower</th>
             <th>Opis / wykonane czynności</th>
             <th>Akcje</th>
+            <th>🔔</th>
             <th>Zakończone</th>
           </tr>
         </thead>
@@ -261,6 +321,103 @@ function safeDatePL(iso){
   return (String(d) === "Invalid Date") ? "" : d.toLocaleString("pl-PL");
 }
 
+/* ======= PRZYPOMNIENIA (lekko, bez dodatkowych zapytań) =======
+   Obsługujemy różne nazwy pól, bo u Ciebie mogły być inaczej:
+   - reminder_due_at / reminder_due
+   - reminder_months / reminder_after_months
+   - reminder_done / reminder_done_at
+   - start: archived_at (jeśli jest) lub completed_at
+*/
+function getStartDate(o){
+  const s = o.archived_at || o.completed_at || null;
+  if(!s) return null;
+  const d = new Date(s);
+  return (String(d) === "Invalid Date") ? null : d;
+}
+
+function getDueDate(o){
+  // 1) jeśli jest gotowy termin
+  const dueIso = o.reminder_due_at || o.reminder_due || null;
+  if(dueIso){
+    const d = new Date(dueIso);
+    if(String(d) !== "Invalid Date") return d;
+  }
+
+  // 2) wyliczamy z miesięcy (jeśli są)
+  const months = o.reminder_months ?? o.reminder_after_months ?? null;
+  if(months == null) return null;
+
+  const start = getStartDate(o);
+  if(!start) return null;
+
+  const m = Number(months);
+  if(!Number.isFinite(m) || m <= 0) return null;
+
+  const due = new Date(start);
+  // dodanie miesięcy "po ludzku"
+  const day = due.getDate();
+  due.setMonth(due.getMonth() + m);
+
+  // korekta dla końców miesięcy (np. 31 → 30/28)
+  if(due.getDate() < day) due.setDate(0);
+
+  return due;
+}
+
+function isReminderDone(o){
+  return Boolean(o.reminder_done) || Boolean(o.reminder_done_at);
+}
+
+function reminderBadge(o){
+  const start = getStartDate(o);
+  const due = getDueDate(o);
+
+  if(!start || !due){
+    return `<span class="remDash">—</span>`;
+  }
+
+  // jeśli zrobione
+  if(isReminderDone(o)){
+    return `
+      <div class="remBtn ok" title="Przypomnienie: zrobione">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+    `;
+  }
+
+  const now = new Date();
+  const total = due.getTime() - start.getTime();
+  const elapsed = now.getTime() - start.getTime();
+
+  if(total <= 0){
+    return `
+      <div class="remBtn danger" title="Przypomnienie: termin niepoprawny">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+    `;
+  }
+
+  // progress 0..1 (może wyjść >1 jeśli po terminie)
+  const p = Math.min(Math.max(elapsed / total, 0), 1);
+
+  let cls = "ok";
+  let title = `Przypomnienie: ${Math.round(p*100)}% • termin: ${safeDatePL(due.toISOString())}`;
+
+  if(p >= 0.90){
+    cls = "danger";
+  }else if(p >= 0.50){
+    cls = "warn";
+  }else{
+    cls = "ok";
+  }
+
+  return `
+    <div class="remBtn ${cls}" title="${esc(title)}">
+      <i class="fa-solid fa-bell"></i>
+    </div>
+  `;
+}
+
 /* ✅ WZNÓW: tworzy nowe zlecenie z tym samym public_code */
 async function resumeOrder(o){
   if(!o || !o.public_code){
@@ -279,14 +436,11 @@ async function resumeOrder(o){
     customer_name: (o.customer_name ?? "").toString(),
     phone: (o.phone ?? "").toString(),
     bike_type: (o.bike_type ?? "").toString(),
-
-    // u Ciebie w UI często jest "Opis / wykonane" = description
     description: (o.description ?? "").toString(),
-
-    // ✅ to pole MUSI być niepuste (może być "")
     issue_description: issueDesc,
 
     public_code: (o.public_code ?? "").toString(),
+
     archived_at: null,
     completed_at: null
   };
@@ -306,10 +460,10 @@ async function resumeOrder(o){
 }
 
 async function loadCompletedOrders(){
-  // ✅ do SELECT dokładamy issue_description, żeby wznawianie miało co skopiować
+  // ✅ select("*") – żeby nie wywalić błędu jeśli nazwy kolumn przypomnień są inne / jeszcze nie ma
   const { data, error } = await supabaseClient
     .from("orders")
-    .select("id, public_code, customer_name, phone, bike_type, description, issue_description, completed_at")
+    .select("*")
     .eq("status","wydano")
     .order("completed_at",{ascending:false});
 
@@ -324,7 +478,7 @@ async function loadCompletedOrders(){
   if(!data || data.length === 0){
     tbody.innerHTML = `
       <tr>
-        <td colspan="6">Brak zakończonych zleceń</td>
+        <td colspan="7">Brak zakończonych zleceń</td>
       </tr>`;
     return;
   }
@@ -338,6 +492,7 @@ async function loadCompletedOrders(){
       <td>${esc(o.phone ?? "")}</td>
       <td>${esc(o.bike_type ?? "")}</td>
       <td class="text">${esc(o.description ?? "")}</td>
+
       <td>
         <div class="actions">
           <a class="actionBtn info" href="${link}" title="Szczegóły / historia">
@@ -348,6 +503,9 @@ async function loadCompletedOrders(){
           </button>
         </div>
       </td>
+
+      <td class="remCell">${reminderBadge(o)}</td>
+
       <td class="date">${safeDatePL(o.completed_at)}</td>
     `;
 
