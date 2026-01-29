@@ -6,227 +6,921 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- ✅ kluczowe dla /panel/ -->
+<script src="/supabaseClient.js"></script>
 
 <style>
-body{background:#020617;color:#e5e7eb;font-family:system-ui;margin:0}
-.wrapper{max-width:1100px;margin:auto;padding:16px}
-.card{background:#0f172a;border-radius:16px;padding:16px;margin-bottom:16px}
-.card-title{display:flex;justify-content:space-between;align-items:center}
-.badge{font-size:12px;opacity:.6}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-label{display:block;margin-top:10px;font-size:13px;opacity:.8}
-input,textarea,select{width:100%;padding:10px;border-radius:10px;border:none;background:#020617;color:#fff}
-textarea{min-height:90px}
-.sum{margin-top:10px;font-weight:bold}
-.btn{padding:10px 14px;border-radius:12px;border:none;cursor:pointer}
-.btn.small{font-size:13px}
-.btn.warn{background:#f59e0b;color:#000}
-.btn.neutral{background:#1e293b;color:#fff}
-.btn.save{background:#2563eb;color:#fff;width:100%}
-.photoBar{margin-top:12px}
-.photoTop{display:flex;justify-content:space-between;align-items:center}
-.help{font-size:12px;opacity:.6;margin-top:6px}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+  --muted: rgba(229,231,235,0.7);
+}
+*{ box-sizing:border-box; }
+body{ margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); }
+
+/* ===== HEADER (jak panel) ===== */
+header{
+  position:fixed; top:0; width:100%; z-index:10;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:14px;
+}
+header h1{
+  margin:0; font-size:18px; color:var(--accent);
+  display:flex; align-items:center; gap:8px; white-space:nowrap;
+}
+.header-right{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+.toplink{
+  display:flex; align-items:center; gap:8px;
+  color:#fff; text-decoration:none; font-weight:800; font-size:14px;
+  opacity:.92; padding:6px 4px; background:transparent; border:none; cursor:pointer;
+}
+.toplink:hover{ color:var(--accent); }
+
+/* ===== LAYOUT ===== */
+.wrapper{ max-width: 980px; margin: 0 auto; padding: 120px 24px 80px; }
+
+/* ===== BOX ===== */
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 16px;
+  padding: 22px;
+}
+h1.page-title{ margin:0 0 14px; font-size:26px; font-weight:900; }
+
+/* ===== panelowy układ ===== */
+.grid{ display:grid; grid-template-columns: 1fr; gap:14px; }
+@media(min-width: 980px){ .grid{ grid-template-columns: 1fr 1fr; gap:16px; } }
+
+.card{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 14px;
+  padding: 16px;
+}
+.card-title{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin:0 0 10px;
+}
+.card-title h2{
+  margin:0;
+  font-size:14px;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+  color:#93c5fd;
+  font-weight:900;
+  display:flex; align-items:center; gap:8px;
+}
+.card-title .badge{ font-size:12px; color:rgba(229,231,235,0.9); opacity:.85; }
+
+/* ===== FORM ===== */
+label{ display:block; font-weight:800; color:#93c5fd; margin-top:12px; }
+input,select,textarea{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color:#000;
+  font-size:16px;
+  margin-top:6px;
+}
+textarea{ min-height:120px; resize:vertical; }
+
+/* ===== SUMA ===== */
+.sum{ text-align:right; font-size:22px; font-weight:900; margin:12px 0 0; }
+
+/* ===== ACTIONS ===== */
+.actions{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:12px;
+}
+@media(min-width: 780px){ .actions{ grid-template-columns: 1fr 1fr; } }
+.actions .btn{ margin:0; }
+
+/* ===== BUTTONS ===== */
+.btn{
+  width:100%;
+  padding:16px;
+  font-size:16px;
+  font-weight:900;
+  border-radius:999px;
+  cursor:pointer;
+
+  border:2px solid var(--accent);
+  background:transparent;
+  color:var(--accent);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+.btn:hover{ background:var(--accent); color:#fff; }
+
+.btn.save{ background:var(--accent); color:#fff; }
+.btn.save:hover{ background:var(--accentHover); }
+
+/* przyciski druku */
+.btn.pdf-in, .btn.pdf-out, .btn.pdf-book{
+  border-color: rgba(255,255,255,0.18);
+  color:#fff;
+}
+.btn.pdf-in:hover, .btn.pdf-out:hover, .btn.pdf-book:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
+  color:#fff;
+}
+
+/* ===== HELP ===== */
+.help{ margin-top:10px; font-size:12px; color: rgba(229,231,235,0.78); line-height:1.35; }
+
+/* ===== PHOTO MINI BAR ===== */
+.photoBar{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,0.10);
+}
+.photoTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.photoCount{
+  font-size:12px;
+  opacity:.9;
+  color:rgba(229,231,235,0.9);
+}
+.row{ display:flex; gap:10px; align-items:center; margin-top:10px; }
+.btn.small{ width:auto; padding:12px 14px; border-radius:12px; font-size:14px; }
+.btn.neutral{
+  border-color: rgba(255,255,255,0.18);
+  color:#fff;
+}
+.btn.neutral:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
+  color:#fff;
+}
+.btn.warn{
+  border-color: rgba(245,158,11,0.6);
+  color:#fff;
+}
+.btn.warn:hover{
+  background: rgba(245,158,11,0.18);
+  color:#fff;
+}
 </style>
 </head>
 
 <body>
-<div class="wrapper">
 
 <header>
   <h1><i class="fa-solid fa-pen-to-square"></i> Edycja zlecenia</h1>
+  <div class="header-right">
+    <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
+  </div>
 </header>
 
-<div class="grid">
+<div class="wrapper">
+  <div class="box">
 
-<!-- LEWA -->
-<div class="card">
-  <div class="card-title">
-    <h2>Zlecenie</h2>
-    <span class="badge">Dane klienta</span>
-  </div>
+    <h1 class="page-title">Edycja zlecenia</h1>
 
-  <label>Status</label>
-  <select id="status">
-    <option>oczekujące</option>
-    <option>nowe</option>
-    <option>w trakcie</option>
-    <option>gotowe</option>
-    <option>wydano</option>
-  </select>
+    <div class="grid">
 
-  <label>Klient</label>
-  <input id="customer">
+      <!-- LEWA: Dane zlecenia -->
+      <div class="card">
+        <div class="card-title">
+          <h2><i class="fa-solid fa-clipboard-list"></i> Zlecenie</h2>
+          <span class="badge">Dane klienta + status</span>
+        </div>
 
-  <label>Telefon</label>
-  <input id="phone">
+        <label>Status</label>
+        <select id="status">
+          <option>oczekujące</option>
+          <option>nowe</option>
+          <option>w trakcie</option>
+          <option>gotowe</option>
+          <option>wydano</option>
+        </select>
 
-  <label>Rower</label>
-  <input id="bike">
+        <label>Klient</label>
+        <input id="customer">
 
-  <label>Opis</label>
-  <textarea id="note"></textarea>
-</div>
+        <label>Telefon</label>
+        <input id="phone">
 
-<!-- PRAWA -->
-<div class="card">
-  <div class="card-title">
-    <h2>Kosztorys</h2>
-    <span class="badge">SMS + Galeria</span>
-  </div>
+        <label>Rower</label>
+        <input id="bike">
 
-  <label>Koszt</label>
-  <textarea id="costText"></textarea>
+        <label>Opis zgłoszenia klienta</label>
+        <textarea id="note"></textarea>
 
-  <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
-
-  <div class="photoBar">
-    <div class="photoTop">
-      <div>
-        <i class="fa-solid fa-camera"></i>
-        Zdjęcia: <b id="photoCount">0</b>
+        <div class="help">
+          Tip: „oczekujące” = online od klienta, „nowe” = przyjęte w serwisie.
+        </div>
       </div>
-      <button class="btn small neutral" onclick="openStaffGallery()">Galeria</button>
+
+      <!-- PRAWA: Kosztorys + Zdjęcia + SMS -->
+      <div class="card">
+        <div class="card-title">
+          <h2><i class="fa-solid fa-receipt"></i> Kosztorys</h2>
+          <span class="badge">Lista pozycji + suma</span>
+        </div>
+
+        <label>Koszt (roboczy – do wydania roweru)</label>
+        <textarea id="costText" placeholder="np. detka 25&#10;regulacja przerzutek 40"></textarea>
+
+        <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
+
+        <div class="photoBar">
+          <div class="photoTop">
+            <div class="photoCount">
+              <i class="fa-solid fa-camera"></i>
+              Zdjęcia: <b id="photoCount">0</b>
+            </div>
+
+            <!-- ✅ Galeria = panel (dla Ciebie) -->
+            <button class="btn small neutral" onclick="openGallery()" type="button">
+              <i class="fa-solid fa-images"></i> Galeria
+            </button>
+          </div>
+
+          <!-- ✅ Jeden przycisk SMS PRO -->
+          <div class="row">
+            <button class="btn small warn" onclick="smsPro()" type="button">
+              <i class="fa-solid fa-paper-plane"></i> SMS PRO (odbiorca + treść)
+            </button>
+          </div>
+
+          <div class="help" id="photoHelp">
+            Zdjęcia dodajesz i przeglądasz w galerii (panel). Klient dostaje link do galerii publicznej.
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
-    <div class="row">
-      <button class="btn small warn" onclick="smsPro()">
-        <i class="fa-solid fa-paper-plane"></i> SMS PRO
+    <!-- AKCJE (zostają w tej kolejności) -->
+    <div class="actions" style="margin-top:16px;">
+      <button class="btn save" onclick="save()" type="button">
+        <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
+      </button>
+
+      <button class="btn pdf-in" onclick="printIn()" type="button">
+        <i class="fa-solid fa-print"></i> Drukuj kartę przyjęcia
+      </button>
+
+      <button class="btn pdf-out" onclick="printOut()" type="button">
+        <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
+      </button>
+
+      <button class="btn pdf-book" onclick="printBooklet()" type="button">
+        <i class="fa-solid fa-book"></i> Książeczka serwisowa
       </button>
     </div>
 
-    <div class="help">
-      Klient dostaje link do galerii publicznej (bez logowania)
-    </div>
   </div>
 </div>
 
-</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const id = new URLSearchParams(location.search).get("id");
+  if(!id){
+    alert("Brak parametru ?id w URL.");
+    return;
+  }
 
-<div class="actions">
-  <button class="btn save" onclick="save()">Zapisz zmiany</button>
-</div>
+  const status   = document.getElementById("status");
+  const customer = document.getElementById("customer");
+  const phone    = document.getElementById("phone");
+  const bike     = document.getElementById("bike");
+  const note     = document.getElementById("note");
+  const costText = document.getElementById("costText");
+  const sumEl    = document.getElementById("sum");
+
+  const photoCountEl = document.getElementById("photoCount");
+  const photoHelp = document.getElementById("photoHelp");
+
+  const COST_TEXT_COLUMN = "costs_text";
+
+  let currentTotal = 0;
+  let previousStatus = null;
+  let publicCode = "";
+
+  function escapeHtml(str){
+    return (str ?? "")
+      .toString()
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function calcSum(){
+    let s = 0;
+    (costText.value || "").split("\n").forEach(l=>{
+      const m = l.match(/(\d+(?:[.,]\d+)?)/);
+      if(m) s += parseFloat(m[1].replace(",",".")); 
+    });
+    currentTotal = s;
+    sumEl.textContent = s.toFixed(2);
+  }
+  costText.addEventListener("input", calcSum);
+
+  function normalizePhoneToPL48(raw){
+    const digits = String(raw || "").replace(/\D/g, "");
+    if(!digits) return "";
+
+    if(digits.startsWith("48") && digits.length === 11) return digits;
+    if(digits.length === 9) return "48" + digits;
+
+    if(digits.length > 11){
+      return "48" + digits.slice(-9);
+    }
+    return digits;
+  }
+
+  // ✅ stabilny, krótki kod (8 znaków), bez crypto.randomUUID (żeby było pewne wszędzie)
+  function genPublicCode8(){
+    const chars = "0123456789ABCDEF";
+    let out = "";
+    for(let i=0;i<8;i++){
+      out += chars[Math.floor(Math.random()*chars.length)];
+    }
+    return out;
+  }
+
+  // ✅ najważniejsze: jeśli public_code = null, generujemy i zapisujemy do orders
+  async function ensurePublicCode(){
+    if(publicCode && String(publicCode).trim()) return publicCode;
+
+    // próbujemy kilka razy na wypadek konfliktu unique
+    for(let attempt=0; attempt<5; attempt++){
+      const code = genPublicCode8();
+
+      const { error } = await supabaseClient
+        .from("orders")
+        .update({ public_code: code })
+        .eq("id", id);
+
+      if(!error){
+        publicCode = code;
+        return publicCode;
+      }
+
+      // jeśli błąd unique – próbuj dalej
+      const msg = (error.message || "").toLowerCase();
+      if(msg.includes("duplicate") || msg.includes("unique")){
+        continue;
+      }
+
+      // inny błąd – przerywamy
+      throw error;
+    }
+
+    throw new Error("Nie udało się wygenerować unikalnego public_code.");
+  }
+
+  async function sendSmsGotowe(){
+    const to = normalizePhoneToPL48(phone.value);
+    if(!to) return { ok:false, skipped:true, reason:"no_phone" };
+
+    const msg = publicCode
+      ? `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior. Kod: ${publicCode}`
+      : `JL Pro Bike: Rower GOTOWY. Zapraszamy po odbior.`;
+
+    const r = await fetch("/api/sms/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, message: msg })
+    });
+
+    const j = await r.json().catch(()=>({ ok:false, error:"Invalid JSON response" }));
+    return j;
+  }
+
+  // ======= FOTO: panel vs public =======
+  function makeStaffGalleryUrl(){
+    // ✅ panel (wymaga zalogowania)
+    return `/panel/order-photos.html?id=${encodeURIComponent(id)}`;
+  }
+
+  function makePublicGalleryPath(){
+    // ✅ TYLKO publiczna galeria (bez logowania)
+    const code = (publicCode && String(publicCode).trim()) ? String(publicCode).trim() : "";
+    if(!code) return "";
+    return `/order-photos-public.html?code=${encodeURIComponent(code)}`;
+  }
+
+  async function loadPhotosCount(){
+    try{
+      photoHelp.textContent = "Ładowanie zdjęć…";
+
+      const { count, error } = await supabaseClient
+        .from("order_photos")
+        .select("id", { count: "exact", head: true })
+        .eq("order_id", id);
+
+      if(error) throw error;
+
+      photoCountEl.textContent = String(count || 0);
+      photoHelp.textContent = "Zdjęcia dodajesz i przeglądasz w galerii (panel). Klient ma link publiczny.";
+    }catch(e){
+      console.warn("loadPhotosCount error:", e);
+      photoHelp.textContent = "Błąd pobierania zdjęć: " + (e?.message || e);
+    }
+  }
+
+  function openGallery(){
+    window.location.href = makeStaffGalleryUrl();
+  }
+
+  function buildQuoteText(publicUrlAbs){
+    const lines = (costText.value || "").split("\n").map(s=>s.trim()).filter(Boolean);
+    const pretty = lines.length ? lines.map(l=>`- ${l}`).join("\n") : "(brak pozycji)";
+    const sum = (Number.isFinite(currentTotal) ? currentTotal : 0).toFixed(2);
+    return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${publicUrlAbs}`;
+  }
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      return true;
+    }
+  }
+
+  // ✅ SMS PRO: odbiorca + treść + link do galerii PUBLIC
+  async function smsPro(){
+    try{
+      calcSum();
+
+      const code = await ensurePublicCode(); // 🔥 tu jest fix na public_code = null
+      const pubPath = makePublicGalleryPath();
+      const publicUrlAbs = `${location.origin}${pubPath}`;
+
+      const body = buildQuoteText(publicUrlAbs);
+      const to = normalizePhoneToPL48(phone.value);
+
+      await copyToClipboard(body);
+
+      if(!to){
+        alert("Skopiowano do schowka ✅\nBrak numeru telefonu — wpisz telefon klienta, aby otworzyć SMS z odbiorcą.");
+        return;
+      }
+
+      const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const sep = isiOS ? "&" : "?";
+      const smsUrl = `sms:${to}${sep}body=${encodeURIComponent(body)}`;
+      window.location.href = smsUrl;
+
+    }catch(e){
+      console.warn("smsPro error:", e);
+      alert("Błąd SMS PRO: " + (e?.message || e));
+    }
+  }
+
+  // ======= LOAD / SAVE =======
+  async function load(){
+    const { data, error } = await supabaseClient
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if(error){
+      alert("Błąd pobierania danych: " + error.message);
+      return;
+    }
+
+    status.value   = data.status ?? "oczekujące";
+    customer.value = data.customer_name ?? "";
+    phone.value    = data.phone ?? "";
+    bike.value     = data.bike_type ?? "";
+    note.value     = data.description ?? "";
+
+    if(Object.prototype.hasOwnProperty.call(data, COST_TEXT_COLUMN)){
+      costText.value = data[COST_TEXT_COLUMN] ?? "";
+    }else{
+      costText.value = "";
+    }
+
+    previousStatus = status.value;
+    publicCode = data.public_code ?? "";
+
+    // 🔥 auto-naprawa: jeśli null → generuj i zapisz od razu (żeby QR/SMS/galeria zawsze miały kod)
+    try{
+      await ensurePublicCode();
+    }catch(e){
+      console.warn("ensurePublicCode on load:", e);
+      // nie blokujemy panelu, ale SMS PRO i tak pokaże błąd jeśli zapis się nie uda
+    }
+
+    calcSum();
+    await loadPhotosCount();
+  }
+
+  async function save(){
+    calcSum();
+
+    const newStatus = status.value;
+
+    const payload = {
+      status: newStatus,
+      customer_name: customer.value,
+      phone: phone.value,
+      bike_type: bike.value,
+      description: note.value,
+
+      labor_cost: currentTotal,
+      parts_cost: 0,
+      total_cost: currentTotal
+    };
+
+    const { error } = await supabaseClient
+      .from("orders")
+      .update(payload)
+      .eq("id", id);
+
+    if(error){
+      alert("Błąd zapisu: " + error.message);
+      return;
+    }
+
+    const { error: costErr } = await supabaseClient
+      .from("orders")
+      .update({ [COST_TEXT_COLUMN]: costText.value })
+      .eq("id", id);
+
+    if(costErr){
+      const msg = (costErr.message || "").toLowerCase();
+      if(msg.includes("could not find") || msg.includes("schema cache")){
+        alert("Zapisano poprawnie ✅ (status + dane + sumy). Lista pozycji nie zapisana, bo brak kolumny tekstowej w bazie.");
+      }else{
+        alert("Zapisano sumy ✅, ale błąd zapisu listy pozycji: " + costErr.message);
+      }
+      previousStatus = newStatus;
+      await loadPhotosCount();
+      return;
+    }
+
+    let smsNote = "";
+    const shouldSendSms = (newStatus === "gotowe" && previousStatus !== "gotowe");
+    if(shouldSendSms){
+      try{
+        const smsRes = await sendSmsGotowe();
+        if(smsRes && smsRes.ok){
+          smsNote = "\nSMS: wysłano ✅";
+        }else{
+          smsNote = "\nSMS: nie wysłano ⚠️";
+          console.warn("SMSAPI response:", smsRes);
+        }
+      }catch(e){
+        smsNote = "\nSMS: błąd wysyłki ⚠️";
+        console.warn("SMSAPI error:", e);
+      }
+    }
+
+    previousStatus = newStatus;
+
+    // po zapisie jeszcze raz upewnij się, że kod istnieje (na wypadek starych rekordów)
+    try{ await ensurePublicCode(); }catch(e){ console.warn(e); }
+
+    await loadPhotosCount();
+    alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)" + smsNote);
+  }
+
+  // ===== PDF: przyjęcie / wydanie / książeczka =====
+  function printIn(){
+    const win = window.open("","_blank");
+
+    // ✅ QR do statusu (po public_code, jeśli jest)
+    const codeForQr = (publicCode && String(publicCode).trim()) ? String(publicCode).trim() : id;
+    const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Karta przyjęcia</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<style>
+@page{ size:A4; margin:0; }
+html, body{ width:210mm; height:297mm; margin:0; padding:0; overflow:hidden; }
+*{ box-sizing:border-box; }
+body{ font-family:Arial; color:#000; }
+.page{ width:210mm; height:297mm; padding:15mm; box-sizing:border-box; }
+.main{ height:165mm; }
+h2{ margin:0 0 8mm; text-align:center; width:100%; font-size:20px; }
+.header{ display:flex; align-items:flex-start; justify-content:space-between; gap:10mm; }
+.left-info{ font-size:12px; line-height:1.35; }
+.qrbox{ width:40mm; height:40mm; }
+.qrbox img{ width:40mm !important; height:40mm !important; display:block; }
+.sep{ border-top:2px dashed #000; margin:8mm 0 6mm; }
+.tag-wrap{ height:90mm; display:flex; justify-content:flex-start; align-items:flex-start; margin-top:0mm; }
+.tag{ width:180mm; height:85mm; border:2px solid #000; position:relative; }
+.hole{ position:absolute; left:10mm; top:50%; transform:translateY(-50%); width:18px; height:18px; border:2px solid #000; border-radius:50%; }
+.tag-content{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-90deg); transform-origin:center; display:flex; flex-direction:column; align-items:center; gap:8mm; }
+.tag-text{ font-size:12px; line-height:1.25; text-align:center; white-space:pre-line; font-weight:700; }
+.tag-text small{ font-weight:400; }
+.tag-qr{ width:40mm; height:40mm; }
+.tag-qr img{ width:40mm !important; height:40mm !important; display:block; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="main">
+
+    <h2>KARTA PRZYJĘCIA – SERWIS ROWEROWY</h2>
+
+    <div class="header">
+      <div class="left-info">
+        <b>Klient:</b> ${escapeHtml(customer.value)}<br>
+        <b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+        <b>Rower:</b> ${escapeHtml(bike.value)}<br>
+        <b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+      </div>
+
+      <div class="qrbox" id="qrTop"></div>
+    </div>
+
+    <div style="margin-top:10mm; font-size:12px;">
+      <b>Opis zgłoszenia:</b><br><br>
+      <div style="white-space:pre-line;">${escapeHtml(note.value)}</div>
+    </div>
+
+    <div style="margin-top:18mm; font-size:12px;">
+      <b>Podpis klienta:</b> _____________________
+    </div>
+
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="tag-wrap">
+    <div class="tag">
+      <div class="hole"></div>
+
+      <div class="tag-content">
+        <div class="tag-text">
+          ZAWIESZKA – SERWIS<br>
+          <small>
+            Klient: ${escapeHtml(customer.value)}<br>
+            Tel: ${escapeHtml(phone.value)}<br>
+            Rower: ${escapeHtml(bike.value)}<br>
+            Data: ${new Date().toLocaleDateString("pl-PL")}
+          </small>
+        </div>
+
+        <div class="tag-qr" id="qrTag"></div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
 <script>
-/* ===== KONFIG ===== */
-const SUPABASE_URL = "https://mzgxvlltlcrvzmtswzql.supabase.co";
-const SUPABASE_KEY = "TU_WSTAW_PUBLISHABLE_KEY";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const id = new URLSearchParams(location.search).get("id");
-
-let publicCode = "";
-let currentTotal = 0;
-
-/* ===== ELEMENTY ===== */
-const status = document.getElementById("status");
-const customer = document.getElementById("customer");
-const phone = document.getElementById("phone");
-const bike = document.getElementById("bike");
-const note = document.getElementById("note");
-const costText = document.getElementById("costText");
-const sumEl = document.getElementById("sum");
-const photoCountEl = document.getElementById("photoCount");
-
-/* ===== UTIL ===== */
-function normalizePhoneToPL48(v){
-  const d = (v||"").replace(/\D/g,"");
-  if(d.length===9) return "48"+d;
-  if(d.startsWith("48") && d.length===11) return d;
-  return "";
-}
-
-function calcSum(){
-  let s=0;
-  (costText.value||"").split("\n").forEach(l=>{
-    const m=l.match(/(\d+[.,]?\d*)$/);
-    if(m) s+=parseFloat(m[1].replace(",","."))||0;
-  });
-  currentTotal=s;
-  sumEl.textContent=s.toFixed(2);
-}
-
-/* ===== PUBLIC CODE ===== */
-async function ensurePublicCode(){
-  if(publicCode) return publicCode;
-
-  const code = crypto.randomUUID();
-  await supabaseClient.from("orders").update({ public_code: code }).eq("id", id);
-  publicCode = code;
-  return code;
-}
-
-async function getPublicGalleryUrl(){
-  const code = await ensurePublicCode();
-  return `${location.origin}/order-photos-public.html?code=${code}`;
-}
-
-/* ===== GALERIA ===== */
-function openStaffGallery(){
-  location.href = `/panel/order-photos.html?id=${id}`;
-}
-
-/* ===== SMS PRO ===== */
-async function smsPro(){
-  calcSum();
-  const to = normalizePhoneToPL48(phone.value);
-  const gallery = await getPublicGalleryUrl();
-
-  const body =
-`JL Pro Bike Serwis
-Twój kosztorys:
-${costText.value || "(brak pozycji)"}
-
-Suma: ${currentTotal.toFixed(2)} zł
-Zdjęcia:
-${gallery}`;
-
-  await navigator.clipboard.writeText(body);
-
-  if(!to){
-    alert("SMS skopiowany. Brak numeru telefonu.");
-    return;
+  const qrUrl = ${JSON.stringify(qrUrl)};
+  function makeQr(elId){
+    const el = document.getElementById(elId);
+    if(!el) return;
+    el.innerHTML = "";
+    new QRCode(el, { text: qrUrl, width: 151, height: 151 });
   }
 
-  const sep = /iPhone|iPad/.test(navigator.userAgent) ? "&" : "?";
-  location.href = `sms:${to}${sep}body=${encodeURIComponent(body)}`;
+  window.onload = () => {
+    makeQr("qrTop");
+    makeQr("qrTag");
+    window.focus();
+    window.print();
+  };
+<\/script>
+
+</body>
+</html>
+    `);
+
+    win.document.close();
+  }
+
+  function printOut(){
+    let rows="";
+    let i=1;
+
+    (costText.value || "").split("\n").forEach(l=>{
+      const m=l.match(/(\d+(?:[.,]\d+)?)/);
+      if(!m) return;
+      const price = parseFloat(m[1].replace(",",".")) || 0;
+      const desc = l.replace(m[1],"").trim();
+
+      rows += `<tr>
+        <td>${i++}</td>
+        <td>${escapeHtml(desc)}</td>
+        <td style="text-align:right">${price.toFixed(2)} zł</td>
+      </tr>`;
+    });
+
+    const win=window.open("","_blank");
+    win.document.write(`
+<!DOCTYPE html><html lang="pl"><head><meta charset="utf-8">
+<title>Wydanie roweru</title>
+<style>
+body{font-family:Arial;padding:30px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #000;padding:6px}
+th{background:#eee}
+.sum{text-align:right;font-weight:bold;margin-top:10px}
+</style></head><body>
+
+<h2 style="text-align:center">WYDANIE ROWERU – ROZLICZENIE</h2>
+<p>
+<b>Klient:</b> ${escapeHtml(customer.value)}<br>
+<b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+<b>Rower:</b> ${escapeHtml(bike.value)}<br>
+<b>Data:</b> ${new Date().toLocaleString("pl-PL")}
+</p>
+
+<table>
+<tr><th>Lp</th><th>Czynność</th><th>Cena</th></tr>
+${rows}
+</table>
+
+<div class="sum">DO ZAPŁATY: ${currentTotal.toFixed(2)} zł</div>
+<p>Podpis klienta: _____________________</p>
+
+<script>
+  window.onload = () => { window.focus(); window.print(); };
+<\/script>
+
+</body></html>`);
+    win.document.close();
+  }
+
+  function printBooklet(){
+    const codeForQr = (publicCode && String(publicCode).trim()) ? String(publicCode).trim() : id;
+    const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
+
+    const items = (costText.value || "")
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => {
+        const m = l.match(/(\d+(?:[.,]\d+)?)/);
+        if(m){
+          const desc = l.replace(m[1], "").trim();
+          return desc || l.trim();
+        }
+        return l.trim();
+      })
+      .filter(Boolean);
+
+    const itemsHtml = items.length
+      ? `<ul>${items.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>`
+      : `<div class="small muted">Brak wpisów.</div>`;
+
+    const win = window.open("","_blank");
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Książeczka serwisowa</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+
+<style>
+@page{ size:A5; margin:10mm; }
+body{ font-family:Arial; color:#000; }
+h2{ margin:0 0 6mm; font-size:18px; text-align:center; }
+
+.small{ font-size:12px; line-height:1.35; }
+.muted{ color:#333; }
+
+.row{ display:flex; justify-content:space-between; gap:10mm; align-items:flex-start; }
+.box{ border:1px solid #000; padding:6mm; border-radius:6px; }
+
+.field{ margin-top:4mm; display:flex; align-items:flex-end; gap:8mm; }
+.label{ font-weight:bold; }
+.line{ flex:1; border-bottom:1px solid #000; height:18px; }
+
+.sectionTitle{ font-weight:bold; margin:0 0 2mm; }
+
+ul{ margin:2mm 0 0 18px; padding:0; }
+li{ margin:1mm 0; }
+
+/* ✅ QR: wyśrodkowanie + przesunięcie o 3mm w prawo */
+.qrWrap{
+  width:44mm;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-left: 3mm; /* <-- TUTAJ KALIBRACJA */
 }
+.qr{ width:30mm; height:30mm; display:flex; align-items:center; justify-content:center; }
+.qr img{ width:30mm !important; height:30mm !important; display:block; }
 
-/* ===== LOAD / SAVE ===== */
-async function load(){
-  const { data } = await supabaseClient.from("orders").select("*").eq("id", id).single();
-  if(!data) return;
+.sign{ margin-top:8mm; display:flex; justify-content:space-between; gap:10mm; }
+</style>
+</head>
+<body>
 
-  status.value=data.status||"";
-  customer.value=data.customer_name||"";
-  phone.value=data.phone||"";
-  bike.value=data.bike_type||"";
-  note.value=data.description||"";
-  costText.value=data.cost_text||"";
-  publicCode=data.public_code||"";
+<h2>KSIĄŻECZKA SERWISOWA — JL PRO BIKE SERWIS</h2>
 
-  calcSum();
-}
+<div class="row">
+  <div class="box" style="flex:1">
+    <div class="small">
+      <b>Data:</b> ${new Date().toLocaleDateString("pl-PL")}<br>
+      <b>Klient:</b> ${escapeHtml(customer.value)}<br>
+      <b>Telefon:</b> ${escapeHtml(phone.value)}<br>
+      <b>Rower:</b> ${escapeHtml(bike.value)}<br>
+    </div>
 
-async function save(){
-  calcSum();
-  await supabaseClient.from("orders").update({
-    status:status.value,
-    customer_name:customer.value,
-    phone:phone.value,
-    bike_type:bike.value,
-    description:note.value,
-    cost_text:costText.value,
-    total_cost:currentTotal
-  }).eq("id", id);
+    <div class="field">
+      <div class="small label">Przebieg (km):</div>
+      <div class="line"></div>
+    </div>
+  </div>
 
-  alert("Zapisano ✅");
-}
+  <div class="box qrWrap">
+    <div class="small muted"><b>Status online</b></div>
+    <div class="qr" id="qr"></div>
+    <div class="small muted" style="margin-top:3mm">Skanuj QR</div>
+  </div>
+</div>
 
-load();
+<div class="box" style="margin-top:6mm">
+  <div class="small sectionTitle">Co było zrobione (opis / uwagi):</div>
+  <div class="small" style="white-space:pre-line; margin-top:2mm">${escapeHtml(note.value)}</div>
+</div>
+
+<div class="box" style="margin-top:6mm">
+  <div class="small sectionTitle">Co było wymienione / wykonane (bez cen):</div>
+  <div class="small" style="margin-top:2mm">${itemsHtml}</div>
+</div>
+
+<div class="sign">
+  <div style="flex:1">
+    <div class="small muted">Podpis serwisu</div>
+    <div class="line"></div>
+  </div>
+  <div style="flex:1">
+    <div class="small muted">Podpis klienta</div>
+    <div class="line"></div>
+  </div>
+</div>
+
+<script>
+  new QRCode(document.getElementById("qr"), { text: ${JSON.stringify(qrUrl)}, width: 113, height: 113 });
+  window.onload = () => { window.focus(); window.print(); };
+<\/script>
+
+</body>
+</html>
+    `);
+
+    win.document.close();
+  }
+
+  // ===== expose do onclick =====
+  window.save = save;
+  window.printIn = printIn;
+  window.printOut = printOut;
+  window.printBooklet = printBooklet;
+
+  window.openGallery = openGallery;
+  window.smsPro = smsPro;
+
+  load();
+});
 </script>
+
 </body>
 </html>
