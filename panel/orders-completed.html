@@ -150,7 +150,7 @@ tr:hover{ background: rgba(255,255,255,0.04); }
   white-space:nowrap;
 }
 
-/* ✅ prosta ikonka linku do historii */
+/* ✅ ikonka linku */
 .photoLink{
   display:inline-flex;
   align-items:center;
@@ -165,6 +165,28 @@ tr:hover{ background: rgba(255,255,255,0.04); }
   font-size:16px;
 }
 .photoLink:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
+}
+
+/* ✅ mały przycisk "Wznów" obok aparatu */
+.resumeBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:34px;
+  padding:0 10px;
+  margin-left:8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.03);
+  color:#fff;
+  font-weight:900;
+  font-size:12px;
+  cursor:pointer;
+  text-decoration:none;
+}
+.resumeBtn:hover{
   border-color: rgba(37,99,235,0.55);
   background: rgba(37,99,235,0.14);
 }
@@ -188,7 +210,7 @@ tr:hover{ background: rgba(255,255,255,0.04); }
 <main>
   <div class="box">
     <div class="page-title">Zakończone zlecenia</div>
-    <div class="hint">Lista zleceń ze statusem „wydano”. Kliknij 📷 aby wejść w historię i zdjęcia.</div>
+    <div class="hint">Lista zleceń ze statusem „wydano”. Kliknij 📷 aby wejść w historię i zdjęcia. „Wznów” tworzy nowe zlecenie z tym samym kodem QR.</div>
 
     <div class="table-wrap">
       <table>
@@ -219,11 +241,51 @@ function esc(str){
     .replaceAll("'","&#039;");
 }
 
-async function loadCompletedOrders(){
-  // ✅ Tylko jedno zapytanie = natychmiastowe ładowanie
+function safeDatePL(iso){
+  if(!iso) return "";
+  const d = new Date(iso);
+  return (String(d) === "Invalid Date") ? "" : d.toLocaleString("pl-PL");
+}
+
+// ✅ tworzy NOWE zlecenie z tym samym public_code (kod ramy)
+async function resumeOrder(o){
+  if(!o || !o.public_code){
+    alert("Brak public_code (kod QR). Nie mogę wznowić.");
+    return;
+  }
+
+  const ok = confirm("Wznowić jako NOWE zlecenie (kontynuacja historii pod tym samym kodem QR)?");
+  if(!ok) return;
+
+  // Minimalny payload (bez ryzyka błędu kolumn)
+  const payload = {
+    status: "nowe",
+    customer_name: o.customer_name || "",
+    phone: o.phone || "",
+    bike_type: o.bike_type || "",
+    description: o.description || "",
+    public_code: o.public_code
+  };
+
   const { data, error } = await supabaseClient
     .from("orders")
-    .select("id, customer_name, phone, bike_type, description, completed_at")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  if(error){
+    alert("Błąd wznawiania: " + error.message);
+    return;
+  }
+
+  // przejście do edycji nowego zlecenia
+  location.href = `edit-order.html?id=${encodeURIComponent(data.id)}`;
+}
+
+async function loadCompletedOrders(){
+  const { data, error } = await supabaseClient
+    .from("orders")
+    .select("id, public_code, customer_name, phone, bike_type, description, completed_at")
     .eq("status","wydano")
     .order("completed_at",{ascending:false});
 
@@ -257,11 +319,13 @@ async function loadCompletedOrders(){
       <td class="text">${esc(o.description ?? "")}</td>
       <td>
         <a class="photoLink" href="${link}" title="Historia i zdjęcia">📷</a>
+        <button class="resumeBtn" type="button">Wznów</button>
       </td>
-      <td class="date">
-        ${o.completed_at ? new Date(o.completed_at).toLocaleString("pl-PL") : ""}
-      </td>
+      <td class="date">${safeDatePL(o.completed_at)}</td>
     `;
+
+    // podpinamy akcję (bez inline JSON w HTML)
+    tr.querySelector(".resumeBtn").addEventListener("click", () => resumeOrder(o));
 
     tbody.appendChild(tr);
   }
