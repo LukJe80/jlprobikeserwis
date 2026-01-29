@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Naklejka QR — JL Pro Bike</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    @page { size: A4; margin: 0; }
+    html, body { height: 100%; margin: 0; }
+    body { font-family: Arial, sans-serif; background: #fff; color:#000; }
+
+    .page{
+      width: 210mm;
+      height: 297mm;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .sticker{
+      width: 90mm;
+      height: 90mm;
+      border: 2px solid #000;
+      border-radius: 10mm;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 6mm;
+      padding: 6mm;
+    }
+
+    .brand{
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      text-align:center;
+    }
+
+    .qr{
+      width: 60mm;
+      height: 60mm;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .qr img{
+      width:60mm !important;
+      height:60mm !important;
+      display:block;
+    }
+
+    .code{
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: 2px;
+    }
+
+    .hint{
+      font-size: 10px;
+      text-align:center;
+      opacity: .85;
+      line-height: 1.25;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="sticker">
+      <div class="brand">JL Pro Bike Serwis</div>
+      <div class="qr" id="qr"></div>
+      <div class="code" id="codeText">—</div>
+      <div class="hint">Skanuj kod, aby otworzyć status zlecenia</div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const code = new URLSearchParams(location.search).get("code");
+  if(!code){
+    alert("Brak parametru ?code=XXXX");
+    return;
+  }
+
+  document.getElementById("codeText").textContent = code;
+
+  const url = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(code)}`;
+
+  new QRCode(document.getElementById("qr"), {
+    text: url,
+    width: 226,
+    height: 226
+  });
+
+  // auto druk
+  window.onload = () => {
+    window.focus();
+    window.print();
+  };
+})();
+</script>
+</body>
+</html>
