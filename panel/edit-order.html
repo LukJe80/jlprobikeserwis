@@ -22,71 +22,33 @@
   --panelBorder: rgba(255,255,255,0.10);
   --muted: rgba(229,231,235,0.7);
 }
-
 *{ box-sizing:border-box; }
-
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
+body{ margin:0; font-family:Arial,sans-serif; background:var(--bg); color:var(--text); }
 
 /* ===== HEADER (jak panel) ===== */
 header{
-  position:fixed;
-  top:0;
-  width:100%;
-  z-index:10;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  position:fixed; top:0; width:100%; z-index:10;
+  display:flex; justify-content:space-between; align-items:center;
   padding:14px 24px;
   background:rgba(2,6,23,.7);
   backdrop-filter: blur(6px);
   border-bottom:1px solid rgba(255,255,255,0.06);
   gap:14px;
 }
-
 header h1{
-  margin:0;
-  font-size:18px;
-  color:var(--accent);
-  display:flex;
-  align-items:center;
-  gap:8px;
-  white-space:nowrap;
+  margin:0; font-size:18px; color:var(--accent);
+  display:flex; align-items:center; gap:8px; white-space:nowrap;
 }
-
-.header-right{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  flex-wrap:wrap;
-}
-
+.header-right{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
 .toplink{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  color:#fff;
-  text-decoration:none;
-  font-weight:800;
-  font-size:14px;
-  opacity:.92;
-  padding:6px 4px;
-  background:transparent;
-  border:none;
-  cursor:pointer;
+  display:flex; align-items:center; gap:8px;
+  color:#fff; text-decoration:none; font-weight:800; font-size:14px;
+  opacity:.92; padding:6px 4px; background:transparent; border:none; cursor:pointer;
 }
 .toplink:hover{ color:var(--accent); }
 
 /* ===== LAYOUT ===== */
-.wrapper{
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 120px 24px 80px;
-}
+.wrapper{ max-width: 980px; margin: 0 auto; padding: 120px 24px 80px; }
 
 /* ===== BOX ===== */
 .box{
@@ -95,22 +57,11 @@ header h1{
   border-radius: 16px;
   padding: 22px;
 }
-
-h1.page-title{
-  margin:0 0 14px;
-  font-size:26px;
-  font-weight:900;
-}
+h1.page-title{ margin:0 0 14px; font-size:26px; font-weight:900; }
 
 /* ===== panelowy układ ===== */
-.grid{
-  display:grid;
-  grid-template-columns: 1fr;
-  gap:14px;
-}
-@media(min-width: 980px){
-  .grid{ grid-template-columns: 1fr 1fr; gap:16px; }
-}
+.grid{ display:grid; grid-template-columns: 1fr; gap:14px; }
+@media(min-width: 980px){ .grid{ grid-template-columns: 1fr 1fr; gap:16px; } }
 
 .card{
   background: rgba(255,255,255,0.04);
@@ -118,13 +69,9 @@ h1.page-title{
   border-radius: 14px;
   padding: 16px;
 }
-
 .card-title{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin:0 0 10px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:10px; margin:0 0 10px;
 }
 .card-title h2{
   margin:0;
@@ -133,24 +80,12 @@ h1.page-title{
   text-transform:uppercase;
   color:#93c5fd;
   font-weight:900;
-  display:flex;
-  align-items:center;
-  gap:8px;
+  display:flex; align-items:center; gap:8px;
 }
-.card-title .badge{
-  font-size:12px;
-  color:rgba(229,231,235,0.9);
-  opacity:.85;
-}
+.card-title .badge{ font-size:12px; color:rgba(229,231,235,0.9); opacity:.85; }
 
 /* ===== FORM ===== */
-label{
-  display:block;
-  font-weight:800;
-  color:#93c5fd;
-  margin-top:12px;
-}
-
+label{ display:block; font-weight:800; color:#93c5fd; margin-top:12px; }
 input,select,textarea{
   width:100%;
   padding:14px;
@@ -161,16 +96,10 @@ input,select,textarea{
   font-size:16px;
   margin-top:6px;
 }
-
 textarea{ min-height:120px; resize:vertical; }
 
 /* ===== SUMA ===== */
-.sum{
-  text-align:right;
-  font-size:22px;
-  font-weight:900;
-  margin:12px 0 0;
-}
+.sum{ text-align:right; font-size:22px; font-weight:900; margin:12px 0 0; }
 
 /* ===== ACTIONS ===== */
 .actions{
@@ -179,9 +108,7 @@ textarea{ min-height:120px; resize:vertical; }
   grid-template-columns: 1fr;
   gap:12px;
 }
-@media(min-width: 780px){
-  .actions{ grid-template-columns: 1fr 1fr; }
-}
+@media(min-width: 780px){ .actions{ grid-template-columns: 1fr 1fr; } }
 .actions .btn{ margin:0; }
 
 /* ===== BUTTONS ===== */
@@ -203,10 +130,7 @@ textarea{ min-height:120px; resize:vertical; }
 }
 .btn:hover{ background:var(--accent); color:#fff; }
 
-.btn.save{
-  background:var(--accent);
-  color:#fff;
-}
+.btn.save{ background:var(--accent); color:#fff; }
 .btn.save:hover{ background:var(--accentHover); }
 
 /* przyciski druku */
@@ -221,12 +145,7 @@ textarea{ min-height:120px; resize:vertical; }
 }
 
 /* ===== HELP ===== */
-.help{
-  margin-top:10px;
-  font-size:12px;
-  color: rgba(229,231,235,0.78);
-  line-height:1.35;
-}
+.help{ margin-top:10px; font-size:12px; color: rgba(229,231,235,0.78); line-height:1.35; }
 
 /* ===== PHOTO MINI BAR ===== */
 .photoBar{
@@ -234,7 +153,6 @@ textarea{ min-height:120px; resize:vertical; }
   padding-top:12px;
   border-top:1px solid rgba(255,255,255,0.10);
 }
-
 .photoTop{
   display:flex;
   align-items:center;
@@ -242,75 +160,13 @@ textarea{ min-height:120px; resize:vertical; }
   gap:10px;
   margin-bottom:10px;
 }
-
 .photoCount{
   font-size:12px;
   opacity:.9;
   color:rgba(229,231,235,0.9);
 }
-
-.thumbRow{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  align-items:center;
-  margin-top:10px;
-}
-
-.thumb{
-  width:32px;
-  height:32px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.16);
-  overflow:hidden;
-  background: rgba(255,255,255,0.06);
-}
-.thumb img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
-
-.moreBadge{
-  width:32px;
-  height:32px;
-  border-radius:8px;
-  border:1px dashed rgba(255,255,255,0.22);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:12px;
-  font-weight:900;
-  opacity:.9;
-}
-
-.row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  margin-top:10px;
-}
-.row input[type="file"]{
-  flex:1;
-  padding:10px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.92);
-  color:#000;
-}
-.row .btn{
-  width:auto;
-  padding:12px 14px;
-  border-radius:12px;
-  font-size:14px;
-}
-.btn.small{
-  width:auto;
-  padding:12px 14px;
-  border-radius:12px;
-  font-size:14px;
-}
+.row{ display:flex; gap:10px; align-items:center; margin-top:10px; }
+.btn.small{ width:auto; padding:12px 14px; border-radius:12px; font-size:14px; }
 .btn.neutral{
   border-color: rgba(255,255,255,0.18);
   color:#fff;
@@ -333,7 +189,7 @@ textarea{ min-height:120px; resize:vertical; }
 
 <body>
 
- <header>
+<header>
   <h1><i class="fa-solid fa-pen-to-square"></i> Edycja zlecenia</h1>
   <div class="header-right">
     <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
@@ -403,8 +259,6 @@ textarea{ min-height:120px; resize:vertical; }
             </button>
           </div>
 
-          <!-- ✅ upload usunięty – zdjęcia dodajesz w /panel/order-photos.html -->
-
           <div class="row">
             <button class="btn small warn" onclick="copySmsQuote()" type="button">
               <i class="fa-solid fa-copy"></i> Kopiuj SMS (kosztorys + link)
@@ -419,21 +273,22 @@ textarea{ min-height:120px; resize:vertical; }
       </div>
 
     </div>
+
     <!-- AKCJE (zostają w tej kolejności) -->
     <div class="actions" style="margin-top:16px;">
-      <button class="btn save" onclick="save()">
+      <button class="btn save" onclick="save()" type="button">
         <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
       </button>
 
-      <button class="btn pdf-in" onclick="printIn()">
+      <button class="btn pdf-in" onclick="printIn()" type="button">
         <i class="fa-solid fa-print"></i> Drukuj kartę przyjęcia
       </button>
 
-      <button class="btn pdf-out" onclick="printOut()">
+      <button class="btn pdf-out" onclick="printOut()" type="button">
         <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
       </button>
 
-      <button class="btn pdf-book" onclick="printBooklet()">
+      <button class="btn pdf-book" onclick="printBooklet()" type="button">
         <i class="fa-solid fa-book"></i> Książeczka serwisowa
       </button>
     </div>
@@ -442,9 +297,12 @@ textarea{ min-height:120px; resize:vertical; }
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", ()=>{
-
+document.addEventListener("DOMContentLoaded", () => {
   const id = new URLSearchParams(location.search).get("id");
+  if(!id){
+    alert("Brak parametru ?id w URL.");
+    return;
+  }
 
   const status   = document.getElementById("status");
   const customer = document.getElementById("customer");
@@ -454,9 +312,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const costText = document.getElementById("costText");
   const sumEl    = document.getElementById("sum");
 
-  const photoInput = document.getElementById("photoInput");
   const photoCountEl = document.getElementById("photoCount");
-  const thumbRow = document.getElementById("thumbRow");
   const photoHelp = document.getElementById("photoHelp");
 
   const COST_TEXT_COLUMN = "costs_text";
@@ -464,9 +320,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   let currentTotal = 0;
   let previousStatus = null;
   let publicCode = "";
-
-  // cache listy zdjęć
-  let photoRows = [];
 
   function escapeHtml(str){
     return (str ?? "")
@@ -482,7 +335,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
     let s = 0;
     (costText.value || "").split("\n").forEach(l=>{
       const m = l.match(/(\d+(?:[.,]\d+)?)/);
-      if(m) s += parseFloat(m[1].replace(",",".")); 
+      if(m) s += parseFloat(m[1].replace(",","."));
     });
     currentTotal = s;
     sumEl.textContent = s.toFixed(2);
@@ -492,13 +345,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
   function normalizePhoneToPL48(raw){
     const digits = String(raw || "").replace(/\D/g, "");
     if(!digits) return "";
-
     if(digits.startsWith("48") && digits.length === 11) return digits;
     if(digits.length === 9) return "48" + digits;
-
-    if(digits.endsWith(digits.slice(-9)) && digits.length > 11){
-      return "48" + digits.slice(-9);
-    }
+    if(digits.length > 11) return "48" + digits.slice(-9);
     return digits;
   }
 
@@ -520,156 +369,64 @@ document.addEventListener("DOMContentLoaded", ()=>{
     return j;
   }
 
-  // ======= FOTO: ładowanie + miniatury =======
-
-// ✅ link do galerii w PANELU (żeby nie było 404)
-function makeGalleryUrl(){
-  // id = order_id (uuid) w URL: ?id=...
-  return `/panel/order-photos.html?id=${encodeURIComponent(id)}`;
-}
-
-function setPhotoUiLoading(loading){
-  if(loading){
-    photoHelp.textContent = "Ładowanie / upload…";
-  }else{
-    photoHelp.textContent = "Miniatury są lekkie (32×32). Pełne zdjęcia są w galerii.";
-  }
-}
-
-function renderThumbs(){
-  const count = photoRows.length;
-  photoCountEl.textContent = String(count);
-
-  if(count === 0){
-    thumbRow.innerHTML = `<span style="opacity:.75;font-size:12px;">Brak zdjęć.</span>`;
-    return;
+  // ======= FOTO: licznik + galeria =======
+  function makeGalleryUrl(){
+    // ✅ panelowa ścieżka (żeby nie było 404)
+    return `/panel/order-photos.html?id=${encodeURIComponent(id)}`;
   }
 
-  // pokazujemy max 6 miniatur dla lekkości
-  const show = photoRows.slice(0, 6);
+  async function loadPhotosCount(){
+    try{
+      photoHelp.textContent = "Ładowanie zdjęć…";
 
-  thumbRow.innerHTML = show.map(r=>{
-    const url = supabaseClient.storage.from("order-photos").getPublicUrl(r.path).data.publicUrl;
-    return `
-      <a class="thumb" href="${url}" target="_blank" rel="noopener" title="Otwórz">
-        <img loading="lazy" src="${url}" alt="zdjęcie">
-      </a>
-    `;
-  }).join("");
-
-  if(count > 6){
-    // ✅ badge prowadzi do galerii /panel/
-    thumbRow.innerHTML += `<a class="moreBadge" href="${makeGalleryUrl()}" title="Otwórz galerię">+${count-6}</a>`;
-  }
-}
-
-async function loadPhotos(){
-  try{
-    // ✅ zawsze ładujemy po order_id (bo nie masz public_code w order_photos)
-    const { data, error } = await supabaseClient
-      .from("order_photos")
-      .select("id, path, created_at")
-      .eq("order_id", id)
-      .order("created_at", { ascending:false });
-
-    if(error) throw error;
-    photoRows = data || [];
-    renderThumbs();
-  }catch(e){
-    console.warn("loadPhotos error:", e);
-    photoHelp.textContent = "Błąd pobierania zdjęć: " + (e?.message || e);
-  }
-}
-
-function safeName(name){
-  return String(name || "photo.jpg")
-    .replace(/[^a-zA-Z0-9._-]+/g, "_")
-    .slice(0, 120);
-}
-
-async function uploadPhotos(){
-  const files = Array.from(photoInput.files || []);
-  if(files.length === 0){
-    alert("Wybierz zdjęcia.");
-    return;
-  }
-
-  setPhotoUiLoading(true);
-
-  try{
-    for(const file of files){
-      const rand = Math.random().toString(16).slice(2,8);
-
-      // ✅ folder po order_id (uuid)
-      const path = `${id}/${Date.now()}_${rand}_${safeName(file.name)}`;
-
-      // 1) upload do Storage
-      const up = await supabaseClient.storage
-        .from("order-photos")
-        .upload(path, file, { upsert:false });
-
-      if(up.error) throw up.error;
-
-      // 2) wpis do tabeli (BEZ public_code)
-      const ins = await supabaseClient
+      // ✅ licznik po order_id (u Ciebie nie ma public_code w order_photos)
+      const { count, error } = await supabaseClient
         .from("order_photos")
-        .insert({
-          order_id: id,
-          path
-        });
+        .select("id", { count: "exact", head: true })
+        .eq("order_id", id);
 
-      if(ins.error) throw ins.error;
-    }
+      if(error) throw error;
 
-    photoInput.value = "";
-    await loadPhotos();
-    alert("Dodano zdjęcia ✅");
-  }catch(e){
-    console.warn("uploadPhotos error:", e);
-    alert("Błąd dodawania zdjęć: " + (e?.message || e));
-  }finally{
-    setPhotoUiLoading(false);
-  }
-}
-
-function openGallery(){
-  // ✅ otwieramy w tej samej karcie (mniej problemów w mobile)
-  window.location.href = makeGalleryUrl();
-}
-
-function buildQuoteText(){
-  const lines = (costText.value || "").split("\n").map(s=>s.trim()).filter(Boolean);
-  const pretty = lines.length ? lines.map(l=>`- ${l}`).join("\n") : "(brak pozycji)";
-  const sum = (Number.isFinite(currentTotal) ? currentTotal : 0).toFixed(2);
-
-  // ✅ pełny link absolutny (żeby SMS miał działający link)
-  const fullUrl = `${location.origin}${makeGalleryUrl()}`;
-
-  return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${fullUrl}`;
-}
-
-async function copySmsQuote(){
-  calcSum();
-  const text = buildQuoteText();
-
-  try{
-    await navigator.clipboard.writeText(text);
-    alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
-  }catch(e){
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    ta.remove();
-    alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
-  }
-}
+      photoCountEl.textContent = String(count || 0);
+      photoHelp.textContent = "Zdjęcia dodajesz i przeglądasz w galerii: /panel/order-photos.html";
+    }catch(e){
+      console.warn("loadPhotosCount error:", e);
+      photoHelp.textContent = "Błąd pobierania zdjęć: " + (e?.message || e);
     }
   }
 
-  // ======= LOAD / SAVE (bez zmian logiki) =======
+  function openGallery(){
+    window.location.href = makeGalleryUrl();
+  }
 
+  function buildQuoteText(){
+    const lines = (costText.value || "").split("\n").map(s=>s.trim()).filter(Boolean);
+    const pretty = lines.length ? lines.map(l=>`- ${l}`).join("\n") : "(brak pozycji)";
+    const sum = (Number.isFinite(currentTotal) ? currentTotal : 0).toFixed(2);
+
+    const fullUrl = `${location.origin}${makeGalleryUrl()}`;
+    return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${fullUrl}`;
+  }
+
+  async function copySmsQuote(){
+    calcSum();
+    const text = buildQuoteText();
+
+    try{
+      await navigator.clipboard.writeText(text);
+      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+    }catch(e){
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+    }
+  }
+
+  // ======= LOAD / SAVE =======
   async function load(){
     const { data, error } = await supabaseClient
       .from("orders")
@@ -698,9 +455,7 @@ async function copySmsQuote(){
     publicCode = data.public_code ?? "";
 
     calcSum();
-
-    // ✅ foto
-    await loadPhotos();
+    await loadPhotosCount();
   }
 
   async function save(){
@@ -714,7 +469,6 @@ async function copySmsQuote(){
       phone: phone.value,
       bike_type: bike.value,
       description: note.value,
-
       labor_cost: currentTotal,
       parts_cost: 0,
       total_cost: currentTotal
@@ -738,11 +492,12 @@ async function copySmsQuote(){
     if(costErr){
       const msg = (costErr.message || "").toLowerCase();
       if(msg.includes("could not find") || msg.includes("schema cache")){
-        alert("Zapisano poprawnie ✅ (status + dane + sumy). Lista pozycji nie zapisana, bo brak kolumny tekstowej w bazie.");
+        alert("Zapisano ✅ (status + dane + sumy). Lista pozycji nie zapisana, bo brak kolumny tekstowej w bazie.");
       }else{
         alert("Zapisano sumy ✅, ale błąd zapisu listy pozycji: " + costErr.message);
       }
       previousStatus = newStatus;
+      await loadPhotosCount();
       return;
     }
 
@@ -754,7 +509,7 @@ async function copySmsQuote(){
         if(smsRes && smsRes.ok){
           smsNote = "\nSMS: wysłano ✅";
         }else{
-          smsNote = "\nSMS: nie wysłano (sprawdź konfigurację/test-mode) ⚠️";
+          smsNote = "\nSMS: nie wysłano ⚠️";
           console.warn("SMSAPI response:", smsRes);
         }
       }catch(e){
@@ -764,16 +519,13 @@ async function copySmsQuote(){
     }
 
     previousStatus = newStatus;
-
-    // po zapisie odśwież zdjęcia (gdyby np. public_code się pojawił)
-    await loadPhotos();
-
+    await loadPhotosCount();
     alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)" + smsNote);
   }
 
+  // ===== PDF: przyjęcie / wydanie / książeczka =====
   function printIn(){
     const win = window.open("","_blank");
-
     const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
     const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
 
@@ -783,135 +535,34 @@ async function copySmsQuote(){
 <head>
 <meta charset="utf-8">
 <title>Karta przyjęcia</title>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-
 <style>
 @page{ size:A4; margin:0; }
-html, body{
-  width:210mm;
-  height:297mm;
-  margin:0;
-  padding:0;
-  overflow:hidden;
-}
+html, body{ width:210mm; height:297mm; margin:0; padding:0; overflow:hidden; }
 *{ box-sizing:border-box; }
 body{ font-family:Arial; color:#000; }
-
-.page{
-  width:210mm;
-  height:297mm;
-  padding:15mm;
-  box-sizing:border-box;
-}
-
+.page{ width:210mm; height:297mm; padding:15mm; box-sizing:border-box; }
 .main{ height:165mm; }
-
-h2{
-  margin:0 0 8mm;
-  text-align:center;
-  width:100%;
-  font-size:20px;
-}
-
-.header{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10mm;
-}
-
-.left-info{
-  font-size:12px;
-  line-height:1.35;
-}
-
-.qrbox{
-  width:40mm;
-  height:40mm;
-}
-.qrbox img{
-  width:40mm !important;
-  height:40mm !important;
-  display:block;
-}
-
-.sep{
-  border-top:2px dashed #000;
-  margin:8mm 0 6mm;
-}
-
-.tag-wrap{
-  height:90mm;
-  display:flex;
-  justify-content:flex-start;
-  align-items:flex-start;
-  margin-top:0mm;
-  page-break-inside: avoid;
-  break-inside: avoid;
-}
-
-.tag{
-  width:180mm;
-  height:85mm;
-  border:2px solid #000;
-  position:relative;
-  page-break-inside: avoid;
-  break-inside: avoid;
-}
-
-.hole{
-  position:absolute;
-  left:10mm;
-  top:50%;
-  transform:translateY(-50%);
-  width:18px;
-  height:18px;
-  border:2px solid #000;
-  border-radius:50%;
-}
-
-.tag-content{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%) rotate(-90deg);
-  transform-origin:center;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:8mm;
-  page-break-inside: avoid;
-  break-inside: avoid;
-}
-
-.tag-text{
-  font-size:12px;
-  line-height:1.25;
-  text-align:center;
-  white-space:pre-line;
-  font-weight:700;
-}
+h2{ margin:0 0 8mm; text-align:center; width:100%; font-size:20px; }
+.header{ display:flex; align-items:flex-start; justify-content:space-between; gap:10mm; }
+.left-info{ font-size:12px; line-height:1.35; }
+.qrbox{ width:40mm; height:40mm; }
+.qrbox img{ width:40mm !important; height:40mm !important; display:block; }
+.sep{ border-top:2px dashed #000; margin:8mm 0 6mm; }
+.tag-wrap{ height:90mm; display:flex; justify-content:flex-start; align-items:flex-start; margin-top:0mm; }
+.tag{ width:180mm; height:85mm; border:2px solid #000; position:relative; }
+.hole{ position:absolute; left:10mm; top:50%; transform:translateY(-50%); width:18px; height:18px; border:2px solid #000; border-radius:50%; }
+.tag-content{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-90deg); transform-origin:center; display:flex; flex-direction:column; align-items:center; gap:8mm; }
+.tag-text{ font-size:12px; line-height:1.25; text-align:center; white-space:pre-line; font-weight:700; }
 .tag-text small{ font-weight:400; }
-
-.tag-qr{
-  width:40mm;
-  height:40mm;
-}
-.tag-qr img{
-  width:40mm !important;
-  height:40mm !important;
-  display:block;
-}
+.tag-qr{ width:40mm; height:40mm; }
+.tag-qr img{ width:40mm !important; height:40mm !important; display:block; }
 </style>
 </head>
 <body>
-
 <div class="page">
   <div class="main">
-
     <h2>KARTA PRZYJĘCIA – SERWIS ROWEROWY</h2>
-
     <div class="header">
       <div class="left-info">
         <b>Klient:</b> ${escapeHtml(customer.value)}<br>
@@ -919,19 +570,15 @@ h2{
         <b>Rower:</b> ${escapeHtml(bike.value)}<br>
         <b>Data:</b> ${new Date().toLocaleString("pl-PL")}
       </div>
-
       <div class="qrbox" id="qrTop"></div>
     </div>
-
     <div style="margin-top:10mm; font-size:12px;">
       <b>Opis zgłoszenia:</b><br><br>
       <div style="white-space:pre-line;">${escapeHtml(note.value)}</div>
     </div>
-
     <div style="margin-top:18mm; font-size:12px;">
       <b>Podpis klienta:</b> _____________________
     </div>
-
   </div>
 
   <div class="sep"></div>
@@ -939,7 +586,6 @@ h2{
   <div class="tag-wrap">
     <div class="tag">
       <div class="hole"></div>
-
       <div class="tag-content">
         <div class="tag-text">
           ZAWIESZKA – SERWIS<br>
@@ -950,12 +596,10 @@ h2{
             Data: ${new Date().toLocaleDateString("pl-PL")}
           </small>
         </div>
-
         <div class="tag-qr" id="qrTag"></div>
       </div>
     </div>
   </div>
-
 </div>
 
 <script>
@@ -966,7 +610,6 @@ h2{
     el.innerHTML = "";
     new QRCode(el, { text: qrUrl, width: 151, height: 151 });
   }
-
   window.onload = () => {
     makeQr("qrTop");
     makeQr("qrTag");
@@ -974,11 +617,9 @@ h2{
     window.print();
   };
 <\/script>
-
 </body>
 </html>
     `);
-
     win.document.close();
   }
 
@@ -1094,7 +735,7 @@ li{ margin:1mm 0; }
   display:flex;
   flex-direction:column;
   align-items:center;
-  margin-left: 3mm; /* <-- TUTAJ KALIBRACJA: zmień np. 2mm / 4mm */
+  margin-left: 3mm; /* <-- TUTAJ KALIBRACJA */
 }
 .qr{ width:30mm; height:30mm; display:flex; align-items:center; justify-content:center; }
 .qr img{ width:30mm !important; height:30mm !important; display:block; }
@@ -1161,14 +802,12 @@ li{ margin:1mm 0; }
     win.document.close();
   }
 
-  // ===== expose =====
+  // ===== expose do onclick =====
   window.save = save;
   window.printIn = printIn;
   window.printOut = printOut;
   window.printBooklet = printBooklet;
 
-  // foto expose
-  window.uploadPhotos = uploadPhotos;
   window.openGallery = openGallery;
   window.copySmsQuote = copySmsQuote;
 
@@ -1178,5 +817,3 @@ li{ margin:1mm 0; }
 
 </body>
 </html>
-
-
