@@ -333,7 +333,7 @@ textarea{ min-height:120px; resize:vertical; }
 
 <body>
 
-<header>
+ <header>
   <h1><i class="fa-solid fa-pen-to-square"></i> Edycja zlecenia</h1>
   <div class="header-right">
     <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
@@ -398,36 +398,27 @@ textarea{ min-height:120px; resize:vertical; }
               <i class="fa-solid fa-camera"></i>
               Zdjęcia: <b id="photoCount">0</b>
             </div>
-            <button class="btn small neutral" onclick="openGallery()">
+            <button class="btn small neutral" onclick="openGallery()" type="button">
               <i class="fa-solid fa-images"></i> Galeria
             </button>
           </div>
 
-          <div class="thumbRow" id="thumbRow"></div>
+          <!-- ✅ upload usunięty – zdjęcia dodajesz w /panel/order-photos.html -->
 
           <div class="row">
-            <!-- ✅ bez capture: wybierasz z galerii, a aparat masz też w pickerze -->
-            <input id="photoInput" type="file" accept="image/*" multiple />
-            <button class="btn small" onclick="uploadPhotos()">
-              <i class="fa-solid fa-upload"></i> Dodaj
-            </button>
-          </div>
-
-          <div class="row">
-            <button class="btn small warn" onclick="copySmsQuote()">
+            <button class="btn small warn" onclick="copySmsQuote()" type="button">
               <i class="fa-solid fa-copy"></i> Kopiuj SMS (kosztorys + link)
             </button>
           </div>
 
           <div class="help" id="photoHelp">
-            Miniatury są lekkie (32×32). Pełne zdjęcia są w galerii.
+            Zdjęcia dodajesz i przeglądasz w galerii: <b>/panel/order-photos.html</b>.
           </div>
         </div>
 
       </div>
 
     </div>
-
     <!-- AKCJE (zostają w tej kolejności) -->
     <div class="actions" style="margin-top:16px;">
       <button class="btn save" onclick="save()">
@@ -1207,3 +1198,4 @@ li{ margin:1mm 0; }
 
 </body>
 </html>
+
