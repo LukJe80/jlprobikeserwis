@@ -19,6 +19,8 @@
   --panel: rgba(255,255,255,0.05);
   --panelBorder: rgba(255,255,255,0.10);
   --muted: rgba(229,231,235,0.7);
+
+  --danger:#ef4444;
 }
 
 *{ box-sizing:border-box; }
@@ -105,19 +107,22 @@ main{
   font-size:13px;
   color: var(--muted);
   margin: 0 0 16px;
+  line-height:1.35;
 }
 
 /* ===== TABLE ===== */
 .table-wrap{
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 14px;
-  overflow:hidden;
+  overflow: auto;                /* ✅ NA TEL: poziomy scroll */
   background: rgba(0,0,0,0.22);
+  -webkit-overflow-scrolling: touch;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
+  min-width: 860px;              /* ✅ żeby kolumny się nie zgniatały */
 }
 
 th,td{
@@ -150,50 +155,56 @@ tr:hover{ background: rgba(255,255,255,0.04); }
   white-space:nowrap;
 }
 
-/* ✅ ikonka linku */
-.photoLink{
-  display:inline-flex;
+/* ✅ KAFELKI AKCJI (bez napisów) */
+.actions{
+  display:flex;
+  gap:10px;
   align-items:center;
-  justify-content:center;
-  width:34px;
-  height:34px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.03);
-  text-decoration:none;
-  color:#fff;
-  font-size:16px;
-}
-.photoLink:hover{
-  border-color: rgba(37,99,235,0.55);
-  background: rgba(37,99,235,0.14);
+  justify-content:flex-start;
 }
 
-/* ✅ mały przycisk "Wznów" obok aparatu */
-.resumeBtn{
+.actionBtn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.03);
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  height:34px;
-  padding:0 10px;
-  margin-left:8px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.03);
   color:#fff;
-  font-weight:900;
-  font-size:12px;
   cursor:pointer;
   text-decoration:none;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
 }
-.resumeBtn:hover{
+
+.actionBtn:hover{
   border-color: rgba(37,99,235,0.55);
   background: rgba(37,99,235,0.14);
 }
 
+.actionBtn.info{
+  border-color: rgba(239,68,68,0.35);
+}
+.actionBtn.info i{
+  color: var(--danger);
+  font-size:18px;
+}
+.actionBtn.info:hover{
+  border-color: rgba(239,68,68,0.55);
+  background: rgba(239,68,68,0.10);
+}
+
+.actionBtn.resume i{
+  font-size:18px;
+}
+
+/* tel – ciaśniej */
 @media(max-width:720px){
   main{ padding:110px 16px 60px; }
-  th:nth-child(2), td:nth-child(2){ display:none; } /* ukryj Telefon */
+  .box{ padding:16px; }
+  th,td{ padding:10px; }
 }
 </style>
 </head>
@@ -210,7 +221,10 @@ tr:hover{ background: rgba(255,255,255,0.04); }
 <main>
   <div class="box">
     <div class="page-title">Zakończone zlecenia</div>
-    <div class="hint">Lista zleceń ze statusem „wydano”. Kliknij 📷 aby wejść w historię i zdjęcia. „Wznów” tworzy nowe zlecenie z tym samym kodem QR.</div>
+    <div class="hint">
+      <b>i</b> = szczegóły / historia • <i class="fa-solid fa-rotate-left"></i> = wznowienie z tym samym kodem QR (kontynuacja historii).
+      <br>Na telefonie możesz przewijać tabelę w bok.
+    </div>
 
     <div class="table-wrap">
       <table>
@@ -220,7 +234,7 @@ tr:hover{ background: rgba(255,255,255,0.04); }
             <th>Telefon</th>
             <th>Rower</th>
             <th>Opis / wykonane czynności</th>
-            <th>📷</th>
+            <th>Akcje</th>
             <th>Zakończone</th>
           </tr>
         </thead>
@@ -247,24 +261,24 @@ function safeDatePL(iso){
   return (String(d) === "Invalid Date") ? "" : d.toLocaleString("pl-PL");
 }
 
-// ✅ tworzy NOWE zlecenie z tym samym public_code (kod ramy)
+/* ✅ WZNÓW: tworzy nowe zlecenie z tym samym public_code */
 async function resumeOrder(o){
   if(!o || !o.public_code){
-    alert("Brak public_code (kod QR). Nie mogę wznowić.");
+    alert("Brak public_code (kod QR) — nie mogę wznowić.");
     return;
   }
 
   const ok = confirm("Wznowić jako NOWE zlecenie (kontynuacja historii pod tym samym kodem QR)?");
   if(!ok) return;
 
-  // Minimalny payload (bez ryzyka błędu kolumn)
   const payload = {
     status: "nowe",
     customer_name: o.customer_name || "",
     phone: o.phone || "",
     bike_type: o.bike_type || "",
     description: o.description || "",
-    public_code: o.public_code
+    public_code: o.public_code,
+    archived_at: null
   };
 
   const { data, error } = await supabaseClient
@@ -278,7 +292,6 @@ async function resumeOrder(o){
     return;
   }
 
-  // przejście do edycji nowego zlecenia
   location.href = `edit-order.html?id=${encodeURIComponent(data.id)}`;
 }
 
@@ -306,27 +319,28 @@ async function loadCompletedOrders(){
   }
 
   for(const o of data){
+    const link = o.id ? `order-history.html?id=${encodeURIComponent(o.id)}` : "#";
+
     const tr = document.createElement("tr");
-
-    const link = o.id
-      ? `order-history.html?id=${encodeURIComponent(o.id)}`
-      : "#";
-
     tr.innerHTML = `
       <td>${esc(o.customer_name ?? "")}</td>
       <td>${esc(o.phone ?? "")}</td>
       <td>${esc(o.bike_type ?? "")}</td>
       <td class="text">${esc(o.description ?? "")}</td>
       <td>
-        <a class="photoLink" href="${link}" title="Historia i zdjęcia">📷</a>
-        <button class="resumeBtn" type="button">Wznów</button>
+        <div class="actions">
+          <a class="actionBtn info" href="${link}" title="Szczegóły / historia">
+            <i class="fa-solid fa-circle-info"></i>
+          </a>
+          <button class="actionBtn resume" type="button" title="Wznów">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+        </div>
       </td>
       <td class="date">${safeDatePL(o.completed_at)}</td>
     `;
 
-    // podpinamy akcję (bez inline JSON w HTML)
-    tr.querySelector(".resumeBtn").addEventListener("click", () => resumeOrder(o));
-
+    tr.querySelector(".resume").addEventListener("click", () => resumeOrder(o));
     tbody.appendChild(tr);
   }
 }
