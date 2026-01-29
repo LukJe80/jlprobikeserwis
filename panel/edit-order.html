@@ -165,7 +165,7 @@ textarea{ min-height:120px; resize:vertical; }
   opacity:.9;
   color:rgba(229,231,235,0.9);
 }
-.row{ display:flex; gap:10px; align-items:center; margin-top:10px; }
+.row{ display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap; }
 .btn.small{ width:auto; padding:12px 14px; border-radius:12px; font-size:14px; }
 .btn.neutral{
   border-color: rgba(255,255,255,0.18);
@@ -183,6 +183,14 @@ textarea{ min-height:120px; resize:vertical; }
 .btn.warn:hover{
   background: rgba(245,158,11,0.18);
   color:#fff;
+}
+
+/* ===== reminder tiny line ===== */
+.remindInfo{
+  margin-top:10px;
+  font-size:12px;
+  color: rgba(229,231,235,0.82);
+  line-height:1.35;
 }
 </style>
 </head>
@@ -273,6 +281,39 @@ textarea{ min-height:120px; resize:vertical; }
           </div>
         </div>
 
+        <!-- ✅ PRZYPOMNIENIE (DLA CIEBIE) — liczone od archived_at -->
+        <div class="photoBar" style="margin-top:14px;">
+          <div class="card-title" style="margin:0 0 8px;">
+            <h2 style="margin:0;font-size:14px;letter-spacing:.4px;text-transform:uppercase;color:#93c5fd;font-weight:900;display:flex;align-items:center;gap:8px;">
+              <i class="fa-solid fa-bell"></i> Przypomnienie serwisowe
+            </h2>
+            <span class="badge">Tylko dla Ciebie</span>
+          </div>
+
+          <label>Ustaw za ile miesięcy (od archiwizacji)</label>
+          <select id="remindMonths">
+            <option value="">— nie ustawiaj —</option>
+            <option value="3">za 3 miesiące</option>
+            <option value="4">za 4 miesiące</option>
+            <option value="5">za 5 miesięcy</option>
+            <option value="6">za 6 miesięcy</option>
+          </select>
+
+          <label>Notatka</label>
+          <input id="remindNote" placeholder="np. serwis okresowy / napęd / hamulce">
+
+          <div class="row">
+            <button class="btn small warn" onclick="setReminder()" type="button">
+              <i class="fa-solid fa-bell"></i> Ustaw przypomnienie
+            </button>
+            <button class="btn small neutral" onclick="markReminderDone()" type="button">
+              <i class="fa-solid fa-check"></i> Oznacz jako zrobione
+            </button>
+          </div>
+
+          <div class="remindInfo" id="remindInfo">Brak przypomnienia.</div>
+        </div>
+
       </div>
 
     </div>
@@ -318,11 +359,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const photoCountEl = document.getElementById("photoCount");
   const photoHelp = document.getElementById("photoHelp");
 
+  // reminder UI
+  const remindMonthsEl = document.getElementById("remindMonths");
+  const remindNoteEl = document.getElementById("remindNote");
+  const remindInfoEl = document.getElementById("remindInfo");
+
   const COST_TEXT_COLUMN = "costs_text";
 
   let currentTotal = 0;
   let previousStatus = null;
   let publicCode = "";
+
+  // reminder state
+  let archivedAt = null;
+  let remindAt = null;
+  let remindDone = false;
 
   function escapeHtml(str){
     return (str ?? "")
@@ -372,7 +423,6 @@ document.addEventListener("DOMContentLoaded", () => {
   async function ensurePublicCode(){
     if(publicCode && String(publicCode).trim()) return publicCode;
 
-    // próbujemy kilka razy na wypadek konfliktu unique
     for(let attempt=0; attempt<5; attempt++){
       const code = genPublicCode8();
 
@@ -386,13 +436,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return publicCode;
       }
 
-      // jeśli błąd unique – próbuj dalej
       const msg = (error.message || "").toLowerCase();
       if(msg.includes("duplicate") || msg.includes("unique")){
         continue;
       }
-
-      // inny błąd – przerywamy
       throw error;
     }
 
@@ -419,12 +466,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ======= FOTO: panel vs public =======
   function makeStaffGalleryUrl(){
-    // ✅ panel (wymaga zalogowania)
     return `/panel/order-photos.html?id=${encodeURIComponent(id)}`;
   }
 
   function makePublicGalleryPath(){
-    // ✅ TYLKO publiczna galeria (bez logowania)
     const code = (publicCode && String(publicCode).trim()) ? String(publicCode).trim() : "";
     if(!code) return "";
     return `/order-photos-public.html?code=${encodeURIComponent(code)}`;
@@ -480,7 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try{
       calcSum();
 
-      const code = await ensurePublicCode(); // 🔥 tu jest fix na public_code = null
+      const code = await ensurePublicCode();
       const pubPath = makePublicGalleryPath();
       const publicUrlAbs = `${location.origin}${pubPath}`;
 
@@ -502,6 +547,108 @@ document.addEventListener("DOMContentLoaded", () => {
     }catch(e){
       console.warn("smsPro error:", e);
       alert("Błąd SMS PRO: " + (e?.message || e));
+    }
+  }
+
+  // ======= REMINDER (B: od archiwizacji) =======
+  function fmtDatePL(iso){
+    if(!iso) return "";
+    const d = new Date(iso);
+    if(String(d) === "Invalid Date") return "";
+    return d.toLocaleDateString("pl-PL");
+  }
+
+  function refreshReminderInfo(){
+    if(!remindInfoEl) return;
+
+    if(!remindAt){
+      remindInfoEl.textContent = "Brak przypomnienia.";
+      return;
+    }
+
+    const base = archivedAt ? ` (archiwizacja: ${fmtDatePL(archivedAt)})` : "";
+    const done = remindDone ? " ✅ (zrobione)" : "";
+    remindInfoEl.textContent = `🔔 Przypomnienie: ${fmtDatePL(remindAt)}${base}${done}`;
+  }
+
+  async function ensureArchivedAtIfNull(){
+    const nowIso = new Date().toISOString();
+    await supabaseClient
+      .from("orders")
+      .update({ archived_at: nowIso })
+      .eq("id", id)
+      .is("archived_at", null);
+  }
+
+  async function fetchArchivedAt(){
+    const { data, error } = await supabaseClient
+      .from("orders")
+      .select("archived_at")
+      .eq("id", id)
+      .single();
+
+    if(error) throw error;
+    return data?.archived_at || null;
+  }
+
+  async function setReminder(){
+    const m = parseInt(remindMonthsEl?.value || "", 10);
+    const noteTxt = (remindNoteEl?.value || "").trim();
+
+    if(!m){
+      alert("Wybierz liczbę miesięcy.");
+      return;
+    }
+
+    try{
+      // jeżeli nie ma archiwizacji – ustawiamy archived_at teraz (bez ruszania statusu)
+      await ensureArchivedAtIfNull();
+
+      const baseIso = await fetchArchivedAt();
+      archivedAt = baseIso;
+
+      const base = new Date(baseIso || new Date().toISOString());
+      const remind = new Date(base);
+      remind.setMonth(remind.getMonth() + m);
+
+      const payload = {
+        remind_at: remind.toISOString(),
+        remind_done: false,
+        remind_note: noteTxt || null
+      };
+
+      const { error } = await supabaseClient
+        .from("orders")
+        .update(payload)
+        .eq("id", id);
+
+      if(error) throw error;
+
+      remindAt = payload.remind_at;
+      remindDone = false;
+      refreshReminderInfo();
+      alert("Przypomnienie ustawione ✅");
+    }catch(e){
+      console.warn("setReminder error:", e);
+      alert("Błąd zapisu przypomnienia: " + (e?.message || e));
+    }
+  }
+
+  async function markReminderDone(){
+    try{
+      const { error } = await supabaseClient
+        .from("orders")
+        .update({ remind_done: true })
+        .eq("id", id);
+
+      if(error) throw error;
+
+      remindDone = true;
+      refreshReminderInfo();
+      alert("Oznaczono jako zrobione ✅");
+    }catch(e){
+      console.warn("markReminderDone error:", e);
+      alert("Błąd: " + (e?.message || e));
     }
   }
 
@@ -533,16 +680,22 @@ document.addEventListener("DOMContentLoaded", () => {
     previousStatus = status.value;
     publicCode = data.public_code ?? "";
 
-    // 🔥 auto-naprawa: jeśli null → generuj i zapisz od razu (żeby QR/SMS/galeria zawsze miały kod)
+    // reminder state
+    archivedAt = data.archived_at ?? null;
+    remindAt = data.remind_at ?? null;
+    remindDone = !!data.remind_done;
+    if(remindNoteEl && data.remind_note) remindNoteEl.value = data.remind_note;
+
+    // auto-naprawa: jeśli null → generuj i zapisz od razu
     try{
       await ensurePublicCode();
     }catch(e){
       console.warn("ensurePublicCode on load:", e);
-      // nie blokujemy panelu, ale SMS PRO i tak pokaże błąd jeśli zapis się nie uda
     }
 
     calcSum();
     await loadPhotosCount();
+    refreshReminderInfo();
   }
 
   async function save(){
@@ -589,6 +742,15 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // ✅ ARCHIWIZACJA: ustaw archived_at tylko raz, gdy status przechodzi na "wydano"
+    if(newStatus === "wydano" && previousStatus !== "wydano"){
+      await supabaseClient
+        .from("orders")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", id)
+        .is("archived_at", null);
+    }
+
     let smsNote = "";
     const shouldSendSms = (newStatus === "gotowe" && previousStatus !== "gotowe");
     if(shouldSendSms){
@@ -608,8 +770,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     previousStatus = newStatus;
 
-    // po zapisie jeszcze raz upewnij się, że kod istnieje (na wypadek starych rekordów)
     try{ await ensurePublicCode(); }catch(e){ console.warn(e); }
+
+    // odśwież stan przypomnienia po ewentualnym archived_at
+    try{
+      archivedAt = await fetchArchivedAt();
+    }catch(e){
+      // nic — to tylko bonus
+    }
+    refreshReminderInfo();
 
     await loadPhotosCount();
     alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)" + smsNote);
@@ -619,7 +788,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function printIn(){
     const win = window.open("","_blank");
 
-    // ✅ QR do statusu (po public_code, jeśli jest)
     const codeForQr = (publicCode && String(publicCode).trim()) ? String(publicCode).trim() : id;
     const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
 
@@ -917,6 +1085,10 @@ li{ margin:1mm 0; }
 
   window.openGallery = openGallery;
   window.smsPro = smsPro;
+
+  // reminder
+  window.setReminder = setReminder;
+  window.markReminderDone = markReminderDone;
 
   load();
 });
