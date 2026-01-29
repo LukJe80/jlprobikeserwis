@@ -254,19 +254,22 @@ textarea{ min-height:120px; resize:vertical; }
               <i class="fa-solid fa-camera"></i>
               Zdjęcia: <b id="photoCount">0</b>
             </div>
+
+            <!-- ✅ Galeria = panel (dla Ciebie) -->
             <button class="btn small neutral" onclick="openGallery()" type="button">
               <i class="fa-solid fa-images"></i> Galeria
             </button>
           </div>
 
+          <!-- ✅ Jeden przycisk SMS (PRO) -->
           <div class="row">
             <button class="btn small warn" onclick="copySmsQuote()" type="button">
-              <i class="fa-solid fa-copy"></i> Kopiuj SMS (kosztorys + link)
+              <i class="fa-solid fa-copy"></i> Kopiuj SMS (kosztorys + zdjęcia)
             </button>
           </div>
 
           <div class="help" id="photoHelp">
-            Zdjęcia dodajesz i przeglądasz w galerii: <b>/panel/order-photos.html</b>.
+            Zdjęcia dodajesz i przeglądasz w galerii (panel). Klient dostaje link do galerii publicznej.
           </div>
         </div>
 
@@ -369,17 +372,27 @@ document.addEventListener("DOMContentLoaded", () => {
     return j;
   }
 
-  // ======= FOTO: licznik + galeria =======
-  function makeGalleryUrl(){
-    // ✅ panelowa ścieżka (żeby nie było 404)
+  // ======= FOTO: panel vs public =======
+  function makeStaffGalleryUrl(){
+    // ✅ panel (wymaga zalogowania) – dodawanie + podgląd
     return `/panel/order-photos.html?id=${encodeURIComponent(id)}`;
+  }
+
+  function makePublicGalleryUrl(){
+    // ✅ public (dla klienta, bez logowania) – TYLKO odczyt
+    // Jeśli nie ma public_code -> fallback na stronę statusu (zawsze publiczna)
+    const code = (publicCode && publicCode.trim()) ? publicCode.trim() : "";
+    if(code){
+      return `/order-photos-public.html?code=${encodeURIComponent(code)}`;
+    }
+    return `/order-status.html?code=${encodeURIComponent(id)}`;
   }
 
   async function loadPhotosCount(){
     try{
       photoHelp.textContent = "Ładowanie zdjęć…";
 
-      // ✅ licznik po order_id (u Ciebie nie ma public_code w order_photos)
+      // ✅ licznik po order_id (u Ciebie order_photos ma: id, order_id, path, created_at)
       const { count, error } = await supabaseClient
         .from("order_photos")
         .select("id", { count: "exact", head: true })
@@ -388,7 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if(error) throw error;
 
       photoCountEl.textContent = String(count || 0);
-      photoHelp.textContent = "Zdjęcia dodajesz i przeglądasz w galerii: /panel/order-photos.html";
+      photoHelp.textContent = "Zdjęcia dodajesz i przeglądasz w galerii (panel). Klient ma link publiczny.";
     }catch(e){
       console.warn("loadPhotosCount error:", e);
       photoHelp.textContent = "Błąd pobierania zdjęć: " + (e?.message || e);
@@ -396,7 +409,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openGallery(){
-    window.location.href = makeGalleryUrl();
+    // ✅ dla Ciebie – panel
+    window.location.href = makeStaffGalleryUrl();
   }
 
   function buildQuoteText(){
@@ -404,8 +418,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const pretty = lines.length ? lines.map(l=>`- ${l}`).join("\n") : "(brak pozycji)";
     const sum = (Number.isFinite(currentTotal) ? currentTotal : 0).toFixed(2);
 
-    const fullUrl = `${location.origin}${makeGalleryUrl()}`;
-    return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${fullUrl}`;
+    const publicUrl = `${location.origin}${makePublicGalleryUrl()}`;
+    return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${publicUrl}`;
   }
 
   async function copySmsQuote(){
@@ -630,8 +644,8 @@ h2{ margin:0 0 8mm; text-align:center; width:100%; font-size:20px; }
     (costText.value || "").split("\n").forEach(l=>{
       const m=l.match(/(\d+(?:[.,]\d+)?)/);
       if(!m) return;
-      const price = parseFloat(m[1].replace(",",".")) || 0;
-      const desc = l.replace(m[1],"").trim();
+      const price = parseFloat(m[1].replace(",", ".")) || 0;
+      const desc = l.replace(m[1], "").trim();
 
       rows += `<tr>
         <td>${i++}</td>
