@@ -2,81 +2,163 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Galeria zdjęć — JL Pro Bike Serwis</title>
+  <title>Galeria zdjęć – JL Pro Bike Serwis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    :root{--bg:#020617;--card:#0b1222;--text:#e5e7eb;--muted:#94a3b8;--border:rgba(255,255,255,.08);--shadow:0 12px 30px rgba(0,0,0,.35);}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    .wrap{max-width:980px;margin:0 auto;padding:18px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
-    h1{margin:0 0 6px;font-size:20px}
-    .sub{color:var(--muted);font-size:13px;margin-bottom:12px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-    .img{display:block;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#000}
-    .img img{width:100%;height:160px;object-fit:cover;display:block}
-    .err{margin-top:10px;color:#fecaca;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);padding:10px;border-radius:12px}
-    .empty{color:var(--muted);padding:14px 0}
-    .badge{font-size:12px;color:var(--muted)}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    body {
+      margin: 0;
+      background: #020617;
+      color: #e5e7eb;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .sub {
+      opacity: 0.8;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .error {
+      background: #7f1d1d;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .empty {
+      background: #1e293b;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+      opacity: 0.9;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .photo {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0f172a;
+    }
+
+    .photo img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .photo img:hover {
+      transform: scale(1.04);
+    }
+
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      opacity: 0.6;
+      text-align: center;
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
-    <div class="card">
-      <div class="top">
-        <div>
-          <h1>Galeria zdjęć</h1>
-          <div class="sub">Podgląd dla klienta — tylko do odczytu.</div>
-        </div>
-        <div class="badge">JL Pro Bike Serwis</div>
-      </div>
+    <h1>Galeria zdjęć</h1>
+    <div class="sub">Podgląd dla klienta – tylko do odczytu</div>
 
-      <div id="info" class="badge"></div>
-      <div id="grid" class="grid"></div>
-      <div id="msg"></div>
+    <div id="content"></div>
+
+    <div class="footer">
+      JL Pro Bike Serwis
     </div>
   </div>
 
-  <script>
-    const params = new URLSearchParams(location.search);
-    const id = (params.get("id") || "").trim(); // order_id (uuid)
+<script>
+(async function () {
+  const params = new URLSearchParams(window.location.search);
 
-    const grid = document.getElementById("grid");
-    const msg = document.getElementById("msg");
-    const info = document.getElementById("info");
+  // ✅ obsługujemy OBA przypadki
+  const code = params.get("code");
+  const id   = params.get("id");
 
-    function setError(text){ msg.innerHTML = `<div class="err">${text}</div>`; }
+  if (!code && !id) {
+    document.getElementById("content").innerHTML = `
+      <div class="error">
+        Brak id lub kodu w linku.
+      </div>
+    `;
+    return;
+  }
 
-    async function load(){
-      if(!id){ setError("Brak id w linku."); return; }
-      info.textContent = `ID zlecenia: ${id}`;
+  const key = code ?? id;
 
-      try{
-        const r = await fetch(`/api/order-photos?id=${encodeURIComponent(id)}`, { cache: "no-store" });
-        const j = await r.json();
-        if(!r.ok) throw new Error(j?.error || "Błąd API");
+  try {
+    const res = await fetch(`/api/order-photos?code=${encodeURIComponent(key)}`);
+    const json = await res.json();
 
-        const rows = j.photos || [];
-        if(rows.length === 0){
-          grid.innerHTML = "";
-          msg.innerHTML = `<div class="empty">Brak zdjęć.</div>`;
-          return;
-        }
-
-        msg.innerHTML = "";
-        grid.innerHTML = rows.map(p=>{
-          const url = p.url || "";
-          return `<a class="img" href="${url}" target="_blank" rel="noopener"><img loading="lazy" src="${url}" alt="zdjęcie"></a>`;
-        }).join("");
-
-      }catch(e){
-        console.warn(e);
-        setError("Nie udało się wczytać galerii.");
-      }
+    if (!res.ok) {
+      throw new Error(json?.error || "Błąd pobierania zdjęć");
     }
 
-    load();
-  </script>
+    if (!json.photos || json.photos.length === 0) {
+      document.getElementById("content").innerHTML = `
+        <div class="empty">
+          Brak zdjęć dla tego zlecenia.
+        </div>
+      `;
+      return;
+    }
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    json.photos.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "photo";
+
+      const img = document.createElement("img");
+      img.src = p.url;
+      img.loading = "lazy";
+      img.alt = "Zdjęcie serwisowe";
+
+      img.onclick = () => {
+        window.open(p.url, "_blank");
+      };
+
+      div.appendChild(img);
+      grid.appendChild(div);
+    });
+
+    document.getElementById("content").appendChild(grid);
+
+  } catch (err) {
+    document.getElementById("content").innerHTML = `
+      <div class="error">
+        ${err.message}
+      </div>
+    `;
+  }
+})();
+</script>
+
 </body>
 </html>
