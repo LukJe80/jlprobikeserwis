@@ -1,77 +1,52 @@
-// /api/order-photos.js
-// GET /api/order-photos?id=ORDER_UUID
-// GET /api/order-photos?code=PUBLIC_CODE   (opcjonalnie, jeśli kiedyś wrócisz do public_code)
+import { createClient } from "@supabase/supabase-js";
 
-const { createClient } = require("@supabase/supabase-js");
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-function json(res, status, data) {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  // CORS (żeby działało z SMS/telefonu, przeglądarek itd.)
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.end(JSON.stringify(data));
-}
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
-    if (req.method === "OPTIONS") return json(res, 200, { ok: true });
+    const { code } = req.query;
 
-    if (req.method !== "GET") {
-      res.setHeader("Allow", "GET, OPTIONS");
-      return json(res, 405, { error: "Method not allowed" });
+    if (!code) {
+      return res.status(400).json({ error: "Missing code" });
     }
 
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    // 🔎 1. Szukamy zamówienia po public_code LUB po id
+    const { data: order, error: orderErr } = await supabase
+      .from("orders")
+      .select("id")
+      .or(`public_code.eq.${code},id.eq.${code}`)
+      .single();
 
-    if (!SUPABASE_URL || !SERVICE_KEY) {
-      return json(res, 500, {
-        error: "Missing env: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY",
-      });
+    if (orderErr || !order) {
+      return res.status(404).json({ error: "Order not found" });
     }
 
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
-      auth: { persistSession: false },
-    });
-
-    const code = (req.query.code || "").toString().trim();
-    const id = (req.query.id || "").toString().trim();
-
-    if (!code && !id) {
-      return json(res, 400, { error: "Provide ?id=ORDER_UUID (or ?code=...)" });
-    }
-
-    let q = supabase
+    // 📸 2. Pobieramy zdjęcia
+    const { data: photos, error: photoErr } = await supabase
       .from("order_photos")
-      .select("id, order_id, path, created_at")
-      .order("created_at", { ascending: false });
+      .select("id, path, created_at")
+      .eq("order_id", order.id)
+      .order("created_at", { ascending: true });
 
-    // U Ciebie docelowo i tak id=order_id
-    if (id) q = q.eq("order_id", id);
-    else q = q.eq("public_code", code);
+    if (photoErr) {
+      return res.status(500).json({ error: photoErr.message });
+    }
 
-    const { data, error } = await q;
-    if (error) return json(res, 500, { error: error.message });
+    // 🌍 3. Budujemy PUBLIC URL-e
+    const result = photos.map(p => ({
+      ...p,
+      url: `${process.env.SUPABASE_URL}/storage/v1/object/public/order-photos/${p.path}`
+    }));
 
-    const rows = (data || []).map((r) => {
-      const { data: pub } = supabase.storage
-        .from("order-photos")
-        .getPublicUrl(r.path);
-
-      return {
-        id: r.id,
-        order_id: r.order_id,
-        path: r.path,
-        created_at: r.created_at,
-        url: pub?.publicUrl || null,
-      };
+    res.status(200).json({
+      count: result.length,
+      photos: result
     });
 
-    return json(res, 200, { count: rows.length, photos: rows });
   } catch (e) {
-    return json(res, 500, { error: e?.message || String(e) });
+    res.status(500).json({ error: e.message });
   }
-};
+}
