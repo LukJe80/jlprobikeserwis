@@ -8,7 +8,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabaseClient.js"></script>
+<!-- ✅ kluczowe dla /panel/ -->
+<script src="/supabaseClient.js"></script>
 
 <style>
 :root{
@@ -84,7 +85,7 @@ header h1{
 .wrapper{
   max-width: 980px;
   margin: 0 auto;
-  padding: 120px 24px 80px; /* miejsce na header */
+  padding: 120px 24px 80px;
 }
 
 /* ===== BOX ===== */
@@ -101,18 +102,14 @@ h1.page-title{
   font-weight:900;
 }
 
-/* ===== NEW: panelowy układ ===== */
+/* ===== panelowy układ ===== */
 .grid{
   display:grid;
   grid-template-columns: 1fr;
   gap:14px;
 }
-
 @media(min-width: 980px){
-  .grid{
-    grid-template-columns: 1fr 1fr;
-    gap:16px;
-  }
+  .grid{ grid-template-columns: 1fr 1fr; gap:16px; }
 }
 
 .card{
@@ -129,7 +126,6 @@ h1.page-title{
   gap:10px;
   margin:0 0 10px;
 }
-
 .card-title h2{
   margin:0;
   font-size:14px;
@@ -141,7 +137,6 @@ h1.page-title{
   align-items:center;
   gap:8px;
 }
-
 .card-title .badge{
   font-size:12px;
   color:rgba(229,231,235,0.9);
@@ -156,7 +151,6 @@ label{
   margin-top:12px;
 }
 
-/* ✅ CZCIONKA W POLACH MA BYĆ CZARNA */
 input,select,textarea{
   width:100%;
   padding:14px;
@@ -186,13 +180,11 @@ textarea{ min-height:120px; resize:vertical; }
   gap:12px;
 }
 @media(min-width: 780px){
-  .actions{
-    grid-template-columns: 1fr 1fr;
-  }
+  .actions{ grid-template-columns: 1fr 1fr; }
 }
-.actions .btn{ margin:0; } /* w gridzie nie potrzebujemy margin-bottom */
+.actions .btn{ margin:0; }
 
-/* ===== BUTTONS (spójne z projektem, bez zmiany onclick) ===== */
+/* ===== BUTTONS ===== */
 .btn{
   width:100%;
   padding:16px;
@@ -209,11 +201,7 @@ textarea{ min-height:120px; resize:vertical; }
   justify-content:center;
   gap:10px;
 }
-
-.btn:hover{
-  background:var(--accent);
-  color:#fff;
-}
+.btn:hover{ background:var(--accent); color:#fff; }
 
 .btn.save{
   background:var(--accent);
@@ -221,7 +209,7 @@ textarea{ min-height:120px; resize:vertical; }
 }
 .btn.save:hover{ background:var(--accentHover); }
 
-/* przyciski druku w stylu panelu (bez “starych” kolorów) */
+/* przyciski druku */
 .btn.pdf-in, .btn.pdf-out, .btn.pdf-book{
   border-color: rgba(255,255,255,0.18);
   color:#fff;
@@ -232,7 +220,7 @@ textarea{ min-height:120px; resize:vertical; }
   color:#fff;
 }
 
-/* ===== SUBTLE HELP TEXT ===== */
+/* ===== HELP ===== */
 .help{
   margin-top:10px;
   font-size:12px;
@@ -240,15 +228,106 @@ textarea{ min-height:120px; resize:vertical; }
   line-height:1.35;
 }
 
-/* ===== FOOT NOTE ===== */
-.back{
-  margin-top:20px;
-  color:#60a5fa;
-  cursor:pointer;
-  text-align:center;
-  font-weight:800;
+/* ===== PHOTO MINI BAR ===== */
+.photoBar{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,0.10);
 }
-.back:hover{ color:var(--accent); }
+
+.photoTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.photoCount{
+  font-size:12px;
+  opacity:.9;
+  color:rgba(229,231,235,0.9);
+}
+
+.thumbRow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  margin-top:10px;
+}
+
+.thumb{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.16);
+  overflow:hidden;
+  background: rgba(255,255,255,0.06);
+}
+.thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.moreBadge{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  border:1px dashed rgba(255,255,255,0.22);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:900;
+  opacity:.9;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:10px;
+}
+.row input[type="file"]{
+  flex:1;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color:#000;
+}
+.row .btn{
+  width:auto;
+  padding:12px 14px;
+  border-radius:12px;
+  font-size:14px;
+}
+.btn.small{
+  width:auto;
+  padding:12px 14px;
+  border-radius:12px;
+  font-size:14px;
+}
+.btn.neutral{
+  border-color: rgba(255,255,255,0.18);
+  color:#fff;
+}
+.btn.neutral:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
+  color:#fff;
+}
+.btn.warn{
+  border-color: rgba(245,158,11,0.6);
+  color:#fff;
+}
+.btn.warn:hover{
+  background: rgba(245,158,11,0.18);
+  color:#fff;
+}
 </style>
 </head>
 
@@ -266,7 +345,6 @@ textarea{ min-height:120px; resize:vertical; }
 
     <h1 class="page-title">Edycja zlecenia</h1>
 
-    <!-- ===== NOWY UKŁAD: Panel / Historia (bez zmiany ID pól) ===== -->
     <div class="grid">
 
       <!-- LEWA: Dane zlecenia -->
@@ -302,7 +380,7 @@ textarea{ min-height:120px; resize:vertical; }
         </div>
       </div>
 
-      <!-- PRAWA: Kosztorys / robocizna -->
+      <!-- PRAWA: Kosztorys + Zdjęcia + SMS -->
       <div class="card">
         <div class="card-title">
           <h2><i class="fa-solid fa-receipt"></i> Kosztorys</h2>
@@ -314,14 +392,43 @@ textarea{ min-height:120px; resize:vertical; }
 
         <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
 
-        <div class="help">
-          Wpisuj pozycje w osobnych liniach. Suma wylicza się automatycznie z liczb w liniach.
+        <div class="photoBar">
+          <div class="photoTop">
+            <div class="photoCount">
+              <i class="fa-solid fa-camera"></i>
+              Zdjęcia: <b id="photoCount">0</b>
+            </div>
+            <button class="btn small neutral" onclick="openGallery()">
+              <i class="fa-solid fa-images"></i> Galeria
+            </button>
+          </div>
+
+          <div class="thumbRow" id="thumbRow"></div>
+
+          <div class="row">
+            <!-- ✅ bez capture: wybierasz z galerii, a aparat masz też w pickerze -->
+            <input id="photoInput" type="file" accept="image/*" multiple />
+            <button class="btn small" onclick="uploadPhotos()">
+              <i class="fa-solid fa-upload"></i> Dodaj
+            </button>
+          </div>
+
+          <div class="row">
+            <button class="btn small warn" onclick="copySmsQuote()">
+              <i class="fa-solid fa-copy"></i> Kopiuj SMS (kosztorys + link)
+            </button>
+          </div>
+
+          <div class="help" id="photoHelp">
+            Miniatury są lekkie (32×32). Pełne zdjęcia są w galerii.
+          </div>
         </div>
+
       </div>
 
     </div>
 
-    <!-- AKCJE (kolejność przycisków zostaje jak w Twojej wersji) -->
+    <!-- AKCJE (zostają w tej kolejności) -->
     <div class="actions" style="margin-top:16px;">
       <button class="btn save" onclick="save()">
         <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
@@ -356,13 +463,19 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const costText = document.getElementById("costText");
   const sumEl    = document.getElementById("sum");
 
+  const photoInput = document.getElementById("photoInput");
+  const photoCountEl = document.getElementById("photoCount");
+  const thumbRow = document.getElementById("thumbRow");
+  const photoHelp = document.getElementById("photoHelp");
+
   const COST_TEXT_COLUMN = "costs_text";
 
   let currentTotal = 0;
-
-  // ✅ do SMS: zapamiętujemy poprzedni status i kod publiczny (jeśli jest)
   let previousStatus = null;
   let publicCode = "";
+
+  // cache listy zdjęć
+  let photoRows = [];
 
   function escapeHtml(str){
     return (str ?? "")
@@ -385,7 +498,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   }
   costText.addEventListener("input", calcSum);
 
-  // ✅ normalizacja telefonu do formatu 48XXXXXXXXX
   function normalizePhoneToPL48(raw){
     const digits = String(raw || "").replace(/\D/g, "");
     if(!digits) return "";
@@ -399,7 +511,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
     return digits;
   }
 
-  // ✅ SMS tylko przy statusie "gotowe"
   async function sendSmsGotowe(){
     const to = normalizePhoneToPL48(phone.value);
     if(!to) return { ok:false, skipped:true, reason:"no_phone" };
@@ -417,6 +528,176 @@ document.addEventListener("DOMContentLoaded", ()=>{
     const j = await r.json().catch(()=>({ ok:false, error:"Invalid JSON response" }));
     return j;
   }
+
+  // ======= FOTO: ładowanie + miniatury =======
+
+  function makeGalleryUrl(){
+    const codeForLink = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
+    return `https://www.jlprobikeserwis.bike/order-photos.html?code=${encodeURIComponent(codeForLink)}`;
+  }
+
+  function setPhotoUiLoading(loading){
+    if(loading){
+      photoHelp.textContent = "Ładowanie / upload…";
+    }else{
+      photoHelp.textContent = "Miniatury są lekkie (32×32). Pełne zdjęcia są w galerii.";
+    }
+  }
+
+  function renderThumbs(){
+    const count = photoRows.length;
+    photoCountEl.textContent = String(count);
+
+    if(count === 0){
+      thumbRow.innerHTML = `<span style="opacity:.75;font-size:12px;">Brak zdjęć.</span>`;
+      return;
+    }
+
+    // pokazujemy max 6 miniatur dla lekkości
+    const show = photoRows.slice(0, 6);
+
+    thumbRow.innerHTML = show.map(r=>{
+      const url = supabaseClient.storage.from("order-photos").getPublicUrl(r.path).data.publicUrl;
+      return `
+        <a class="thumb" href="${url}" target="_blank" rel="noopener" title="Otwórz">
+          <img loading="lazy" src="${url}" alt="zdjęcie">
+        </a>
+      `;
+    }).join("");
+
+    if(count > 6){
+      thumbRow.innerHTML += `<a class="moreBadge" href="${makeGalleryUrl()}" target="_blank" rel="noopener" title="Otwórz galerię">+${count-6}</a>`;
+    }
+  }
+
+  async function loadPhotos(){
+    try{
+      const codeForQuery = (publicCode && publicCode.trim()) ? publicCode.trim() : "";
+      if(!codeForQuery){
+        // jeśli nie ma kodu, ładuj po order_id (fallback)
+        const { data, error } = await supabaseClient
+          .from("order_photos")
+          .select("id, path, created_at")
+          .eq("order_id", id)
+          .order("created_at", { ascending:false });
+
+        if(error) throw error;
+        photoRows = data || [];
+        renderThumbs();
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("order_photos")
+        .select("id, path, created_at")
+        .eq("public_code", codeForQuery)
+        .order("created_at", { ascending:false });
+
+      if(error) throw error;
+      photoRows = data || [];
+      renderThumbs();
+    }catch(e){
+      console.warn("loadPhotos error:", e);
+      photoHelp.textContent = "Błąd pobierania zdjęć: " + (e?.message || e);
+    }
+  }
+
+  function safeName(name){
+    return String(name || "photo.jpg")
+      .replace(/[^a-zA-Z0-9._-]+/g, "_")
+      .slice(0, 120);
+  }
+
+  async function uploadPhotos(){
+    const files = Array.from(photoInput.files || []);
+    if(files.length === 0){
+      alert("Wybierz zdjęcia.");
+      return;
+    }
+
+    // musimy mieć public_code, żeby link do galerii był stały
+    const codeForUse = (publicCode && publicCode.trim()) ? publicCode.trim() : "";
+    if(!codeForUse){
+      alert("Brak public_code w zleceniu. Najpierw zapisz zlecenie lub sprawdź, czy public_code jest w tabeli orders.");
+      return;
+    }
+
+    setPhotoUiLoading(true);
+
+    try{
+      for(const file of files){
+        const rand = Math.random().toString(16).slice(2,8);
+        const path = `${codeForUse}/${Date.now()}_${rand}_${safeName(file.name)}`;
+
+        // 1) upload do Storage
+        const up = await supabaseClient.storage
+          .from("order-photos")
+          .upload(path, file, { upsert:false });
+
+        if(up.error){
+          throw up.error;
+        }
+
+        // 2) wpis do tabeli
+        const ins = await supabaseClient
+          .from("order_photos")
+          .insert({
+            order_id: id,
+            public_code: codeForUse,
+            path
+          });
+
+        if(ins.error){
+          throw ins.error;
+        }
+      }
+
+      photoInput.value = "";
+      await loadPhotos();
+      alert("Dodano zdjęcia ✅");
+    }catch(e){
+      console.warn("uploadPhotos error:", e);
+      alert("Błąd dodawania zdjęć: " + (e?.message || e));
+    }finally{
+      setPhotoUiLoading(false);
+    }
+  }
+
+  function openGallery(){
+    const url = makeGalleryUrl();
+    window.open(url, "_blank");
+  }
+
+  function buildQuoteText(){
+    const lines = (costText.value || "").split("\n").map(s=>s.trim()).filter(Boolean);
+    const pretty = lines.length ? lines.map(l=>`- ${l}`).join("\n") : "(brak pozycji)";
+    const sum = (Number.isFinite(currentTotal) ? currentTotal : 0).toFixed(2);
+
+    const url = makeGalleryUrl();
+
+    return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${url}`;
+  }
+
+  async function copySmsQuote(){
+    calcSum();
+    const text = buildQuoteText();
+
+    try{
+      await navigator.clipboard.writeText(text);
+      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+    }catch(e){
+      // fallback
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+    }
+  }
+
+  // ======= LOAD / SAVE (bez zmian logiki) =======
 
   async function load(){
     const { data, error } = await supabaseClient
@@ -446,6 +727,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
     publicCode = data.public_code ?? "";
 
     calcSum();
+
+    // ✅ foto
+    await loadPhotos();
   }
 
   async function save(){
@@ -509,6 +793,10 @@ document.addEventListener("DOMContentLoaded", ()=>{
     }
 
     previousStatus = newStatus;
+
+    // po zapisie odśwież zdjęcia (gdyby np. public_code się pojawił)
+    await loadPhotos();
+
     alert("Zapisano poprawnie ✅ (status + dane + sumy + lista pozycji)" + smsNote);
   }
 
@@ -902,10 +1190,16 @@ li{ margin:1mm 0; }
     win.document.close();
   }
 
+  // ===== expose =====
   window.save = save;
   window.printIn = printIn;
   window.printOut = printOut;
   window.printBooklet = printBooklet;
+
+  // foto expose
+  window.uploadPhotos = uploadPhotos;
+  window.openGallery = openGallery;
+  window.copySmsQuote = copySmsQuote;
 
   load();
 });
