@@ -261,10 +261,10 @@ textarea{ min-height:120px; resize:vertical; }
             </button>
           </div>
 
-          <!-- ✅ Jeden przycisk SMS (PRO) -->
+          <!-- ✅ Jeden przycisk SMS PRO -->
           <div class="row">
-            <button class="btn small warn" onclick="copySmsQuote()" type="button">
-              <i class="fa-solid fa-copy"></i> Kopiuj SMS (kosztorys + zdjęcia)
+            <button class="btn small warn" onclick="smsPro()" type="button">
+              <i class="fa-solid fa-paper-plane"></i> SMS PRO (odbiorca + treść)
             </button>
           </div>
 
@@ -380,7 +380,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function makePublicGalleryUrl(){
     // ✅ public (dla klienta, bez logowania) – TYLKO odczyt
-    // Jeśli nie ma public_code -> fallback na stronę statusu (zawsze publiczna)
     const code = (publicCode && publicCode.trim()) ? publicCode.trim() : "";
     if(code){
       return `/order-photos-public.html?code=${encodeURIComponent(code)}`;
@@ -392,7 +391,6 @@ document.addEventListener("DOMContentLoaded", () => {
     try{
       photoHelp.textContent = "Ładowanie zdjęć…";
 
-      // ✅ licznik po order_id (u Ciebie order_photos ma: id, order_id, path, created_at)
       const { count, error } = await supabaseClient
         .from("order_photos")
         .select("id", { count: "exact", head: true })
@@ -409,7 +407,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openGallery(){
-    // ✅ dla Ciebie – panel
     window.location.href = makeStaffGalleryUrl();
   }
 
@@ -422,13 +419,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${publicUrl}`;
   }
 
-  async function copySmsQuote(){
-    calcSum();
-    const text = buildQuoteText();
-
+  async function copyToClipboard(text){
     try{
       await navigator.clipboard.writeText(text);
-      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+      return true;
     }catch(e){
       const ta = document.createElement("textarea");
       ta.value = text;
@@ -436,8 +430,30 @@ document.addEventListener("DOMContentLoaded", () => {
       ta.select();
       document.execCommand("copy");
       ta.remove();
-      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+      return true;
     }
+  }
+
+  // ✅ SMS PRO: ustawia odbiorcę + treść (i dodatkowo kopiuje do schowka)
+  async function smsPro(){
+    calcSum();
+    const body = buildQuoteText();
+    const to = normalizePhoneToPL48(phone.value);
+
+    // zawsze kopiuj (na wypadek, gdyby aplikacja SMS nie przeniosła treści)
+    await copyToClipboard(body);
+
+    if(!to){
+      alert("Skopiowano do schowka ✅\nBrak numeru telefonu — wpisz telefon klienta, aby otworzyć SMS z odbiorcą.");
+      return;
+    }
+
+    const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const sep = isiOS ? "&" : "?";
+    const smsUrl = `sms:${to}${sep}body=${encodeURIComponent(body)}`;
+
+    // otwieramy SMS (na niektórych przeglądarkach może zadziałać dopiero po akcji usera — tu jest klik)
+    window.location.href = smsUrl;
   }
 
   // ======= LOAD / SAVE =======
@@ -823,7 +839,7 @@ li{ margin:1mm 0; }
   window.printBooklet = printBooklet;
 
   window.openGallery = openGallery;
-  window.copySmsQuote = copySmsQuote;
+  window.smsPro = smsPro;
 
   load();
 });
