@@ -271,14 +271,24 @@ async function resumeOrder(o){
   const ok = confirm("Wznowić jako NOWE zlecenie (kontynuacja historii pod tym samym kodem QR)?");
   if(!ok) return;
 
+  // ✅ issue_description u Ciebie ma NOT NULL — więc zawsze ustawiamy
+  const issueDesc = (o.issue_description ?? o.description ?? "").toString();
+
   const payload = {
     status: "nowe",
-    customer_name: o.customer_name || "",
-    phone: o.phone || "",
-    bike_type: o.bike_type || "",
-    description: o.description || "",
-    public_code: o.public_code,
-    archived_at: null
+    customer_name: (o.customer_name ?? "").toString(),
+    phone: (o.phone ?? "").toString(),
+    bike_type: (o.bike_type ?? "").toString(),
+
+    // u Ciebie w UI często jest "Opis / wykonane" = description
+    description: (o.description ?? "").toString(),
+
+    // ✅ to pole MUSI być niepuste (może być "")
+    issue_description: issueDesc,
+
+    public_code: (o.public_code ?? "").toString(),
+    archived_at: null,
+    completed_at: null
   };
 
   const { data, error } = await supabaseClient
@@ -296,9 +306,10 @@ async function resumeOrder(o){
 }
 
 async function loadCompletedOrders(){
+  // ✅ do SELECT dokładamy issue_description, żeby wznawianie miało co skopiować
   const { data, error } = await supabaseClient
     .from("orders")
-    .select("id, public_code, customer_name, phone, bike_type, description, completed_at")
+    .select("id, public_code, customer_name, phone, bike_type, description, issue_description, completed_at")
     .eq("status","wydano")
     .order("completed_at",{ascending:false});
 
