@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Galeria zdjęć — JL Pro Bike Serwis</title>
+
   <style>
     :root{--bg:#020617;--card:#0b1222;--text:#e5e7eb;--muted:#94a3b8;--border:rgba(255,255,255,.08);--shadow:0 12px 30px rgba(0,0,0,.35);}
     body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
@@ -18,7 +19,6 @@
     .empty{color:var(--muted);padding:14px 0}
     .badge{font-size:12px;color:var(--muted)}
     .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-    .hint{font-size:12px;color:var(--muted);margin-top:8px}
   </style>
 </head>
 <body>
@@ -35,20 +35,18 @@
       <div id="info" class="badge"></div>
       <div id="grid" class="grid"></div>
       <div id="msg"></div>
-      <div class="hint">Jeśli zdjęcia się nie ładują, odśwież stronę (linki są czasowe).</div>
     </div>
   </div>
 
   <script>
     const params = new URLSearchParams(location.search);
-    const id = (params.get("id") || "").trim();
+    const id = (params.get("id") || "").trim(); // order_id (uuid)
 
     const grid = document.getElementById("grid");
     const msg = document.getElementById("msg");
     const info = document.getElementById("info");
 
     function setError(text){ msg.innerHTML = `<div class="err">${text}</div>`; }
-    function setEmpty(){ msg.innerHTML = `<div class="empty">Brak zdjęć.</div>`; }
 
     async function load(){
       if(!id){ setError("Brak id w linku."); return; }
@@ -57,24 +55,21 @@
       try{
         const r = await fetch(`/api/order-photos?id=${encodeURIComponent(id)}`, { cache: "no-store" });
         const j = await r.json();
+        if(!r.ok) throw new Error(j?.error || "Błąd API");
 
-        if(!r.ok){
-          setError(j?.error || "Nie udało się wczytać galerii.");
-          return;
-        }
-
-        const rows = (j && j.photos) ? j.photos : [];
+        const rows = j.photos || [];
         if(rows.length === 0){
           grid.innerHTML = "";
-          setEmpty();
+          msg.innerHTML = `<div class="empty">Brak zdjęć.</div>`;
           return;
         }
 
         msg.innerHTML = "";
         grid.innerHTML = rows.map(p=>{
-          const url = p.url;
+          const url = p.url || "";
           return `<a class="img" href="${url}" target="_blank" rel="noopener"><img loading="lazy" src="${url}" alt="zdjęcie"></a>`;
         }).join("");
+
       }catch(e){
         console.warn(e);
         setError("Nie udało się wczytać galerii.");
