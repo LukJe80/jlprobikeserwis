@@ -522,169 +522,149 @@ document.addEventListener("DOMContentLoaded", ()=>{
 
   // ======= FOTO: ładowanie + miniatury =======
 
-  function makeGalleryUrl(){
-    const codeForLink = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
-    return `https://www.jlprobikeserwis.bike/order-photos.html?code=${encodeURIComponent(codeForLink)}`;
+// ✅ link do galerii w PANELU (żeby nie było 404)
+function makeGalleryUrl(){
+  // id = order_id (uuid) w URL: ?id=...
+  return `/panel/order-photos.html?id=${encodeURIComponent(id)}`;
+}
+
+function setPhotoUiLoading(loading){
+  if(loading){
+    photoHelp.textContent = "Ładowanie / upload…";
+  }else{
+    photoHelp.textContent = "Miniatury są lekkie (32×32). Pełne zdjęcia są w galerii.";
+  }
+}
+
+function renderThumbs(){
+  const count = photoRows.length;
+  photoCountEl.textContent = String(count);
+
+  if(count === 0){
+    thumbRow.innerHTML = `<span style="opacity:.75;font-size:12px;">Brak zdjęć.</span>`;
+    return;
   }
 
-  function setPhotoUiLoading(loading){
-    if(loading){
-      photoHelp.textContent = "Ładowanie / upload…";
-    }else{
-      photoHelp.textContent = "Miniatury są lekkie (32×32). Pełne zdjęcia są w galerii.";
-    }
+  // pokazujemy max 6 miniatur dla lekkości
+  const show = photoRows.slice(0, 6);
+
+  thumbRow.innerHTML = show.map(r=>{
+    const url = supabaseClient.storage.from("order-photos").getPublicUrl(r.path).data.publicUrl;
+    return `
+      <a class="thumb" href="${url}" target="_blank" rel="noopener" title="Otwórz">
+        <img loading="lazy" src="${url}" alt="zdjęcie">
+      </a>
+    `;
+  }).join("");
+
+  if(count > 6){
+    // ✅ badge prowadzi do galerii /panel/
+    thumbRow.innerHTML += `<a class="moreBadge" href="${makeGalleryUrl()}" title="Otwórz galerię">+${count-6}</a>`;
+  }
+}
+
+async function loadPhotos(){
+  try{
+    // ✅ zawsze ładujemy po order_id (bo nie masz public_code w order_photos)
+    const { data, error } = await supabaseClient
+      .from("order_photos")
+      .select("id, path, created_at")
+      .eq("order_id", id)
+      .order("created_at", { ascending:false });
+
+    if(error) throw error;
+    photoRows = data || [];
+    renderThumbs();
+  }catch(e){
+    console.warn("loadPhotos error:", e);
+    photoHelp.textContent = "Błąd pobierania zdjęć: " + (e?.message || e);
+  }
+}
+
+function safeName(name){
+  return String(name || "photo.jpg")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .slice(0, 120);
+}
+
+async function uploadPhotos(){
+  const files = Array.from(photoInput.files || []);
+  if(files.length === 0){
+    alert("Wybierz zdjęcia.");
+    return;
   }
 
-  function renderThumbs(){
-    const count = photoRows.length;
-    photoCountEl.textContent = String(count);
+  setPhotoUiLoading(true);
 
-    if(count === 0){
-      thumbRow.innerHTML = `<span style="opacity:.75;font-size:12px;">Brak zdjęć.</span>`;
-      return;
-    }
+  try{
+    for(const file of files){
+      const rand = Math.random().toString(16).slice(2,8);
 
-    // pokazujemy max 6 miniatur dla lekkości
-    const show = photoRows.slice(0, 6);
+      // ✅ folder po order_id (uuid)
+      const path = `${id}/${Date.now()}_${rand}_${safeName(file.name)}`;
 
-    thumbRow.innerHTML = show.map(r=>{
-      const url = supabaseClient.storage.from("order-photos").getPublicUrl(r.path).data.publicUrl;
-      return `
-        <a class="thumb" href="${url}" target="_blank" rel="noopener" title="Otwórz">
-          <img loading="lazy" src="${url}" alt="zdjęcie">
-        </a>
-      `;
-    }).join("");
+      // 1) upload do Storage
+      const up = await supabaseClient.storage
+        .from("order-photos")
+        .upload(path, file, { upsert:false });
 
-    if(count > 6){
-      thumbRow.innerHTML += `<a class="moreBadge" href="${makeGalleryUrl()}" target="_blank" rel="noopener" title="Otwórz galerię">+${count-6}</a>`;
-    }
-  }
+      if(up.error) throw up.error;
 
-  async function loadPhotos(){
-    try{
-      const codeForQuery = (publicCode && publicCode.trim()) ? publicCode.trim() : "";
-      if(!codeForQuery){
-        // jeśli nie ma kodu, ładuj po order_id (fallback)
-        const { data, error } = await supabaseClient
-          .from("order_photos")
-          .select("id, path, created_at")
-          .eq("order_id", id)
-          .order("created_at", { ascending:false });
-
-        if(error) throw error;
-        photoRows = data || [];
-        renderThumbs();
-        return;
-      }
-
-      const { data, error } = await supabaseClient
+      // 2) wpis do tabeli (BEZ public_code)
+      const ins = await supabaseClient
         .from("order_photos")
-        .select("id, path, created_at")
-        .eq("public_code", codeForQuery)
-        .order("created_at", { ascending:false });
+        .insert({
+          order_id: id,
+          path
+        });
 
-      if(error) throw error;
-      photoRows = data || [];
-      renderThumbs();
-    }catch(e){
-      console.warn("loadPhotos error:", e);
-      photoHelp.textContent = "Błąd pobierania zdjęć: " + (e?.message || e);
-    }
-  }
-
-  function safeName(name){
-    return String(name || "photo.jpg")
-      .replace(/[^a-zA-Z0-9._-]+/g, "_")
-      .slice(0, 120);
-  }
-
-  async function uploadPhotos(){
-    const files = Array.from(photoInput.files || []);
-    if(files.length === 0){
-      alert("Wybierz zdjęcia.");
-      return;
+      if(ins.error) throw ins.error;
     }
 
-    // musimy mieć public_code, żeby link do galerii był stały
-    const codeForUse = (publicCode && publicCode.trim()) ? publicCode.trim() : "";
-    if(!codeForUse){
-      alert("Brak public_code w zleceniu. Najpierw zapisz zlecenie lub sprawdź, czy public_code jest w tabeli orders.");
-      return;
-    }
-
-    setPhotoUiLoading(true);
-
-    try{
-      for(const file of files){
-        const rand = Math.random().toString(16).slice(2,8);
-        const path = `${codeForUse}/${Date.now()}_${rand}_${safeName(file.name)}`;
-
-        // 1) upload do Storage
-        const up = await supabaseClient.storage
-          .from("order-photos")
-          .upload(path, file, { upsert:false });
-
-        if(up.error){
-          throw up.error;
-        }
-
-        // 2) wpis do tabeli
-        const ins = await supabaseClient
-          .from("order_photos")
-          .insert({
-            order_id: id,
-            public_code: codeForUse,
-            path
-          });
-
-        if(ins.error){
-          throw ins.error;
-        }
-      }
-
-      photoInput.value = "";
-      await loadPhotos();
-      alert("Dodano zdjęcia ✅");
-    }catch(e){
-      console.warn("uploadPhotos error:", e);
-      alert("Błąd dodawania zdjęć: " + (e?.message || e));
-    }finally{
-      setPhotoUiLoading(false);
-    }
+    photoInput.value = "";
+    await loadPhotos();
+    alert("Dodano zdjęcia ✅");
+  }catch(e){
+    console.warn("uploadPhotos error:", e);
+    alert("Błąd dodawania zdjęć: " + (e?.message || e));
+  }finally{
+    setPhotoUiLoading(false);
   }
+}
 
-  function openGallery(){
-    const url = makeGalleryUrl();
-    window.open(url, "_blank");
+function openGallery(){
+  // ✅ otwieramy w tej samej karcie (mniej problemów w mobile)
+  window.location.href = makeGalleryUrl();
+}
+
+function buildQuoteText(){
+  const lines = (costText.value || "").split("\n").map(s=>s.trim()).filter(Boolean);
+  const pretty = lines.length ? lines.map(l=>`- ${l}`).join("\n") : "(brak pozycji)";
+  const sum = (Number.isFinite(currentTotal) ? currentTotal : 0).toFixed(2);
+
+  // ✅ pełny link absolutny (żeby SMS miał działający link)
+  const fullUrl = `${location.origin}${makeGalleryUrl()}`;
+
+  return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${fullUrl}`;
+}
+
+async function copySmsQuote(){
+  calcSum();
+  const text = buildQuoteText();
+
+  try{
+    await navigator.clipboard.writeText(text);
+    alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+  }catch(e){
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+    alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
   }
-
-  function buildQuoteText(){
-    const lines = (costText.value || "").split("\n").map(s=>s.trim()).filter(Boolean);
-    const pretty = lines.length ? lines.map(l=>`- ${l}`).join("\n") : "(brak pozycji)";
-    const sum = (Number.isFinite(currentTotal) ? currentTotal : 0).toFixed(2);
-
-    const url = makeGalleryUrl();
-
-    return `JL Pro Bike — kosztorys\n${pretty}\n\nSuma: ${sum} zł\nZdjęcia: ${url}`;
-  }
-
-  async function copySmsQuote(){
-    calcSum();
-    const text = buildQuoteText();
-
-    try{
-      await navigator.clipboard.writeText(text);
-      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
-    }catch(e){
-      // fallback
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      ta.remove();
-      alert("Skopiowano do schowka ✅\nWklej w SMS do klienta.");
+}
     }
   }
 
@@ -1198,4 +1178,5 @@ li{ margin:1mm 0; }
 
 </body>
 </html>
+
 
