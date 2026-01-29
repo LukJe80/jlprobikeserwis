@@ -281,7 +281,7 @@ textarea{ min-height:120px; resize:vertical; }
           </div>
         </div>
 
-        <!-- ✅ PRZYPOMNIENIE (DLA CIEBIE) — liczone od archived_at -->
+        <!-- ✅ PRZYPOMNIENIE (DLA CIEBIE) — zapis do orders.reminder_months + orders.reminder_note -->
         <div class="photoBar" style="margin-top:14px;">
           <div class="card-title" style="margin:0 0 8px;">
             <h2 style="margin:0;font-size:14px;letter-spacing:.4px;text-transform:uppercase;color:#93c5fd;font-weight:900;display:flex;align-items:center;gap:8px;">
@@ -293,10 +293,16 @@ textarea{ min-height:120px; resize:vertical; }
           <label>Ustaw za ile miesięcy (od archiwizacji)</label>
           <select id="remindMonths">
             <option value="">— nie ustawiaj —</option>
+            <option value="1">za 1 miesiąc</option>
+            <option value="2">za 2 miesiące</option>
             <option value="3">za 3 miesiące</option>
             <option value="4">za 4 miesiące</option>
             <option value="5">za 5 miesięcy</option>
             <option value="6">za 6 miesięcy</option>
+            <option value="7">za 7 miesięcy</option>
+            <option value="8">za 8 miesięcy</option>
+            <option value="9">za 9 miesięcy</option>
+            <option value="10">za 10 miesięcy</option>
           </select>
 
           <label>Notatka</label>
@@ -304,10 +310,10 @@ textarea{ min-height:120px; resize:vertical; }
 
           <div class="row">
             <button class="btn small warn" onclick="setReminder()" type="button">
-              <i class="fa-solid fa-bell"></i> Ustaw przypomnienie
+              <i class="fa-solid fa-bell"></i> Zapisz przypomnienie
             </button>
-            <button class="btn small neutral" onclick="markReminderDone()" type="button">
-              <i class="fa-solid fa-check"></i> Oznacz jako zrobione
+            <button class="btn small neutral" onclick="clearReminder()" type="button">
+              <i class="fa-solid fa-xmark"></i> Wyczyść
             </button>
           </div>
 
@@ -370,10 +376,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let previousStatus = null;
   let publicCode = "";
 
-  // reminder state
-  let archivedAt = null;
-  let remindAt = null;
-  let remindDone = false;
+  // reminder state (z bazy)
+  let archivedAt = null;           // orders.archived_at
+  let reminderMonths = null;       // orders.reminder_months
+  let reminderNote = null;         // orders.reminder_note
 
   function escapeHtml(str){
     return (str ?? "")
@@ -409,7 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return digits;
   }
 
-  // ✅ stabilny, krótki kod (8 znaków), bez crypto.randomUUID (żeby było pewne wszędzie)
+  // ✅ stabilny, krótki kod (8 znaków)
   function genPublicCode8(){
     const chars = "0123456789ABCDEF";
     let out = "";
@@ -419,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return out;
   }
 
-  // ✅ najważniejsze: jeśli public_code = null, generujemy i zapisujemy do orders
+  // ✅ jeśli public_code = null, generujemy i zapisujemy do orders
   async function ensurePublicCode(){
     if(publicCode && String(publicCode).trim()) return publicCode;
 
@@ -525,7 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try{
       calcSum();
 
-      const code = await ensurePublicCode();
+      await ensurePublicCode();
       const pubPath = makePublicGalleryPath();
       const publicUrlAbs = `${location.origin}${pubPath}`;
 
@@ -550,7 +556,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ======= REMINDER (B: od archiwizacji) =======
+  // ======= PRZYPOMNIENIE: orders.reminder_months + orders.reminder_note + orders.archived_at =======
   function fmtDatePL(iso){
     if(!iso) return "";
     const d = new Date(iso);
@@ -558,17 +564,35 @@ document.addEventListener("DOMContentLoaded", () => {
     return d.toLocaleDateString("pl-PL");
   }
 
+  function calcReminderDate(archIso, months){
+    if(!archIso || !months) return null;
+    const base = new Date(archIso);
+    if(String(base) === "Invalid Date") return null;
+
+    const m = Number(months);
+    if(!Number.isFinite(m) || m <= 0) return null;
+
+    const due = new Date(base);
+    const day = due.getDate();
+    due.setMonth(due.getMonth() + m);
+    if(due.getDate() < day) due.setDate(0);
+    return due.toISOString();
+  }
+
   function refreshReminderInfo(){
     if(!remindInfoEl) return;
 
-    if(!remindAt){
+    if(!reminderMonths){
       remindInfoEl.textContent = "Brak przypomnienia.";
       return;
     }
 
     const base = archivedAt ? ` (archiwizacja: ${fmtDatePL(archivedAt)})` : "";
-    const done = remindDone ? " ✅ (zrobione)" : "";
-    remindInfoEl.textContent = `🔔 Przypomnienie: ${fmtDatePL(remindAt)}${base}${done}`;
+    const dueIso = calcReminderDate(archivedAt, reminderMonths);
+    const dueTxt = dueIso ? fmtDatePL(dueIso) : "—";
+    const noteTxt = reminderNote ? ` | Notatka: ${reminderNote}` : "";
+
+    remindInfoEl.textContent = `🔔 Przypomnienie: ${dueTxt}${base}${noteTxt}`;
   }
 
   async function ensureArchivedAtIfNull(){
@@ -596,58 +620,55 @@ document.addEventListener("DOMContentLoaded", () => {
     const noteTxt = (remindNoteEl?.value || "").trim();
 
     if(!m){
-      alert("Wybierz liczbę miesięcy.");
+      alert("Wybierz liczbę miesięcy (1–10).");
       return;
     }
 
     try{
       // jeżeli nie ma archiwizacji – ustawiamy archived_at teraz (bez ruszania statusu)
       await ensureArchivedAtIfNull();
-
-      const baseIso = await fetchArchivedAt();
-      archivedAt = baseIso;
-
-      const base = new Date(baseIso || new Date().toISOString());
-      const remind = new Date(base);
-      remind.setMonth(remind.getMonth() + m);
-
-      const payload = {
-        remind_at: remind.toISOString(),
-        remind_done: false,
-        remind_note: noteTxt || null
-      };
+      archivedAt = await fetchArchivedAt();
 
       const { error } = await supabaseClient
         .from("orders")
-        .update(payload)
+        .update({
+          reminder_months: m,
+          reminder_note: noteTxt || null
+        })
         .eq("id", id);
 
       if(error) throw error;
 
-      remindAt = payload.remind_at;
-      remindDone = false;
+      reminderMonths = m;
+      reminderNote = noteTxt || null;
       refreshReminderInfo();
-      alert("Przypomnienie ustawione ✅");
+      alert("Przypomnienie zapisane ✅");
     }catch(e){
       console.warn("setReminder error:", e);
       alert("Błąd zapisu przypomnienia: " + (e?.message || e));
     }
   }
 
-  async function markReminderDone(){
+  async function clearReminder(){
     try{
       const { error } = await supabaseClient
         .from("orders")
-        .update({ remind_done: true })
+        .update({
+          reminder_months: null,
+          reminder_note: null
+        })
         .eq("id", id);
 
       if(error) throw error;
 
-      remindDone = true;
+      reminderMonths = null;
+      reminderNote = null;
+      if(remindMonthsEl) remindMonthsEl.value = "";
+      if(remindNoteEl) remindNoteEl.value = "";
       refreshReminderInfo();
-      alert("Oznaczono jako zrobione ✅");
+      alert("Wyczyszczono przypomnienie ✅");
     }catch(e){
-      console.warn("markReminderDone error:", e);
+      console.warn("clearReminder error:", e);
       alert("Błąd: " + (e?.message || e));
     }
   }
@@ -680,11 +701,17 @@ document.addEventListener("DOMContentLoaded", () => {
     previousStatus = status.value;
     publicCode = data.public_code ?? "";
 
-    // reminder state
+    // reminder from DB
     archivedAt = data.archived_at ?? null;
-    remindAt = data.remind_at ?? null;
-    remindDone = !!data.remind_done;
-    if(remindNoteEl && data.remind_note) remindNoteEl.value = data.remind_note;
+    reminderMonths = (data.reminder_months ?? null);
+    reminderNote = (data.reminder_note ?? null);
+
+    if(remindMonthsEl){
+      remindMonthsEl.value = (reminderMonths == null) ? "" : String(reminderMonths);
+    }
+    if(remindNoteEl){
+      remindNoteEl.value = reminderNote ?? "";
+    }
 
     // auto-naprawa: jeśli null → generuj i zapisz od razu
     try{
@@ -703,6 +730,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const newStatus = status.value;
 
+    // ⚠️ reminder zapisujemy też przy normalnym "Zapisz zmiany"
+    const m = parseInt(remindMonthsEl?.value || "", 10);
+    const noteTxt = (remindNoteEl?.value || "").trim();
+
     const payload = {
       status: newStatus,
       customer_name: customer.value,
@@ -712,7 +743,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       labor_cost: currentTotal,
       parts_cost: 0,
-      total_cost: currentTotal
+      total_cost: currentTotal,
+
+      // ✅ NOWE KOLUMNY (z bazy)
+      reminder_months: m ? m : null,
+      reminder_note: noteTxt || null
     };
 
     const { error } = await supabaseClient
@@ -774,10 +809,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // odśwież stan przypomnienia po ewentualnym archived_at
     try{
-      archivedAt = await fetchArchivedAt();
+      const { data } = await supabaseClient
+        .from("orders")
+        .select("archived_at, reminder_months, reminder_note")
+        .eq("id", id)
+        .single();
+
+      archivedAt = data?.archived_at ?? archivedAt;
+      reminderMonths = data?.reminder_months ?? null;
+      reminderNote = data?.reminder_note ?? null;
+
+      if(remindMonthsEl){
+        remindMonthsEl.value = (reminderMonths == null) ? "" : String(reminderMonths);
+      }
+      if(remindNoteEl){
+        remindNoteEl.value = reminderNote ?? "";
+      }
     }catch(e){
       // nic — to tylko bonus
     }
+
     refreshReminderInfo();
 
     await loadPhotosCount();
@@ -1010,7 +1061,7 @@ li{ margin:1mm 0; }
   display:flex;
   flex-direction:column;
   align-items:center;
-  margin-left: 3mm; /* <-- TUTAJ KALIBRACJA */
+  margin-left: 3mm; /* <-- TUTAJ KALIBRACJA (3mm) */
 }
 .qr{ width:30mm; height:30mm; display:flex; align-items:center; justify-content:center; }
 .qr img{ width:30mm !important; height:30mm !important; display:block; }
@@ -1088,7 +1139,7 @@ li{ margin:1mm 0; }
 
   // reminder
   window.setReminder = setReminder;
-  window.markReminderDone = markReminderDone;
+  window.clearReminder = clearReminder;
 
   load();
 });
