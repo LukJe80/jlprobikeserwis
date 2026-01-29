@@ -1,93 +1,105 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <title>Galeria zdjęć – JL Pro Bike Serwis</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<title>Galeria zdjęć – JL Pro Bike Serwis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      background:#0f1220;
-      color:#fff;
-      font-family:system-ui, sans-serif;
-      margin:0;
-      padding:20px;
-    }
-
-    h1 {
-      text-align:center;
-      margin-bottom:20px;
-    }
-
-    .grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-      gap:12px;
-    }
-
-    .grid img {
-      width:100%;
-      border-radius:10px;
-      cursor:pointer;
-      transition:.2s;
-    }
-
-    .grid img:hover {
-      transform:scale(1.05);
-    }
-
-    .error {
-      background:#b91c1c;
-      padding:16px;
-      border-radius:10px;
-      text-align:center;
-      max-width:400px;
-      margin:40px auto;
-    }
-  </style>
+<style>
+body{
+  margin:0;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:24px;
+}
+h1{margin:0 0 6px;font-size:22px;}
+.sub{opacity:.7;font-size:14px;margin-bottom:20px;}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:12px;
+}
+.photo{
+  background:#0f172a;
+  border-radius:12px;
+  overflow:hidden;
+}
+.photo img{
+  width:100%;
+  height:140px;
+  object-fit:cover;
+  cursor:pointer;
+  transition:.2s;
+}
+.photo img:hover{transform:scale(1.05);}
+.box{
+  background:#1e293b;
+  padding:16px;
+  border-radius:12px;
+}
+.error{background:#7f1d1d;}
+.footer{
+  margin-top:30px;
+  font-size:12px;
+  opacity:.6;
+  text-align:center;
+}
+</style>
 </head>
-<body>
 
-<h1>Galeria zdjęć</h1>
-<div id="app"></div>
+<body>
+<div class="wrap">
+  <h1>Galeria zdjęć</h1>
+  <div class="sub">Podgląd dla klienta — tylko do odczytu</div>
+  <div id="content"></div>
+  <div class="footer">JL Pro Bike Serwis</div>
+</div>
 
 <script>
-(async () => {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-  const app = document.getElementById("app");
+(async ()=>{
+  const code = new URLSearchParams(location.search).get("code");
 
-  if (!code) {
-    app.innerHTML = `<div class="error">Brak kodu w linku.</div>`;
+  if(!code){
+    content.innerHTML = `<div class="box error">Brak kodu w linku.</div>`;
     return;
   }
 
-  try {
-    const res = await fetch(`/api/order-photos?code=${encodeURIComponent(code)}`);
-    const data = await res.json();
+  try{
+    const r = await fetch(`/api/order-photos?code=${encodeURIComponent(code)}`);
+    const j = await r.json();
 
-    if (!data.photos || data.photos.length === 0) {
-      app.innerHTML = `<div class="error">Brak zdjęć.</div>`;
+    if(!r.ok) throw new Error(j.error || "Błąd");
+
+    if(!j.photos.length){
+      content.innerHTML = `<div class="box">Brak zdjęć dla tego zlecenia.</div>`;
       return;
     }
 
     const grid = document.createElement("div");
-    grid.className = "grid";
+    grid.className="grid";
 
-    data.photos.forEach(photo => {
-      const img = document.createElement("img");
-      img.src = photo.url;
-      img.onclick = () => window.open(photo.url, "_blank");
-      grid.appendChild(img);
+    j.photos.forEach(p=>{
+      const d=document.createElement("div");
+      d.className="photo";
+      const i=document.createElement("img");
+      i.src=p.url;
+      i.loading="lazy";
+      i.onclick=()=>window.open(p.url,"_blank");
+      d.appendChild(i);
+      grid.appendChild(d);
     });
 
-    app.appendChild(grid);
+    content.appendChild(grid);
 
-  } catch (err) {
-    app.innerHTML = `<div class="error">Błąd ładowania galerii.</div>`;
+  }catch(e){
+    content.innerHTML=`<div class="box error">${e.message}</div>`;
   }
 })();
 </script>
-
 </body>
 </html>
