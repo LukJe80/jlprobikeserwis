@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Druk naklejek QR — JL Pro Bike</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root{
+      --accent:#2563eb;
+      --accentHover:#1d4ed8;
+      --bg:#020617;
+      --text:#e5e7eb;
+      --panel: rgba(255,255,255,0.05);
+      --panelBorder: rgba(255,255,255,0.10);
+      --muted: rgba(229,231,235,0.7);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
+
+    header{
+      position:fixed; top:0; width:100%; z-index:10;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:14px 24px;
+      background:rgba(2,6,23,.7);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      gap:14px;
+    }
+    header h1{
+      margin:0; font-size:18px; color:var(--accent);
+      display:flex; align-items:center; gap:8px; white-space:nowrap;
+    }
+    .header-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+    .toplink{
+      display:flex; align-items:center; gap:8px;
+      color:#fff; text-decoration:none; font-weight:800; font-size:14px;
+      opacity:.92; padding:6px 4px; background:transparent; border:none; cursor:pointer;
+      white-space:nowrap;
+    }
+    .toplink:hover{ color:var(--accent); }
+
+    .wrap{
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 120px 24px 80px;
+    }
+    .box{
+      background: var(--panel);
+      border: 1px solid var(--panelBorder);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:12px;
+    }
+
+    label{display:block;font-weight:900;color:#93c5fd;margin-top:10px}
+    input{
+      width: 260px;
+      max-width: 100%;
+      padding:14px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.92);
+      color:#000;
+      font-size:16px;
+      font-weight:800;
+      letter-spacing:2px;
+      text-transform:uppercase;
+    }
+
+    .btn{
+      padding:14px 18px;
+      border-radius:12px;
+      border:2px solid var(--accent);
+      background:transparent;
+      color:var(--accent);
+      font-weight:900;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    .btn:hover{ background:var(--accent); color:#fff; }
+
+    .preview{
+      margin-top:18px;
+      border-top:1px solid rgba(255,255,255,0.10);
+      padding-top:18px;
+      display:flex;
+      gap:18px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .qrBox{
+      width: 180px;
+      height: 180px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.25);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .qrBox img{ width: 150px !important; height: 150px !important; display:block; }
+    .meta{
+      font-size:14px;
+      color: rgba(229,231,235,0.88);
+      line-height:1.35;
+    }
+    .meta b{ color:#fff; }
+    .hint{ margin-top:10px; font-size:12px; color:var(--muted); line-height:1.35; }
+
+    /* ====== TRYB DRUKU: 1 naklejka na A4 ====== */
+    @media print{
+      header, .wrap{ display:none !important; }
+      body{ background:#fff; color:#000; }
+
+      .printPage{
+        display:flex !important;
+        width:210mm;
+        height:297mm;
+        align-items:center;
+        justify-content:center;
+      }
+      .sticker{
+        width: 90mm;
+        height: 90mm;
+        border: 2px solid #000;
+        border-radius: 10mm;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        gap: 6mm;
+        padding: 6mm;
+      }
+      .brand{
+        font-weight: 900;
+        font-size: 12px;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        text-align:center;
+      }
+      .qrPrint{
+        width: 60mm;
+        height: 60mm;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      }
+      .qrPrint img{ width:60mm !important; height:60mm !important; display:block; }
+      .code{
+        font-weight: 900;
+        font-size: 18px;
+        letter-spacing: 2px;
+      }
+      .hintPrint{
+        font-size: 10px;
+        text-align:center;
+        opacity: .85;
+        line-height: 1.25;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1><i class="fa-solid fa-qrcode"></i> Druk naklejek QR</h1>
+    <div class="header-right">
+      <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="box">
+      <h2 style="margin:0 0 6px;font-size:22px;font-weight:900;">Wpisz kod i drukuj</h2>
+      <div class="hint">
+        To jest narzędzie dla serwisu. Kod wpisujesz ręcznie (np. z naklejki / dokumentu).
+        QR zawsze prowadzi do statusu: <b>order-status.html?code=KOD</b>.
+      </div>
+
+      <label>Kod (public_code)</label>
+      <div class="row">
+        <input id="codeInput" placeholder="NP. F68908B3" autocomplete="off" />
+        <button class="btn" onclick="generate()" type="button">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Podgląd
+        </button>
+        <button class="btn" onclick="printSticker()" type="button">
+          <i class="fa-solid fa-print"></i> Drukuj naklejkę
+        </button>
+      </div>
+
+      <div class="preview">
+        <div class="qrBox" id="qrPreview"></div>
+        <div class="meta">
+          <div><b>Kod:</b> <span id="codeLabel">—</span></div>
+          <div><b>Link QR:</b> <span id="urlLabel">—</span></div>
+          <div class="hint">Tip: wpisuj wielkimi literami (system sam podniesie do uppercase).</div>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:14px;">
+        Jeśli chcesz drukować od razu po wejściu z linku, możesz otworzyć:
+        <b>/panel/print-qr.html?code=F68908B3</b> — kod wypełni się automatycznie.
+      </div>
+    </div>
+  </div>
+
+  <!-- Obszar tylko do druku -->
+  <div class="printPage" style="display:none;">
+    <div class="sticker">
+      <div class="brand">JL Pro Bike Serwis</div>
+      <div class="qrPrint" id="qrPrint"></div>
+      <div class="code" id="codePrint">—</div>
+      <div class="hintPrint">Skanuj kod, aby otworzyć status zlecenia</div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const codeParam = new URLSearchParams(location.search).get("code");
+  if(codeParam){
+    document.getElementById("codeInput").value = String(codeParam).toUpperCase().trim();
+  }
+  generate();
+})();
+
+function buildUrl(code){
+  return `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(code)}`;
+}
+
+function clearEl(el){ while(el.firstChild) el.removeChild(el.firstChild); }
+
+function getCode(){
+  return String(document.getElementById("codeInput").value || "").toUpperCase().trim();
+}
+
+function generate(){
+  const code = getCode();
+  const qrPreview = document.getElementById("qrPreview");
+  const qrPrint = document.getElementById("qrPrint");
+
+  document.getElementById("codeLabel").textContent = code || "—";
+  document.getElementById("codePrint").textContent = code || "—";
+
+  if(!code){
+    document.getElementById("urlLabel").textContent = "—";
+    clearEl(qrPreview);
+    clearEl(qrPrint);
+    return;
+  }
+
+  const url = buildUrl(code);
+  document.getElementById("urlLabel").textContent = url;
+
+  clearEl(qrPreview);
+  clearEl(qrPrint);
+
+  new QRCode(qrPreview, { text: url, width: 150, height: 150 });
+  new QRCode(qrPrint,   { text: url, width: 226, height: 226 });
+}
+
+function printSticker(){
+  const code = getCode();
+  if(!code){
+    alert("Wpisz kod (public_code).");
+    return;
+  }
+  generate();
+  setTimeout(() => {
+    window.focus();
+    window.print();
+  }, 200);
+}
+</script>
+</body>
+</html>
