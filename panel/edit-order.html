@@ -80,9 +80,9 @@ header h1{
 }
 .toplink:hover{ color:var(--accent); }
 
-/* ===== LAYOUT (zamiast flex center) ===== */
+/* ===== LAYOUT ===== */
 .wrapper{
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 120px 24px 80px; /* miejsce na header */
 }
@@ -92,7 +92,7 @@ header h1{
   background: var(--panel);
   border: 1px solid var(--panelBorder);
   border-radius: 16px;
-  padding: 26px;
+  padding: 22px;
 }
 
 h1.page-title{
@@ -101,12 +101,59 @@ h1.page-title{
   font-weight:900;
 }
 
+/* ===== NEW: panelowy układ ===== */
+.grid{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:14px;
+}
+
+@media(min-width: 980px){
+  .grid{
+    grid-template-columns: 1fr 1fr;
+    gap:16px;
+  }
+}
+
+.card{
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.card-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin:0 0 10px;
+}
+
+.card-title h2{
+  margin:0;
+  font-size:14px;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+  color:#93c5fd;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.card-title .badge{
+  font-size:12px;
+  color:rgba(229,231,235,0.9);
+  opacity:.85;
+}
+
 /* ===== FORM ===== */
 label{
   display:block;
   font-weight:800;
   color:#93c5fd;
-  margin-top:14px;
+  margin-top:12px;
 }
 
 /* ✅ CZCIONKA W POLACH MA BYĆ CZARNA */
@@ -123,12 +170,27 @@ input,select,textarea{
 
 textarea{ min-height:120px; resize:vertical; }
 
+/* ===== SUMA ===== */
 .sum{
   text-align:right;
   font-size:22px;
   font-weight:900;
-  margin:14px 0 22px;
+  margin:12px 0 0;
 }
+
+/* ===== ACTIONS ===== */
+.actions{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:12px;
+}
+@media(min-width: 780px){
+  .actions{
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.actions .btn{ margin:0; } /* w gridzie nie potrzebujemy margin-bottom */
 
 /* ===== BUTTONS (spójne z projektem, bez zmiany onclick) ===== */
 .btn{
@@ -138,7 +200,6 @@ textarea{ min-height:120px; resize:vertical; }
   font-weight:900;
   border-radius:999px;
   cursor:pointer;
-  margin-bottom:12px;
 
   border:2px solid var(--accent);
   background:transparent;
@@ -171,6 +232,15 @@ textarea{ min-height:120px; resize:vertical; }
   color:#fff;
 }
 
+/* ===== SUBTLE HELP TEXT ===== */
+.help{
+  margin-top:10px;
+  font-size:12px;
+  color: rgba(229,231,235,0.78);
+  line-height:1.35;
+}
+
+/* ===== FOOT NOTE ===== */
 .back{
   margin-top:20px;
   color:#60a5fa;
@@ -196,48 +266,79 @@ textarea{ min-height:120px; resize:vertical; }
 
     <h1 class="page-title">Edycja zlecenia</h1>
 
-    <label>Status</label>
-    <select id="status">
-      <option>oczekujące</option>
-      <option>nowe</option>
-      <option>w trakcie</option>
-      <option>gotowe</option>
-      <option>wydano</option>
-    </select>
+    <!-- ===== NOWY UKŁAD: Panel / Historia (bez zmiany ID pól) ===== -->
+    <div class="grid">
 
-    <label>Klient</label>
-    <input id="customer">
+      <!-- LEWA: Dane zlecenia -->
+      <div class="card">
+        <div class="card-title">
+          <h2><i class="fa-solid fa-clipboard-list"></i> Zlecenie</h2>
+          <span class="badge">Dane klienta + status</span>
+        </div>
 
-    <label>Telefon</label>
-    <input id="phone">
+        <label>Status</label>
+        <select id="status">
+          <option>oczekujące</option>
+          <option>nowe</option>
+          <option>w trakcie</option>
+          <option>gotowe</option>
+          <option>wydano</option>
+        </select>
 
-    <label>Rower</label>
-    <input id="bike">
+        <label>Klient</label>
+        <input id="customer">
 
-    <label>Opis zgłoszenia klienta</label>
-    <textarea id="note"></textarea>
+        <label>Telefon</label>
+        <input id="phone">
 
-    <label>Koszt (roboczy – do wydania roweru)</label>
-    <textarea id="costText" placeholder="np. detka 25&#10;regulacja przerzutek 40"></textarea>
+        <label>Rower</label>
+        <input id="bike">
 
-    <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
+        <label>Opis zgłoszenia klienta</label>
+        <textarea id="note"></textarea>
 
-    <button class="btn save" onclick="save()">
-      <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
-    </button>
+        <div class="help">
+          Tip: „oczekujące” = online od klienta, „nowe” = przyjęte w serwisie.
+        </div>
+      </div>
 
-    <button class="btn pdf-in" onclick="printIn()">
-      <i class="fa-solid fa-print"></i> Drukuj kartę przyjęcia
-    </button>
+      <!-- PRAWA: Kosztorys / robocizna -->
+      <div class="card">
+        <div class="card-title">
+          <h2><i class="fa-solid fa-receipt"></i> Kosztorys</h2>
+          <span class="badge">Lista pozycji + suma</span>
+        </div>
 
-    <button class="btn pdf-out" onclick="printOut()">
-      <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
-    </button>
+        <label>Koszt (roboczy – do wydania roweru)</label>
+        <textarea id="costText" placeholder="np. detka 25&#10;regulacja przerzutek 40"></textarea>
 
-    <!-- ✅ NOWE: kartka do książeczki serwisowej -->
-    <button class="btn pdf-book" onclick="printBooklet()">
-      <i class="fa-solid fa-book"></i> Książeczka serwisowa
-    </button>
+        <div class="sum">SUMA: <span id="sum">0.00</span> zł</div>
+
+        <div class="help">
+          Wpisuj pozycje w osobnych liniach. Suma wylicza się automatycznie z liczb w liniach.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- AKCJE (kolejność przycisków zostaje jak w Twojej wersji) -->
+    <div class="actions" style="margin-top:16px;">
+      <button class="btn save" onclick="save()">
+        <i class="fa-solid fa-floppy-disk"></i> Zapisz zmiany
+      </button>
+
+      <button class="btn pdf-in" onclick="printIn()">
+        <i class="fa-solid fa-print"></i> Drukuj kartę przyjęcia
+      </button>
+
+      <button class="btn pdf-out" onclick="printOut()">
+        <i class="fa-solid fa-print"></i> Drukuj wydanie roweru
+      </button>
+
+      <button class="btn pdf-book" onclick="printBooklet()">
+        <i class="fa-solid fa-book"></i> Książeczka serwisowa
+      </button>
+    </div>
 
   </div>
 </div>
@@ -414,7 +515,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   function printIn(){
     const win = window.open("","_blank");
 
-    // ✅ QR ma prowadzić do statusu, a nie być “gołym UUID”
     const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
     const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
 
@@ -676,7 +776,6 @@ ${rows}
     win.document.close();
   }
 
-  // ✅ NOWE: “kartka do książeczki serwisowej” (A5) — BEZ CEN
   function printBooklet(){
     const codeForQr = (publicCode && publicCode.trim()) ? publicCode.trim() : id;
     const qrUrl = `https://www.jlprobikeserwis.bike/order-status.html?code=${encodeURIComponent(codeForQr)}`;
