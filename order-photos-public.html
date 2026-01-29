@@ -3,159 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <title>Galeria zdjęć – JL Pro Bike Serwis</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
     body {
-      margin: 0;
-      background: #020617;
-      color: #e5e7eb;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    }
-
-    .wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px;
+      background:#0f1220;
+      color:#fff;
+      font-family:system-ui, sans-serif;
+      margin:0;
+      padding:20px;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: 22px;
-    }
-
-    .sub {
-      opacity: 0.8;
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    .error {
-      background: #7f1d1d;
-      padding: 16px;
-      border-radius: 12px;
-      margin-top: 20px;
-    }
-
-    .empty {
-      background: #1e293b;
-      padding: 16px;
-      border-radius: 12px;
-      margin-top: 20px;
-      opacity: 0.9;
+      text-align:center;
+      margin-bottom:20px;
     }
 
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 12px;
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+      gap:12px;
     }
 
-    .photo {
-      position: relative;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #0f172a;
+    .grid img {
+      width:100%;
+      border-radius:10px;
+      cursor:pointer;
+      transition:.2s;
     }
 
-    .photo img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      display: block;
-      cursor: pointer;
-      transition: transform 0.2s ease;
+    .grid img:hover {
+      transform:scale(1.05);
     }
 
-    .photo img:hover {
-      transform: scale(1.04);
-    }
-
-    .footer {
-      margin-top: 30px;
-      font-size: 12px;
-      opacity: 0.6;
-      text-align: center;
+    .error {
+      background:#b91c1c;
+      padding:16px;
+      border-radius:10px;
+      text-align:center;
+      max-width:400px;
+      margin:40px auto;
     }
   </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <h1>Galeria zdjęć</h1>
-    <div class="sub">Podgląd dla klienta – tylko do odczytu</div>
 
-    <div id="content"></div>
-
-    <div class="footer">
-      JL Pro Bike Serwis
-    </div>
-  </div>
+<h1>Galeria zdjęć</h1>
+<div id="app"></div>
 
 <script>
-(async function () {
+(async () => {
   const params = new URLSearchParams(window.location.search);
-
-  // ✅ obsługujemy OBA przypadki
   const code = params.get("code");
-  const id   = params.get("id");
+  const app = document.getElementById("app");
 
-  if (!code && !id) {
-    document.getElementById("content").innerHTML = `
-      <div class="error">
-        Brak id lub kodu w linku.
-      </div>
-    `;
+  if (!code) {
+    app.innerHTML = `<div class="error">Brak kodu w linku.</div>`;
     return;
   }
 
-  const key = code ?? id;
-
   try {
-    const res = await fetch(`/api/order-photos?code=${encodeURIComponent(key)}`);
-    const json = await res.json();
+    const res = await fetch(`/api/order-photos?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(json?.error || "Błąd pobierania zdjęć");
-    }
-
-    if (!json.photos || json.photos.length === 0) {
-      document.getElementById("content").innerHTML = `
-        <div class="empty">
-          Brak zdjęć dla tego zlecenia.
-        </div>
-      `;
+    if (!data.photos || data.photos.length === 0) {
+      app.innerHTML = `<div class="error">Brak zdjęć.</div>`;
       return;
     }
 
     const grid = document.createElement("div");
     grid.className = "grid";
 
-    json.photos.forEach(p => {
-      const div = document.createElement("div");
-      div.className = "photo";
-
+    data.photos.forEach(photo => {
       const img = document.createElement("img");
-      img.src = p.url;
-      img.loading = "lazy";
-      img.alt = "Zdjęcie serwisowe";
-
-      img.onclick = () => {
-        window.open(p.url, "_blank");
-      };
-
-      div.appendChild(img);
-      grid.appendChild(div);
+      img.src = photo.url;
+      img.onclick = () => window.open(photo.url, "_blank");
+      grid.appendChild(img);
     });
 
-    document.getElementById("content").appendChild(grid);
+    app.appendChild(grid);
 
   } catch (err) {
-    document.getElementById("content").innerHTML = `
-      <div class="error">
-        ${err.message}
-      </div>
-    `;
+    app.innerHTML = `<div class="error">Błąd ładowania galerii.</div>`;
   }
 })();
 </script>
