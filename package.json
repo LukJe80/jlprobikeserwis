@@ -2,6 +2,7 @@
   "name": "jlprobikeserwis",
   "private": true,
   "dependencies": {
-    "nodemailer": "^6.9.15"
+    "nodemailer": "^6.9.15",
+    "@supabase/supabase-js": "^2.39.7"
   }
 }
