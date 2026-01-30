@@ -191,6 +191,16 @@ pre.note{
   color:#fff;
 }
 
+.btn.gray{
+  border-color: rgba(255,255,255,0.18);
+  color: rgba(229,231,235,0.92);
+}
+.btn.gray:hover{
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(37,99,235,0.55);
+  color:#fff;
+}
+
 .badge{
   display:inline-flex;
   align-items:center;
@@ -222,6 +232,87 @@ pre.note{
   font-size:12px;
   color: var(--muted);
   line-height:1.35;
+}
+
+/* ===== INTERNAL NOTES ===== */
+.noteBox{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+textarea.noteInput{
+  width:100%;
+  min-height:110px;
+  resize:vertical;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.92);
+  color:#000;
+  font-size:14px;
+  padding:12px;
+}
+
+.noteList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:4px;
+}
+
+.noteItem{
+  border:1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  border-radius:12px;
+  padding:12px;
+}
+
+.noteMeta{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  margin-bottom:8px;
+  color: rgba(229,231,235,0.85);
+  font-size:12px;
+  font-weight:800;
+}
+
+.noteText{
+  white-space:pre-wrap;
+  line-height:1.45;
+  font-size:13px;
+  color: rgba(229,231,235,0.95);
+}
+
+.noteActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.iconBtn{
+  border:1px solid rgba(255,255,255,0.16);
+  background: rgba(0,0,0,0.12);
+  color: rgba(229,231,235,0.92);
+  border-radius:999px;
+  padding:8px 10px;
+  cursor:pointer;
+  font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.iconBtn:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.12);
+}
+.iconBtn.danger{
+  border-color: rgba(239,68,68,0.35);
+}
+.iconBtn.danger:hover{
+  border-color: rgba(239,68,68,0.9);
+  background: rgba(239,68,68,0.12);
 }
 
 /* ===== GALLERY ===== */
@@ -333,6 +424,27 @@ pre.note{
         </div>
       </div>
 
+      <!-- ✅ NOTATKI WEWNĘTRZNE (TYLKO TU, TYLKO DLA SERWISANTA) -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <h3>Notatki serwisowe (tylko dla Ciebie) <span class="badge" id="notesCount"><i class="fa-solid fa-note-sticky"></i> 0</span></h3>
+
+        <div class="noteBox">
+          <textarea class="noteInput" id="newNote" placeholder="np. trudny klient, nie dzwonić przed 18, następnym razem sprawdzić suport, uwaga na pękniętą linkę..."></textarea>
+
+          <div class="btnRow">
+            <button class="btn" onclick="addInternalNote()">
+              <i class="fa-solid fa-plus"></i> Dodaj notatkę
+            </button>
+            <span class="badgeInfo">
+              <i class="fa-solid fa-lock"></i> Niewidoczne dla klienta
+            </span>
+          </div>
+
+          <div class="noteList" id="noteList"></div>
+          <div class="smallNote" id="notesHelp">Notatki zostają po archiwizacji i po wznowieniu. Możesz usuwać pojedyncze wpisy.</div>
+        </div>
+      </div>
+
       <div class="card" style="grid-column: 1 / -1;">
         <h3>Zdjęcia</h3>
         <div class="hint" id="photoHint">Ładowanie zdjęć…</div>
@@ -345,6 +457,7 @@ pre.note{
 
 <script>
 const BUCKET = "order-photos";
+const NOTES_TABLE = "order_internal_notes";
 
 const qs = new URLSearchParams(location.search);
 const orderId = qs.get("id");
@@ -360,6 +473,11 @@ const bTotal = document.getElementById("bTotal");
 const galleryEl = document.getElementById("gallery");
 const photoHint = document.getElementById("photoHint");
 const msgEl = document.getElementById("msg");
+
+// notes ui
+const noteListEl = document.getElementById("noteList");
+const notesCountEl = document.getElementById("notesCount");
+const newNoteEl = document.getElementById("newNote");
 
 let currentPhone = "";
 let reminderMonths = null;
@@ -396,6 +514,17 @@ function fmtDatePL(iso){
     const d = new Date(iso);
     if(Number.isNaN(d.getTime())) return "—";
     return d.toLocaleString("pl-PL");
+  }catch{
+    return "—";
+  }
+}
+
+function fmtDatePLShort(iso){
+  if(!iso) return "—";
+  try{
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString("pl-PL", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
   }catch{
     return "—";
   }
@@ -439,13 +568,11 @@ async function requireLogin(){
   try{
     const { data } = await supabaseClient.auth.getSession();
     if(!data?.session){
-      // jeśli masz inny plik logowania, podmień nazwę
       location.href = "login.html";
       return false;
     }
     return true;
   }catch(e){
-    // nie blokuj “na siłę”, ale pokażesz ewentualne błędy w msg
     return true;
   }
 }
@@ -473,7 +600,6 @@ async function sendReminderSms(){
   try{
     await navigator.clipboard.writeText(text);
   }catch(e){
-    // fallback
     const ta = document.createElement("textarea");
     ta.value = text;
     document.body.appendChild(ta);
@@ -494,6 +620,101 @@ function publicUrl(path){
   }
 }
 
+/* =======================
+   NOTATKI WEWNĘTRZNE
+   (widoczne tylko w order-history)
+======================= */
+
+function renderNotes(rows){
+  const count = rows ? rows.length : 0;
+  notesCountEl.innerHTML = `<i class="fa-solid fa-note-sticky"></i> ${count}`;
+
+  if(!rows || rows.length === 0){
+    noteListEl.innerHTML = `<div class="hint" style="margin:0;">Brak notatek.</div>`;
+    return;
+  }
+
+  noteListEl.innerHTML = rows.map(r => {
+    return `
+      <div class="noteItem">
+        <div class="noteMeta">
+          <span><i class="fa-regular fa-clock"></i> ${esc(fmtDatePLShort(r.created_at))}</span>
+          <div class="noteActions">
+            <button class="iconBtn danger" onclick="deleteInternalNote('${esc(r.id)}')" title="Usuń notatkę">
+              <i class="fa-solid fa-trash"></i> Usuń
+            </button>
+          </div>
+        </div>
+        <div class="noteText">${esc(r.note)}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function loadInternalNotes(){
+  try{
+    const { data, error } = await supabaseClient
+      .from(NOTES_TABLE)
+      .select("id, note, created_at")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending:false });
+
+    if(error) throw error;
+    renderNotes(data || []);
+  }catch(e){
+    console.warn("loadInternalNotes error:", e);
+    noteListEl.innerHTML = `<div class="hint" style="margin:0;">Błąd pobierania notatek: ${esc(e?.message || e)}</div>`;
+  }
+}
+
+async function addInternalNote(){
+  const text = (newNoteEl.value || "").trim();
+  if(text.length < 2){
+    alert("Wpisz notatkę (min. 2 znaki).");
+    return;
+  }
+
+  try{
+    const { error } = await supabaseClient
+      .from(NOTES_TABLE)
+      .insert({ order_id: orderId, note: text });
+
+    if(error) throw error;
+
+    newNoteEl.value = "";
+    await loadInternalNotes();
+  }catch(e){
+    console.warn("addInternalNote error:", e);
+    alert("Błąd zapisu notatki: " + (e?.message || e));
+  }
+}
+
+async function deleteInternalNote(noteId){
+  if(!noteId) return;
+  const ok = confirm("Usunąć tę notatkę na stałe?");
+  if(!ok) return;
+
+  try{
+    const { error } = await supabaseClient
+      .from(NOTES_TABLE)
+      .delete()
+      .eq("id", noteId);
+
+    if(error) throw error;
+    await loadInternalNotes();
+  }catch(e){
+    console.warn("deleteInternalNote error:", e);
+    alert("Błąd usuwania notatki: " + (e?.message || e));
+  }
+}
+
+// expose for inline onclick
+window.addInternalNote = addInternalNote;
+window.deleteInternalNote = deleteInternalNote;
+
+/* =======================
+   ZDJĘCIA
+======================= */
 async function loadPhotos(){
   photoHint.textContent = "Pobieranie zdjęć…";
   galleryEl.innerHTML = "";
@@ -540,6 +761,9 @@ async function loadPhotos(){
   }
 }
 
+/* =======================
+   ZLECENIE
+======================= */
 async function loadOrder(){
   if(!orderId){
     subtitleEl.textContent = "Błąd: brak parametru ?id=...";
@@ -581,7 +805,6 @@ async function loadOrder(){
 
   subtitleEl.textContent = "Status: " + (data.status ?? "—");
 
-  // Dane (KV)
   const rows = [
     ["Klient", data.customer_name ?? "—"],
     ["Telefon", data.phone ?? "—"],
@@ -595,16 +818,13 @@ async function loadOrder(){
     <div class="v">${esc(v)}</div>
   `).join("");
 
-  // Opis
   descEl.textContent = (data.description && String(data.description).trim()) ? data.description : "—";
 
-  // Kosztorys
   costsTextEl.textContent = (data.costs_text && String(data.costs_text).trim()) ? data.costs_text : "—";
   bLabor.innerHTML = `<i class="fa-solid fa-person-digging"></i> Robocizna: ${esc(money(data.labor_cost))}`;
   bParts.innerHTML = `<i class="fa-solid fa-gear"></i> Części: ${esc(money(data.parts_cost))}`;
   bTotal.innerHTML = `<i class="fa-solid fa-sack-dollar"></i> Suma: ${esc(money(data.total_cost))}`;
 
-  // SMS + okno przypomnienia
   currentPhone = data.phone || "";
   document.getElementById("smsBtn").disabled = !currentPhone;
 
@@ -612,6 +832,8 @@ async function loadOrder(){
   baseDateIso = data.archived_at || data.completed_at || null;
   updateReminderUi();
 
+  // ✅ najpierw notatki (lekko), potem zdjęcia
+  await loadInternalNotes();
   await loadPhotos();
 }
 
@@ -620,8 +842,3 @@ loadOrder();
 
 </body>
 </html>
-
-
-
-
-
