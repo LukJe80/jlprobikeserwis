@@ -20,6 +20,8 @@
   --muted: rgba(229,231,235,0.7);
   --card: rgba(0,0,0,0.20);
   --danger:#ef4444;
+  --ok:#22c55e;
+  --warn:#f59e0b;
 }
 
 *{ box-sizing:border-box; }
@@ -62,8 +64,7 @@ header h1{
   gap:14px;
 }
 
-.toplink,
-.smsBtn{
+.toplink{
   display:flex;
   align-items:center;
   gap:8px;
@@ -76,12 +77,7 @@ header h1{
   cursor:pointer;
   opacity:.92;
 }
-.toplink:hover,
-.smsBtn:hover{ color: var(--accent); }
-
-.smsBtn{
-  color: var(--danger);
-}
+.toplink:hover{ color: var(--accent); }
 
 /* ===== MAIN ===== */
 main{
@@ -156,12 +152,68 @@ pre.note{
   border:1px solid rgba(255,255,255,0.12);
   border-radius:14px;
   overflow:hidden;
+  background: rgba(255,255,255,0.02);
 }
 
 .tile img{
   width:100%;
   height:160px;
   object-fit:cover;
+}
+
+.btnRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top:10px;
+}
+
+.btn{
+  padding:12px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  border:2px solid var(--accent);
+  background:transparent;
+  color:var(--accent);
+  font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+
+.btn:hover{
+  background:var(--accent);
+  color:#fff;
+}
+
+.btn.danger{
+  border-color: rgba(239,68,68,0.9);
+  color: rgba(239,68,68,0.95);
+}
+.btn.danger:hover{
+  background: rgba(239,68,68,0.95);
+  color:#fff;
+}
+
+.badgeInfo{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.12);
+  color: rgba(229,231,235,0.9);
+  font-size:12px;
+  font-weight:800;
+  background: rgba(255,255,255,0.03);
+}
+
+.smallNote{
+  margin-top:10px;
+  font-size:12px;
+  color: var(--muted);
+  line-height:1.35;
 }
 
 @media(max-width:900px){
@@ -175,9 +227,6 @@ pre.note{
 <header>
   <h1><i class="fa-solid fa-receipt"></i> Historia zlecenia</h1>
   <div class="header-right">
-    <button class="smsBtn" id="smsBtn" onclick="sendReminderSms()" style="display:none;">
-      <i class="fa-solid fa-bell"></i> SMS przypomnienie
-    </button>
     <a class="toplink" href="orders-completed.html">
       <i class="fa-solid fa-arrow-left"></i> Powrót
     </a>
@@ -200,6 +249,25 @@ pre.note{
         <pre class="note" id="desc">—</pre>
       </div>
 
+      <!-- ✅ SMS PRZYPOMNIENIE (kafelek jak w edit-order: przycisk w treści, nie w headerze) -->
+      <div class="card" style="grid-column:1/-1;">
+        <h3>Przypomnienie serwisowe</h3>
+
+        <div class="btnRow">
+          <button class="btn danger" id="smsBtn" onclick="sendReminderSms()" disabled>
+            <i class="fa-solid fa-bell"></i> SMS przypomnienie
+          </button>
+
+          <span class="badgeInfo" id="reminderRange">
+            <i class="fa-regular fa-calendar"></i> Brak danych przypomnienia
+          </span>
+        </div>
+
+        <div class="smallNote" id="smsHelp">
+          Kliknięcie kopiuje treść do schowka i otwiera SMS z numerem klienta (jeśli jest).
+        </div>
+      </div>
+
       <div class="card" style="grid-column:1/-1;">
         <h3>Zdjęcia</h3>
         <div class="gallery" id="gallery"></div>
@@ -213,45 +281,119 @@ const qs = new URLSearchParams(location.search);
 const orderId = qs.get("id");
 
 let currentPhone = "";
+let reminderMonths = null;
+let baseDateIso = null;
+
+// ====== USTAWIENIA OKNA PRZYPOMNIENIA (tu możesz zmienić) ======
+const REMINDER_WINDOW_DAYS_BEFORE = 30;  // ✅ np. 30 dni przed
+const REMINDER_WINDOW_DAYS_AFTER  = 30;  // ✅ np. 30 dni po
+
+function fmtDatePL(iso){
+  if(!iso) return "—";
+  try{
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("pl-PL");
+  }catch{
+    return "—";
+  }
+}
+
+function addDays(date, days){
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function addMonths(date, months){
+  const d = new Date(date);
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + months);
+
+  // korekta np. 31 -> krótszy miesiąc
+  if(d.getDate() < day){
+    d.setDate(0);
+  }
+  return d;
+}
+
+function updateReminderUi(){
+  const rangeEl = document.getElementById("reminderRange");
+
+  if(!baseDateIso || !Number.isFinite(reminderMonths)){
+    rangeEl.innerHTML = `<i class="fa-regular fa-calendar"></i> Brak danych przypomnienia`;
+    return;
+  }
+
+  const base = new Date(baseDateIso);
+  const target = addMonths(base, reminderMonths);
+
+  const from = addDays(target, -REMINDER_WINDOW_DAYS_BEFORE);
+  const to   = addDays(target,  REMINDER_WINDOW_DAYS_AFTER);
+
+  rangeEl.innerHTML = `<i class="fa-regular fa-calendar"></i> Serwis: <b>${from.toLocaleDateString("pl-PL")}</b> – <b>${to.toLocaleDateString("pl-PL")}</b>`;
+}
 
 async function loadOrder(){
   const { data, error } = await supabaseClient
     .from("orders")
-    .select("customer_name, phone, bike_type, description, completed_at")
+    .select("customer_name, phone, bike_type, description, archived_at, completed_at, reminder_months")
     .eq("id", orderId)
     .single();
 
-  if(error) return;
+  if(error){
+    document.getElementById("subtitle").textContent = "Błąd ładowania: " + error.message;
+    return;
+  }
 
-  document.getElementById("title").textContent = "Zlecenie";
-  document.getElementById("subtitle").textContent = "Zakończone";
+  document.getElementById("title").textContent = "Zlecenie (archiwum)";
+  document.getElementById("subtitle").textContent = "Szczegóły zlecenia";
 
   const kv = document.getElementById("kv");
   kv.innerHTML = `
     <div class="k">Klient</div><div class="v">${data.customer_name ?? "—"}</div>
     <div class="k">Telefon</div><div class="v">${data.phone ?? "—"}</div>
     <div class="k">Rower</div><div class="v">${data.bike_type ?? "—"}</div>
+    <div class="k">Zakończono</div><div class="v">${fmtDatePL(data.archived_at || data.completed_at)}</div>
   `;
 
   document.getElementById("desc").textContent = data.description || "—";
 
-  if(data.phone){
-    currentPhone = data.phone;
-    document.getElementById("smsBtn").style.display = "flex";
-  }
+  // SMS
+  currentPhone = data.phone || "";
+  const smsBtn = document.getElementById("smsBtn");
+  smsBtn.disabled = !currentPhone;
+
+  // Przypomnienie: baza daty + miesiące
+  reminderMonths = (typeof data.reminder_months === "number") ? data.reminder_months : null;
+  baseDateIso = data.archived_at || data.completed_at || null;
+  updateReminderUi();
+
+  // (opcjonalnie) tu ładujesz zdjęcia, jeśli masz w tym pliku — zostawiamy jak było u Ciebie
 }
 
-function sendReminderSms(){
-  const text =
-`JL Pro Bike Serwis
+function buildReminderSmsText(){
+  // tekst dokładnie jak podałeś
+  return `JL Pro Bike Serwis
 
 przypominamy o serwisie okresowym roweru. Umów dla siebie wygodny termin:
 
 jlprobikeserwis.bike`;
+}
 
+function sendReminderSms(){
+  if(!currentPhone){
+    alert("Brak numeru telefonu w zleceniu.");
+    return;
+  }
+
+  const text = buildReminderSmsText();
+
+  // kopiuj do schowka (na wszelki wypadek)
   navigator.clipboard.writeText(text).catch(()=>{});
 
-  const phone = currentPhone.replace(/\s+/g,"");
+  // otwórz aplikację SMS
+  const phone = String(currentPhone).replace(/\s+/g,"");
   location.href = `sms:${phone}?body=${encodeURIComponent(text)}`;
 }
 
