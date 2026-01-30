@@ -495,10 +495,10 @@ async function loadCompletedOrders(){
           <td>${esc(o.bike || "")}</td>
           <td class="desc">${esc(o.issue_description || o.note || "")}</td>
           <td class="actions">
-            <button class="iconBtn info" title="Szczegóły" onclick='openDetails(${JSON.stringify({id:o.id})})'>
+            <button class="actionBtn info" title="Szczegóły" onclick='openDetails(${JSON.stringify({id:o.id})})'>
               <i class="fa-solid fa-circle-info"></i>
             </button>
-            <button class="iconBtn resume" title="Wznów" onclick='resumeOrder(${JSON.stringify({id:o.id, customer_name:o.customer_name||"", phone:o.phone||"", bike:o.bike||"", issue_description:o.issue_description||""})})'>
+            <button class="actionBtn resume" title="Wznów" onclick='resumeOrder(${JSON.stringify({id:o.id, customer_name:o.customer_name||"", phone:o.phone||"", bike:o.bike||"", issue_description:o.issue_description||""})})'>
               <i class="fa-solid fa-rotate-left"></i>
             </button>
           </td>
