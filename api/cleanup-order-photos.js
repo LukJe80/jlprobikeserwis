@@ -1,177 +1,145 @@
-// api/cleanup-order-photos.js
-// Usuwa zdjęcia ze Storage + rekordy z order_photos dla zleceń zarchiwizowanych > 12 miesięcy.
+// /api/cleanup-order-photos.js
+// Wariant B: usuwa zdjęcia dla ZARCHIWIZOWANYCH zleceń,
+// gdy archived_at < (teraz - 12 miesięcy).
+//
 // Wymaga ENV na Vercel:
 // - SUPABASE_URL
 // - SUPABASE_SERVICE_ROLE_KEY
-// Opcjonalnie:
-// - CLEANUP_SECRET  (żeby nikt z zewnątrz nie odpalał endpointu)
+// - CRON_SECRET  (dowolny sekret, żeby endpointu nie odpalał nikt obcy)
+//
+// Bucket: order-photos
+// Tabela: order_photos (kolumny: id, order_id, path, created_at)
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const CLEANUP_SECRET = process.env.CLEANUP_SECRET || "";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const cronSecret = process.env.CRON_SECRET;
+
+const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  auth: { persistSession: false },
+});
 
 const BUCKET = "order-photos";
 const MONTHS = 12;
+const ORDERS_BATCH = 200; // ile zleceń na raz
+const PHOTOS_BATCH = 500; // ile zdjęć na raz
 
-function json(res, code, data) {
-  res.statusCode = code;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(data));
-}
-
-async function sb(path, { method = "GET", query = "", body = null } = {}) {
-  const url = `${SUPABASE_URL}${path}${query ? `?${query}` : ""}`;
-  const headers = {
-    apikey: SERVICE_KEY,
-    Authorization: `Bearer ${SERVICE_KEY}`,
-    "Content-Type": "application/json",
-  };
-
-  const r = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
-  const text = await r.text();
-  let data;
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-
-  if (!r.ok) {
-    const err = new Error(typeof data === "string" ? data : (data?.message || "Supabase error"));
-    err.status = r.status;
-    err.data = data;
-    throw err;
-  }
-  return data;
+function monthsAgoIso(m) {
+  const d = new Date();
+  d.setMonth(d.getMonth() - m);
+  return d.toISOString();
 }
 
 export default async function handler(req, res) {
   try {
-    // Zabezpieczenie (opcjonalne, ale bardzo polecam)
-    if (CLEANUP_SECRET) {
-      const got = (req.headers["x-cleanup-secret"] || req.query?.secret || "").toString();
-      if (got !== CLEANUP_SECRET) {
-        return json(res, 401, { error: "unauthorized" });
-      }
+    // --- auth/secret ---
+    const token =
+      req.headers["x-cron-secret"] ||
+      req.headers["x-vercel-cron-secret"] ||
+      req.query.secret;
+
+    if (!cronSecret || String(token || "") !== String(cronSecret)) {
+      return res.status(401).json({ error: "unauthorized" });
     }
 
-    if (!SUPABASE_URL || !SERVICE_KEY) {
-      return json(res, 500, { error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY" });
+    if (!supabaseUrl || !serviceRoleKey) {
+      return res.status(500).json({ error: "missing_env" });
     }
 
-    // 1) znajdź order_id dla zleceń zarchiwizowanych > 12 miesięcy
-    // archived_at < now() - interval '12 months'
-    // Supabase REST nie ma "interval", więc liczymy datę w JS:
-    const cutoff = new Date();
-    cutoff.setMonth(cutoff.getMonth() - MONTHS);
-    const cutoffIso = cutoff.toISOString();
+    const cutoff = monthsAgoIso(MONTHS);
 
-    // pobierz stare order_id
-    const oldOrders = await sb(
-      "/rest/v1/orders",
-      {
-        query: [
-          "select=id,archived_at",
-          "archived_at=lt." + encodeURIComponent(cutoffIso),
-          "archived_at=is.not.null",
-          "limit=10000",
-        ].join("&"),
-      }
-    );
+    // 1) Pobierz zarchiwizowane zlecenia starsze niż 12 miesięcy
+    const { data: oldOrders, error: ordErr } = await supabase
+      .from("orders")
+      .select("id, archived_at")
+      .not("archived_at", "is", null)
+      .lt("archived_at", cutoff)
+      .order("archived_at", { ascending: true })
+      .limit(ORDERS_BATCH);
 
-    const orderIds = (oldOrders || []).map(o => o.id).filter(Boolean);
+    if (ordErr) throw ordErr;
 
-    if (orderIds.length === 0) {
-      return json(res, 200, { ok: true, message: "nothing to cleanup", cutoff: cutoffIso, deletedFiles: 0, deletedRows: 0 });
+    if (!oldOrders || oldOrders.length === 0) {
+      return res.status(200).json({
+        ok: true,
+        message: "Brak zarchiwizowanych zleceń starszych niż 12 miesięcy.",
+        cutoff,
+        deleted_files: 0,
+        deleted_rows: 0,
+      });
     }
 
-    // 2) pobierz listę zdjęć z order_photos dla tych orderów
-    // robimy w paczkach, żeby URL nie był za długi
-    let allRows = [];
-    const chunkSize = 200; // bezpiecznie
-    for (let i = 0; i < orderIds.length; i += chunkSize) {
-      const chunk = orderIds.slice(i, i + chunkSize);
+    const orderIds = oldOrders.map((o) => o.id).filter(Boolean);
 
-      // query: order_id=in.(...)
-      const inList = chunk.map(id => `"${id}"`).join(",");
-      const rows = await sb(
-        "/rest/v1/order_photos",
-        {
-          query: [
-            "select=id,order_id,path",
-            `order_id=in.(${encodeURIComponent(inList)})`,
-            "limit=10000",
-          ].join("&"),
-        }
-      );
-      allRows = allRows.concat(rows || []);
+    // 2) Pobierz zdjęcia dla tych order_id
+    // Uwaga: Supabase .in() ma limit długości — dlatego małe batch'e.
+    let photos = [];
+    for (let i = 0; i < orderIds.length; i += 50) {
+      const chunk = orderIds.slice(i, i + 50);
+      const { data: p, error: pErr } = await supabase
+        .from("order_photos")
+        .select("id, order_id, path")
+        .in("order_id", chunk)
+        .limit(PHOTOS_BATCH);
+
+      if (pErr) throw pErr;
+      if (p && p.length) photos = photos.concat(p);
     }
 
-    if (allRows.length === 0) {
-      return json(res, 200, { ok: true, message: "no photos for old orders", cutoff: cutoffIso, deletedFiles: 0, deletedRows: 0 });
+    if (photos.length === 0) {
+      return res.status(200).json({
+        ok: true,
+        message:
+          "Zlecenia spełniają warunek, ale brak wpisów w order_photos dla tych order_id.",
+        cutoff,
+        orders_matched: orderIds.length,
+        deleted_files: 0,
+        deleted_rows: 0,
+      });
     }
 
-    // 3) usuń pliki ze Storage (Supabase Storage API)
-    const paths = allRows.map(r => r.path).filter(Boolean);
-
-    // Storage usuwa w batchu (lista ścieżek)
-    // endpoint: POST /storage/v1/object/{bucket}  body: { prefixes: [...] }
-    // UWAGA: w nowszych wersjach bywa: POST /storage/v1/object/{bucket}/remove
-    // Najpewniejszy jest /remove:
-    const removeChunkSize = 200;
+    // 3) Usuń pliki ze Storage (w paczkach)
+    const paths = photos.map((r) => r.path).filter(Boolean);
     let deletedFiles = 0;
 
-    for (let i = 0; i < paths.length; i += removeChunkSize) {
-      const pchunk = paths.slice(i, i + removeChunkSize);
-
-      const r = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/remove`, {
-        method: "POST",
-        headers: {
-          apikey: SERVICE_KEY,
-          Authorization: `Bearer ${SERVICE_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prefixes: pchunk }),
-      });
-
-      const t = await r.text();
-      if (!r.ok) {
-        throw new Error(`Storage remove failed: ${t}`);
-      }
-
-      deletedFiles += pchunk.length;
+    for (let i = 0; i < paths.length; i += 200) {
+      const chunk = paths.slice(i, i + 200);
+      const { error: rmErr } = await supabase.storage.from(BUCKET).remove(chunk);
+      // Jeśli pliku nie ma, Supabase potrafi zwrócić błąd — nie zatrzymujemy całego procesu.
+      if (rmErr) console.warn("Storage remove warning:", rmErr);
+      deletedFiles += chunk.length;
     }
 
-    // 4) usuń rekordy z order_photos dla tych orderów
-    // kasujemy po order_id in (...)
+    // 4) Usuń rekordy z order_photos (w paczkach)
+    const ids = photos.map((r) => r.id).filter(Boolean);
     let deletedRows = 0;
-    for (let i = 0; i < orderIds.length; i += chunkSize) {
-      const chunk = orderIds.slice(i, i + chunkSize);
-      const inList = chunk.map(id => `"${id}"`).join(",");
 
-      // Prefer: DELETE ...?order_id=in.(...)
-      await sb(
-        "/rest/v1/order_photos",
-        {
-          method: "DELETE",
-          query: `order_id=in.(${encodeURIComponent(inList)})`,
-        }
-      );
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200);
+      const { error: delErr } = await supabase
+        .from("order_photos")
+        .delete()
+        .in("id", chunk);
 
-      // liczymy “w przybliżeniu” — dokładna liczba = rows w allRows
-      // (jeśli chcesz 1:1, możemy policzyć po chunkach, ale to nie jest konieczne)
+      if (delErr) throw delErr;
+      deletedRows += chunk.length;
     }
-    deletedRows = allRows.length;
 
-    return json(res, 200, {
+    return res.status(200).json({
       ok: true,
-      cutoff: cutoffIso,
-      oldOrders: orderIds.length,
-      deletedFiles,
-      deletedRows,
+      cutoff,
+      orders_matched: orderIds.length,
+      photos_matched: photos.length,
+      deleted_files: deletedFiles,
+      deleted_rows: deletedRows,
+      note:
+        oldOrders.length === ORDERS_BATCH
+          ? "Zleceń było dużo — endpoint czyści partiami. Cron dojedzie resztę kolejnego dnia."
+          : "Wyczyszczono wszystko z tej partii.",
     });
-
   } catch (e) {
-    return json(res, 500, {
-      error: e?.message || String(e),
-      details: e?.data || null,
-      status: e?.status || null,
-    });
+    console.error("cleanup-order-photos error:", e);
+    return res.status(500).json({ error: "server_error", detail: e?.message || String(e) });
   }
 }
