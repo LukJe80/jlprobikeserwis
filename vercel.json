@@ -1,6 +1,8 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/panel/index.html" },
-    { "source": "/panel", "destination": "/panel/index.html" }
+  "crons": [
+    {
+      "path": "/api/cleanup-order-photos",
+      "schedule": "0 3 * * *"
+    }
   ]
 }
