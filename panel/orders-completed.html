@@ -1,296 +1,212 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<title>Historia zleceń – JL Pro Bike Serwis</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<title>Zakończone zlecenia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabaseClient.js"></script>
 
 <style>
-:root{
-  --accent:#2563eb;
-  --bg:#020617;
-  --text:#e5e7eb;
-  --panel:rgba(255,255,255,.05);
-  --border:rgba(255,255,255,.1);
-
-  --ok:#22c55e;
-  --warn:#f59e0b;
-  --danger:#ef4444;
-}
-
-*{box-sizing:border-box}
-
 body{
   margin:0;
-  font-family:Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
+  background:#070b1a;
+  color:#e6ecff;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
 }
-
-/* ===== HEADER ===== */
-header{
-  position:fixed;
-  top:0;
-  width:100%;
-  z-index:10;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px 24px;
-  background:rgba(2,6,23,.8);
-  backdrop-filter:blur(6px);
-  border-bottom:1px solid var(--border);
+.wrapper{
+  max-width:1200px;
+  margin:30px auto;
+  padding:20px;
 }
-
-header h1{
-  margin:0;
-  font-size:18px;
-  color:var(--accent);
-  display:flex;
-  gap:8px;
+h1{
+  margin-bottom:6px;
 }
-
-.toplink{
-  color:#fff;
-  text-decoration:none;
-  font-weight:700;
-}
-.toplink:hover{color:var(--accent)}
-
-/* ===== MAIN ===== */
-main{
-  max-width:1100px;
-  margin:auto;
-  padding:120px 24px 80px;
-}
-
-.box{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:22px;
-}
-
-.page-title{
-  font-size:28px;
-  font-weight:900;
-}
-
-.hint{
-  font-size:13px;
+.sub{
   opacity:.7;
-  margin-bottom:14px;
+  font-size:14px;
 }
-
-/* ===== TABLE ===== */
 .table-wrap{
+  margin-top:20px;
   overflow-x:auto;
   border-radius:14px;
+  background:#0d1226;
+  box-shadow:0 0 0 1px rgba(255,255,255,.04);
 }
-
 table{
   width:100%;
   border-collapse:collapse;
   min-width:900px;
 }
-
 th,td{
-  padding:12px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  font-size:14px;
+  padding:14px;
+  text-align:left;
+  border-bottom:1px solid rgba(255,255,255,.05);
 }
-
 th{
-  font-size:12px;
-  color:#93c5fd;
-  text-transform:uppercase;
+  color:#8fb3ff;
+  font-size:13px;
+  font-weight:600;
 }
-
-tr:hover{background:rgba(255,255,255,.04)}
-
+tr:hover td{
+  background:rgba(255,255,255,.03);
+}
 .actions{
   display:flex;
-  gap:10px;
+  gap:8px;
 }
-
-/* ===== ACTION BUTTONS ===== */
-.btnIcon{
-  width:40px;
-  height:40px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.05);
+.btn{
+  width:38px;
+  height:38px;
+  border-radius:10px;
   display:flex;
   align-items:center;
   justify-content:center;
   cursor:pointer;
-}
-.btnIcon:hover{
-  border-color:var(--accent);
-  background:rgba(37,99,235,.15);
-}
-
-.btnInfo i{color:var(--danger)}
-.btnResume i{color:#fff}
-
-/* ===== REMINDER ===== */
-.rem{
-  width:40px;
-  height:40px;
-  border-radius:12px;
+  font-size:18px;
   border:1px solid rgba(255,255,255,.15);
+  background:#0b1024;
+}
+.btn.info{color:#ff5252;}
+.btn.restore{color:#fff;}
+.bell{
+  width:36px;
+  height:36px;
+  border-radius:50%;
   display:flex;
   align-items:center;
   justify-content:center;
+  font-size:18px;
 }
-
-.rem.ok{border-color:rgba(34,197,94,.4)}
-.rem.ok i{color:var(--ok)}
-
-.rem.warn{border-color:rgba(245,158,11,.4)}
-.rem.warn i{color:var(--warn)}
-
-.rem.danger{border-color:rgba(239,68,68,.4)}
-.rem.danger i{color:var(--danger)}
-
-.remDash{opacity:.6}
-
-/* MOBILE */
-@media(max-width:700px){
-  main{padding:110px 14px}
+.bell.green{background:#113d2b;color:#33ff99;}
+.bell.yellow{background:#3d3411;color:#ffd84d;}
+.bell.red{background:#3d1111;color:#ff5c5c;}
+.empty{
+  opacity:.5;
 }
 </style>
 </head>
 
 <body>
+<div class="wrapper">
+  <h1>Zakończone zlecenia</h1>
+  <div class="sub">ℹ szczegóły • ↩ wznowienie • 🔔 przypomnienie</div>
 
-<header>
-  <h1><i class="fa-solid fa-box-archive"></i> Historia zleceń</h1>
-  <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
-</header>
-
-<main>
-  <div class="box">
-    <div class="page-title">Zakończone zlecenia</div>
-    <div class="hint">
-      ℹ szczegóły • ↩ wznowienie • 🔔 przypomnienie
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Klient</th>
-            <th>Telefon</th>
-            <th>Rower</th>
-            <th>Opis</th>
-            <th>Akcje</th>
-            <th>🔔</th>
-            <th>Zakończone</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>KLIENT</th>
+          <th>TELEFON</th>
+          <th>ROWER</th>
+          <th>OPIS</th>
+          <th>AKCJE</th>
+          <th>🔔</th>
+          <th>ZAKOŃCZONE</th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="7" class="empty">Ładowanie…</td></tr>
+      </tbody>
+    </table>
   </div>
-</main>
+</div>
 
 <script>
-function esc(t){
-  return (t??"").toString()
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
-}
+const supabase = window.supabase.createClient(
+  "https://mzgxv11t1crvzmtswzql.supabase.co",
+  "PUBLIC_ANON_KEY_TU_NIC_NIE_TRZEBA"
+);
 
-function formatDate(d){
-  return d ? new Date(d).toLocaleString("pl-PL") : "";
-}
-
-/* ===== REMINDER LOGIC ===== */
-function reminderCell(o){
-  if(!o.reminder_months || !o.archived_at){
-    return `<span class="remDash">—</span>`;
+// helper odporny na różne nazwy kolumn
+function pick(o, keys){
+  for(const k of keys){
+    const v = o?.[k];
+    if(v !== undefined && v !== null && String(v).trim() !== "") return v;
   }
-
-  const start = new Date(o.archived_at);
-  const due = new Date(start);
-  due.setMonth(due.getMonth() + o.reminder_months);
-
-  const total = due - start;
-  const now = Date.now();
-  const passed = now - start;
-
-  if(passed <= 0) return `<div class="rem ok"><i class="fa-solid fa-bell"></i></div>`;
-
-  const percent = passed / total;
-
-  if(percent < .5) return `<div class="rem ok"><i class="fa-solid fa-bell"></i></div>`;
-  if(percent < .9) return `<div class="rem warn"><i class="fa-solid fa-bell"></i></div>`;
-  return `<div class="rem danger"><i class="fa-solid fa-bell"></i></div>`;
+  return "";
+}
+function esc(s){
+  return String(s||"").replace(/[&<>"']/g,m=>(
+    {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]
+  ));
 }
 
-/* ===== LOAD ORDERS ===== */
+// kolor dzwonka
+function reminderBell(o){
+  if(!o.reminder_months || !o.archived_at){
+    return `<div class="bell green">🔔</div>`;
+  }
+  const archived = new Date(o.archived_at);
+  const now = new Date();
+  const total = o.reminder_months * 30;
+  const passed = (now - archived) / (1000*60*60*24);
+  const pct = passed / total;
+
+  if(pct >= 0.9) return `<div class="bell red">🔔</div>`;
+  if(pct >= 0.7) return `<div class="bell yellow">🔔</div>`;
+  return `<div class="bell green">🔔</div>`;
+}
+
 async function load(){
-  const { data, error } = await supabaseClient
+  const {data,error} = await supabase
     .from("orders")
     .select("*")
     .not("archived_at","is",null)
     .order("archived_at",{ascending:false});
 
+  const tbody = document.getElementById("rows");
   if(error){
-    alert(error.message);
+    tbody.innerHTML = `<tr><td colspan="7">Błąd</td></tr>`;
+    return;
+  }
+  if(!data.length){
+    tbody.innerHTML = `<tr><td colspan="7" class="empty">Brak archiwalnych zleceń</td></tr>`;
     return;
   }
 
-  rows.innerHTML = data.map(o=>`
+  tbody.innerHTML = data.map(o=>`
     <tr>
-      <td>${esc(o.customer)}</td>
-      <td>${esc(o.phone)}</td>
-      <td>${esc(o.bike)}</td>
-      <td>${esc(o.note)}</td>
-      <td>
-        <div class="actions">
-          <a class="btnIcon btnInfo" href="order-history.html?id=${o.id}">
-            <i class="fa-solid fa-circle-info"></i>
-          </a>
-          <div class="btnIcon btnResume" onclick="resume('${o.id}')">
-            <i class="fa-solid fa-rotate-left"></i>
-          </div>
-        </div>
+      <td>${esc(pick(o,["customer","client","client_name","customer_name"]))}</td>
+      <td>${esc(pick(o,["phone","tel","telephone"]))}</td>
+      <td>${esc(pick(o,["bike","bike_name","bike_model","bike_type"]))}</td>
+      <td>${esc(pick(o,["note","issue_description","description","work_done"]))}</td>
+      <td class="actions">
+        <div class="btn info" title="Szczegóły" onclick="info('${o.id}')">ℹ</div>
+        <div class="btn restore" title="Wznów" onclick="restore('${o.id}')">↩</div>
       </td>
-      <td>${reminderCell(o)}</td>
-      <td>${formatDate(o.archived_at)}</td>
+      <td>${reminderBell(o)}</td>
+      <td>${new Date(o.archived_at).toLocaleString()}</td>
     </tr>
   `).join("");
 }
 
-/* ===== RESUME (NO DUPLICATE) ===== */
-async function resume(id){
-  if(!confirm("Wznowić to zlecenie?")) return;
+function info(id){
+  location.href = `/panel/order-history.html?id=${id}`;
+}
 
-  const { error } = await supabaseClient
+async function restore(id){
+  if(!confirm("Wznowić zlecenie?")) return;
+
+  const {error} = await supabase
     .from("orders")
     .update({
       archived_at: null,
-      status: "w trakcie"
+      status: "nowe",
+      reminder_months: null,
+      reminder_note: null,
+      public_code: crypto.randomUUID()
     })
-    .eq("id", id);
+    .eq("id",id);
 
   if(error){
-    alert(error.message);
+    alert("Błąd wznowienia");
     return;
   }
-
-  window.location.href = "edit-order.html?id=" + id;
+  load();
 }
 
 load();
 </script>
-
 </body>
 </html>
