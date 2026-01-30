@@ -1,212 +1,522 @@
 <!DOCTYPE html>
+
 <html lang="pl">
 <head>
-<meta charset="UTF-8" />
-<title>Zakończone zlecenia</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
+<meta charset="utf-8"/>
+<title>Panel serwisanta – Zakończone zlecenia</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="supabaseClient.js"></script>
 <style>
+:root{
+  --accent:#2563eb;
+  --accentHover:#1d4ed8;
+  --bg:#020617;
+  --text:#e5e7eb;
+
+  --panel: rgba(255,255,255,0.05);
+  --panelBorder: rgba(255,255,255,0.10);
+  --muted: rgba(229,231,235,0.7);
+
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --ok:#22c55e;
+}
+
+*{ box-sizing:border-box; }
+
 body{
   margin:0;
-  background:#070b1a;
-  color:#e6ecff;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
 }
-.wrapper{
-  max-width:1200px;
-  margin:30px auto;
-  padding:20px;
+
+/* ===== HEADER ===== */
+header{
+  position:fixed;
+  top:0;
+  width:100%;
+  z-index:10;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 24px;
+  background:rgba(2,6,23,.7);
+  backdrop-filter: blur(6px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  gap:14px;
+  flex-wrap:wrap;
 }
-h1{
-  margin-bottom:6px;
+
+header h1{
+  margin:0;
+  font-size:18px;
+  color: var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
 }
-.sub{
-  opacity:.7;
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.toplink{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:800;
   font-size:14px;
+  opacity:.92;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  white-space:nowrap;
 }
+.toplink:hover{ color: var(--accent); }
+
+/* ===== MAIN ===== */
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:120px 30px 80px;
+}
+
+.box{
+  background: var(--panel);
+  border: 1px solid var(--panelBorder);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.page-title{
+  margin:0 0 6px;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.hint{
+  font-size:13px;
+  color: var(--muted);
+  margin: 0 0 16px;
+  line-height:1.35;
+}
+
+/* ===== TABLE ===== */
 .table-wrap{
-  margin-top:20px;
-  overflow-x:auto;
-  border-radius:14px;
-  background:#0d1226;
-  box-shadow:0 0 0 1px rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  overflow: auto;                /* ✅ NA TEL: poziomy scroll */
+  background: rgba(0,0,0,0.22);
+  -webkit-overflow-scrolling: touch;
 }
+
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:900px;
+  min-width: 920px;              /* ✅ minimalnie szerzej (dochodzi 🔔) */
 }
+
 th,td{
-  padding:14px;
+  padding:12px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
   text-align:left;
-  border-bottom:1px solid rgba(255,255,255,.05);
+  vertical-align:top;
+  font-size:14px;
 }
+
 th{
-  color:#8fb3ff;
+  color:#93c5fd;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  background: rgba(255,255,255,0.03);
+}
+
+tr:hover{ background: rgba(255,255,255,0.04); }
+
+.text{
+  white-space:pre-line;
   font-size:13px;
-  font-weight:600;
+  color:#cbd5f5;
 }
-tr:hover td{
-  background:rgba(255,255,255,.03);
+
+.date{
+  font-size:12px;
+  color:#94a3b8;
+  white-space:nowrap;
 }
+
+/* ✅ KAFELKI AKCJI (bez napisów) */
 .actions{
   display:flex;
-  gap:8px;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-start;
 }
-.btn{
-  width:38px;
-  height:38px;
-  border-radius:10px;
-  display:flex;
+
+.actionBtn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.03);
+  display:inline-flex;
   align-items:center;
   justify-content:center;
+  color:#fff;
   cursor:pointer;
-  font-size:18px;
-  border:1px solid rgba(255,255,255,.15);
-  background:#0b1024;
+  text-decoration:none;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
 }
-.btn.info{color:#ff5252;}
-.btn.restore{color:#fff;}
-.bell{
-  width:36px;
-  height:36px;
-  border-radius:50%;
-  display:flex;
+
+.actionBtn:hover{
+  border-color: rgba(37,99,235,0.55);
+  background: rgba(37,99,235,0.14);
+}
+
+.actionBtn.info{
+  border-color: rgba(239,68,68,0.35);
+}
+.actionBtn.info i{
+  color: var(--danger);
+  font-size:18px;
+}
+.actionBtn.info:hover{
+  border-color: rgba(239,68,68,0.55);
+  background: rgba(239,68,68,0.10);
+}
+
+.actionBtn.resume i{
+  font-size:18px;
+}
+
+/* 🔔 PRZYPOMNIENIA – kafelek */
+.remCell{
+  width:1%;
+  white-space:nowrap;
+}
+
+.remBtn{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.03);
+  display:inline-flex;
   align-items:center;
   justify-content:center;
+  cursor:default;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.remBtn i{
   font-size:18px;
 }
-.bell.green{background:#113d2b;color:#33ff99;}
-.bell.yellow{background:#3d3411;color:#ffd84d;}
-.bell.red{background:#3d1111;color:#ff5c5c;}
-.empty{
-  opacity:.5;
+
+.remBtn.ok{
+  border-color: rgba(34,197,94,0.35);
+}
+.remBtn.ok i{ color: var(--ok); }
+.remBtn.ok:hover{
+  border-color: rgba(34,197,94,0.55);
+  background: rgba(34,197,94,0.10);
+}
+
+.remBtn.warn{
+  border-color: rgba(245,158,11,0.35);
+}
+.remBtn.warn i{ color: var(--warn); }
+.remBtn.warn:hover{
+  border-color: rgba(245,158,11,0.55);
+  background: rgba(245,158,11,0.10);
+}
+
+.remBtn.danger{
+  border-color: rgba(239,68,68,0.35);
+}
+.remBtn.danger i{ color: var(--danger); }
+.remBtn.danger:hover{
+  border-color: rgba(239,68,68,0.55);
+  background: rgba(239,68,68,0.10);
+}
+
+.remDash{
+  opacity:.65;
+  font-size:14px;
+}
+
+/* tel – ciaśniej */
+@media(max-width:720px){
+  main{ padding:110px 16px 60px; }
+  .box{ padding:16px; }
+  th,td{ padding:10px; }
 }
 </style>
 </head>
-
 <body>
-<div class="wrapper">
-  <h1>Zakończone zlecenia</h1>
-  <div class="sub">ℹ szczegóły • ↩ wznowienie • 🔔 przypomnienie</div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>KLIENT</th>
-          <th>TELEFON</th>
-          <th>ROWER</th>
-          <th>OPIS</th>
-          <th>AKCJE</th>
-          <th>🔔</th>
-          <th>ZAKOŃCZONE</th>
-        </tr>
-      </thead>
-      <tbody id="rows">
-        <tr><td colspan="7" class="empty">Ładowanie…</td></tr>
-      </tbody>
-    </table>
-  </div>
+<header>
+<h1><i class="fa-solid fa-box-archive"></i> Historia zleceń</h1>
+<div class="header-right">
+<a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
 </div>
-
+</header>
+<main>
+<div class="box">
+<div class="page-title">Zakończone zlecenia</div>
+<div class="hint">
+<b>i</b> = szczegóły / historia • <i class="fa-solid fa-rotate-left"></i> = wznowienie z tym samym kodem QR (kontynuacja historii).
+      <br/><i class="fa-solid fa-bell"></i> = przypomnienie (kolor zależy od % czasu do następnego serwisu).
+      <br/>Na telefonie możesz przewijać tabelę w bok.
+    </div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Klient</th>
+<th>Telefon</th>
+<th>Rower</th>
+<th>Opis / wykonane czynności</th>
+<th>Akcje</th>
+<th>🔔</th>
+<th>Zakończone</th>
+</tr>
+</thead>
+<tbody id="ordersTable"></tbody>
+</table>
+</div>
+</div>
+</main>
 <script>
-const supabase = window.supabase.createClient(
-  "https://mzgxv11t1crvzmtswzql.supabase.co",
-  "PUBLIC_ANON_KEY_TU_NIC_NIE_TRZEBA"
-);
-
-// helper odporny na różne nazwy kolumn
-function pick(o, keys){
-  for(const k of keys){
-    const v = o?.[k];
-    if(v !== undefined && v !== null && String(v).trim() !== "") return v;
-  }
-  return "";
-}
-function esc(s){
-  return String(s||"").replace(/[&<>"']/g,m=>(
-    {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]
-  ));
+function esc(str){
+  return (str ?? "")
+    .toString()
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
-// kolor dzwonka
-function reminderBell(o){
-  if(!o.reminder_months || !o.archived_at){
-    return `<div class="bell green">🔔</div>`;
+function safeDatePL(iso){
+  if(!iso) return "";
+  const d = new Date(iso);
+  return (String(d) === "Invalid Date") ? "" : d.toLocaleString("pl-PL");
+}
+
+function randomCode(len=8){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out="";
+  for(let i=0;i<len;i++) out += chars[Math.floor(Math.random()*chars.length)];
+  return out;
+}
+
+function openDetails(o){
+  if(!o || !o.id){ alert('Brak ID'); return; }
+  location.href = `order-history.html?id=${encodeURIComponent(o.id)}`;
+}
+
+
+
+/* ======= PRZYPOMNIENIA (lekko, bez dodatkowych zapytań) =======
+   Obsługujemy różne nazwy pól, bo u Ciebie mogły być inaczej:
+   - reminder_due_at / reminder_due
+   - reminder_months / reminder_after_months
+   - reminder_done / reminder_done_at
+   - start: archived_at (jeśli jest) lub completed_at
+*/
+function getStartDate(o){
+  const s = o.archived_at || o.completed_at || null;
+  if(!s) return null;
+  const d = new Date(s);
+  return (String(d) === "Invalid Date") ? null : d;
+}
+
+function getDueDate(o){
+  // 1) jeśli jest gotowy termin
+  const dueIso = o.reminder_due_at || o.reminder_due || null;
+  if(dueIso){
+    const d = new Date(dueIso);
+    if(String(d) !== "Invalid Date") return d;
   }
-  const archived = new Date(o.archived_at);
+
+  // 2) wyliczamy z miesięcy (jeśli są)
+  const months = o.reminder_months ?? o.reminder_after_months ?? null;
+  if(months == null) return null;
+
+  const start = getStartDate(o);
+  if(!start) return null;
+
+  const m = Number(months);
+  if(!Number.isFinite(m) || m <= 0) return null;
+
+  const due = new Date(start);
+  // dodanie miesięcy "po ludzku"
+  const day = due.getDate();
+  due.setMonth(due.getMonth() + m);
+
+  // korekta dla końców miesięcy (np. 31 → 30/28)
+  if(due.getDate() < day) due.setDate(0);
+
+  return due;
+}
+
+function isReminderDone(o){
+  return Boolean(o.reminder_done) || Boolean(o.reminder_done_at);
+}
+
+function reminderBadge(o){
+  const start = getStartDate(o);
+  const due = getDueDate(o);
+
+  if(!start || !due){
+    return `<span class="remDash">—</span>`;
+  }
+
+  // jeśli zrobione
+  if(isReminderDone(o)){
+    return `
+      <div class="remBtn ok" title="Przypomnienie: zrobione">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+    `;
+  }
+
   const now = new Date();
-  const total = o.reminder_months * 30;
-  const passed = (now - archived) / (1000*60*60*24);
-  const pct = passed / total;
+  const total = due.getTime() - start.getTime();
+  const elapsed = now.getTime() - start.getTime();
 
-  if(pct >= 0.9) return `<div class="bell red">🔔</div>`;
-  if(pct >= 0.7) return `<div class="bell yellow">🔔</div>`;
-  return `<div class="bell green">🔔</div>`;
-}
-
-async function load(){
-  const {data,error} = await supabase
-    .from("orders")
-    .select("*")
-    .not("archived_at","is",null)
-    .order("archived_at",{ascending:false});
-
-  const tbody = document.getElementById("rows");
-  if(error){
-    tbody.innerHTML = `<tr><td colspan="7">Błąd</td></tr>`;
-    return;
-  }
-  if(!data.length){
-    tbody.innerHTML = `<tr><td colspan="7" class="empty">Brak archiwalnych zleceń</td></tr>`;
-    return;
+  if(total <= 0){
+    return `
+      <div class="remBtn danger" title="Przypomnienie: termin niepoprawny">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+    `;
   }
 
-  tbody.innerHTML = data.map(o=>`
-    <tr>
-      <td>${esc(pick(o,["customer","client","client_name","customer_name"]))}</td>
-      <td>${esc(pick(o,["phone","tel","telephone"]))}</td>
-      <td>${esc(pick(o,["bike","bike_name","bike_model","bike_type"]))}</td>
-      <td>${esc(pick(o,["note","issue_description","description","work_done"]))}</td>
-      <td class="actions">
-        <div class="btn info" title="Szczegóły" onclick="info('${o.id}')">ℹ</div>
-        <div class="btn restore" title="Wznów" onclick="restore('${o.id}')">↩</div>
-      </td>
-      <td>${reminderBell(o)}</td>
-      <td>${new Date(o.archived_at).toLocaleString()}</td>
-    </tr>
-  `).join("");
+  // progress 0..1 (może wyjść >1 jeśli po terminie)
+  const p = Math.min(Math.max(elapsed / total, 0), 1);
+
+  let cls = "ok";
+  let title = `Przypomnienie: ${Math.round(p*100)}% • termin: ${safeDatePL(due.toISOString())}`;
+
+  if(p >= 0.90){
+    cls = "danger";
+  }else if(p >= 0.50){
+    cls = "warn";
+  }else{
+    cls = "ok";
+  }
+
+  return `
+    <div class="remBtn ${cls}" title="${esc(title)}">
+      <i class="fa-solid fa-bell"></i>
+    </div>
+  `;
 }
 
-function info(id){
-  location.href = `/panel/order-history.html?id=${id}`;
-}
+/* ✅ WZNÓW: tworzy nowe zlecenie z tym samym public_code */
+async function resumeOrder(o){
+  if(!o || !o.id){
+    alert("Brak ID zlecenia — nie mogę wznowić.");
+    return;
+  }
 
-async function restore(id){
-  if(!confirm("Wznowić zlecenie?")) return;
+  const ok = confirm("Wznowić zlecenie? (Zlecenie wróci do aktywnych, a klient dostanie NOWY link do galerii)");
+  if(!ok) return;
 
-  const {error} = await supabase
+  // nowy kod dla linku publicznego galerii (stary link przestaje działać)
+  const newPublic = randomCode(8);
+
+  // issue_description u Ciebie ma NOT NULL — nie ruszamy jej (zostaje jak była)
+  const { error } = await supabaseClient
     .from("orders")
     .update({
-      archived_at: null,
       status: "nowe",
-      reminder_months: null,
-      reminder_note: null,
-      public_code: crypto.randomUUID()
+      archived_at: null,
+      completed_at: null,
+      public_code: newPublic
     })
-    .eq("id",id);
+    .eq("id", o.id);
 
   if(error){
-    alert("Błąd wznowienia");
+    alert("Błąd wznawiania: " + error.message);
     return;
   }
-  load();
+
+  // Przenieś do edycji tego samego zlecenia
+  location.href = `edit-order.html?id=${encodeURIComponent(o.id)}`;
 }
 
-load();
+async function loadCompletedOrders(){
+  const tbody = document.getElementById("ordersTable");
+  try{
+    if(typeof supabaseClient === "undefined"){
+      throw new Error("Brak supabaseClient (sprawdź supabaseClient.js / ścieżkę w <script src=>)");
+    }
+
+    tbody.innerHTML = "";
+
+    // ✅ select("*") – odporne na różnice w kolumnach (np. reminder_*)
+    const { data, error } = await supabaseClient
+      .from("orders")
+      .select("*")
+      .eq("status","wydano")
+      .order("archived_at", { ascending:false });
+
+    if(error) throw error;
+
+    const rows = Array.isArray(data) ? data : [];
+
+    if(rows.length === 0){
+      tbody.innerHTML = `<tr><td colspan="7" style="opacity:.75;">Brak zakończonych zleceń.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = rows.map(o=>{
+      const bell = reminderBadge(o);
+      const completed = safeDatePL(o.completed_at || o.archived_at || o.updated_at || o.created_at);
+
+      return `
+        <tr>
+          <td>${esc(o.customer_name || "")}</td>
+          <td>${esc(o.phone || "")}</td>
+          <td>${esc(o.bike || "")}</td>
+          <td class="desc">${esc(o.issue_description || o.note || "")}</td>
+          <td class="actions">
+            <button class="iconBtn info" title="Szczegóły" onclick='openDetails(${JSON.stringify({id:o.id})})'>
+              <i class="fa-solid fa-circle-info"></i>
+            </button>
+            <button class="iconBtn resume" title="Wznów" onclick='resumeOrder(${JSON.stringify({id:o.id, customer_name:o.customer_name||"", phone:o.phone||"", bike:o.bike||"", issue_description:o.issue_description||""})})'>
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </td>
+          <td class="bellCell">${bell}</td>
+          <td class="date">${completed}</td>
+        </tr>
+      `;
+    }).join("");
+
+  }catch(e){
+    console.error("loadCompletedOrders error:", e);
+    if(tbody){
+      tbody.innerHTML = `<tr><td colspan="7">Błąd ładowania: ${esc(e?.message || e)}</td></tr>`;
+    }
+  }
+}
+
+loadCompletedOrders();
 </script>
 </body>
 </html>
