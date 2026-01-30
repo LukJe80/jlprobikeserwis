@@ -19,6 +19,7 @@
   --panelBorder: rgba(255,255,255,0.10);
   --muted: rgba(229,231,235,0.7);
   --card: rgba(0,0,0,0.20);
+  --danger:#ef4444;
 }
 
 *{ box-sizing:border-box; }
@@ -44,7 +45,6 @@ header{
   backdrop-filter: blur(6px);
   border-bottom:1px solid rgba(255,255,255,0.06);
   gap:14px;
-  flex-wrap:wrap;
 }
 
 header h1{
@@ -54,17 +54,16 @@ header h1{
   display:flex;
   align-items:center;
   gap:8px;
-  white-space:nowrap;
 }
 
 .header-right{
   display:flex;
   align-items:center;
-  gap:16px;
-  flex-wrap:wrap;
+  gap:14px;
 }
 
-.toplink{
+.toplink,
+.smsBtn{
   display:flex;
   align-items:center;
   gap:8px;
@@ -72,14 +71,17 @@ header h1{
   text-decoration:none;
   font-weight:800;
   font-size:14px;
-  opacity:.92;
-  padding:6px 4px;
   background:transparent;
   border:none;
   cursor:pointer;
-  white-space:nowrap;
+  opacity:.92;
 }
-.toplink:hover{ color: var(--accent); }
+.toplink:hover,
+.smsBtn:hover{ color: var(--accent); }
+
+.smsBtn{
+  color: var(--danger);
+}
 
 /* ===== MAIN ===== */
 main{
@@ -126,7 +128,6 @@ main{
   font-size:14px;
   color:#93c5fd;
   text-transform:uppercase;
-  letter-spacing:.4px;
 }
 
 .kv{
@@ -135,26 +136,16 @@ main{
   gap:10px 14px;
   font-size:14px;
 }
-.kv .k{
-  color: rgba(229,231,235,0.75);
-  font-weight:800;
-}
-.kv .v{
-  color: rgba(229,231,235,0.95);
-  font-weight:700;
-  overflow-wrap:anywhere;
-}
+.kv .k{ color:rgba(229,231,235,0.7); font-weight:800; }
+.kv .v{ color:#fff; font-weight:700; }
 
 pre.note{
   margin:0;
   white-space:pre-wrap;
   font-family: inherit;
   font-size:14px;
-  color: rgba(229,231,235,0.95);
-  line-height:1.45;
 }
 
-/* ===== GALLERY ===== */
 .gallery{
   display:grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -163,61 +154,18 @@ pre.note{
 
 .tile{
   border:1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.18);
   border-radius:14px;
   overflow:hidden;
 }
 
 .tile img{
   width:100%;
-  height:170px;
+  height:160px;
   object-fit:cover;
-  display:block;
-  background: rgba(255,255,255,0.04);
-}
-
-.tile .cap{
-  padding:10px;
-  font-size:12px;
-  color: var(--muted);
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:4px 8px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.04);
-  color: rgba(229,231,235,0.9);
-  font-weight:800;
-  font-size:12px;
-}
-
-.msg{
-  margin-top:12px;
-  padding:10px 12px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  color: rgba(229,231,235,0.9);
-  font-size:13px;
-  white-space:pre-line;
-  display:none;
 }
 
 @media(max-width:900px){
-  .grid{ grid-template-columns: 1fr; }
-}
-@media(max-width:720px){
-  main{ padding:110px 16px 60px; }
-  .gallery{ grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-  .tile img{ height:150px; }
-  .kv{ grid-template-columns: 120px 1fr; }
+  .grid{ grid-template-columns:1fr; }
 }
 </style>
 </head>
@@ -227,7 +175,12 @@ pre.note{
 <header>
   <h1><i class="fa-solid fa-receipt"></i> Historia zlecenia</h1>
   <div class="header-right">
-    <a class="toplink" href="orders-completed.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
+    <button class="smsBtn" id="smsBtn" onclick="sendReminderSms()" style="display:none;">
+      <i class="fa-solid fa-bell"></i> SMS przypomnienie
+    </button>
+    <a class="toplink" href="orders-completed.html">
+      <i class="fa-solid fa-arrow-left"></i> Powrót
+    </a>
   </div>
 </header>
 
@@ -247,198 +200,59 @@ pre.note{
         <pre class="note" id="desc">—</pre>
       </div>
 
-      <div class="card" style="grid-column: 1 / -1;">
-        <h3>Kosztorys</h3>
-        <pre class="note" id="costsText">—</pre>
-        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-          <span class="badge" id="bLabor"><i class="fa-solid fa-person-digging"></i> Robocizna: —</span>
-          <span class="badge" id="bParts"><i class="fa-solid fa-gear"></i> Części: —</span>
-          <span class="badge" id="bTotal"><i class="fa-solid fa-sack-dollar"></i> Suma: —</span>
-        </div>
-      </div>
-
-      <div class="card" style="grid-column: 1 / -1;">
+      <div class="card" style="grid-column:1/-1;">
         <h3>Zdjęcia</h3>
-        <div class="hint" id="photoHint">Ładowanie zdjęć…</div>
         <div class="gallery" id="gallery"></div>
-        <div class="msg" id="msg"></div>
       </div>
     </div>
   </div>
 </main>
 
 <script>
-const BUCKET = "order-photos";
-const SIGN_TTL = 60 * 60; // 1h
-
 const qs = new URLSearchParams(location.search);
 const orderId = qs.get("id");
 
-const titleEl = document.getElementById("title");
-const subtitleEl = document.getElementById("subtitle");
-const kvEl = document.getElementById("kv");
-const descEl = document.getElementById("desc");
-const costsTextEl = document.getElementById("costsText");
-const bLabor = document.getElementById("bLabor");
-const bParts = document.getElementById("bParts");
-const bTotal = document.getElementById("bTotal");
-const galleryEl = document.getElementById("gallery");
-const photoHint = document.getElementById("photoHint");
-const msgEl = document.getElementById("msg");
-
-function esc(str){
-  return (str ?? "")
-    .toString()
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-function showMsg(text){
-  msgEl.style.display = "block";
-  msgEl.textContent = text;
-}
-
-function money(v){
-  const n = Number(v);
-  if(!Number.isFinite(n)) return "—";
-  return n.toFixed(2) + " zł";
-}
-
-async function requireLogin(){
-  try{
-    const { data } = await supabaseClient.auth.getSession();
-    if(!data?.session){
-      // jeśli logowanie jest gdzie indziej, podmień to na właściwy plik
-      location.href = "login.html";
-      return false;
-    }
-    return true;
-  }catch(e){
-    return true; // nie blokuj na siłę
-  }
-}
+let currentPhone = "";
 
 async function loadOrder(){
-  if(!orderId){
-    subtitleEl.textContent = "Błąd: brak parametru ?id=...";
-    showMsg("Nieprawidłowy link. Otwórz z archiwum (Zakończone zlecenia).");
-    return;
-  }
-
-  titleEl.textContent = "Zlecenie: " + orderId;
-  subtitleEl.textContent = "Pobieranie danych…";
-
-  const ok = await requireLogin();
-  if(!ok) return;
-
   const { data, error } = await supabaseClient
     .from("orders")
-    .select(`
-      id,
-      status,
-      customer_name,
-      phone,
-      bike_type,
-      description,
-      costs_text,
-      labor_cost,
-      parts_cost,
-      total_cost,
-      completed_at
-    `)
+    .select("customer_name, phone, bike_type, description, completed_at")
     .eq("id", orderId)
     .single();
 
-  if(error){
-    subtitleEl.textContent = "Błąd pobierania zlecenia.";
-    showMsg("Supabase error: " + error.message);
-    return;
+  if(error) return;
+
+  document.getElementById("title").textContent = "Zlecenie";
+  document.getElementById("subtitle").textContent = "Zakończone";
+
+  const kv = document.getElementById("kv");
+  kv.innerHTML = `
+    <div class="k">Klient</div><div class="v">${data.customer_name ?? "—"}</div>
+    <div class="k">Telefon</div><div class="v">${data.phone ?? "—"}</div>
+    <div class="k">Rower</div><div class="v">${data.bike_type ?? "—"}</div>
+  `;
+
+  document.getElementById("desc").textContent = data.description || "—";
+
+  if(data.phone){
+    currentPhone = data.phone;
+    document.getElementById("smsBtn").style.display = "flex";
   }
-
-  subtitleEl.textContent = "Status: " + (data.status ?? "—");
-
-  // Dane (KV)
-  const rows = [
-    ["Klient", data.customer_name ?? "—"],
-    ["Telefon", data.phone ?? "—"],
-    ["Rower", data.bike_type ?? "—"],
-    ["Status", data.status ?? "—"],
-    ["Zakończone", data.completed_at ? new Date(data.completed_at).toLocaleString("pl-PL") : "—"]
-  ];
-
-  kvEl.innerHTML = rows.map(([k,v]) => `
-    <div class="k">${esc(k)}</div>
-    <div class="v">${esc(v)}</div>
-  `).join("");
-
-  // Opis
-  descEl.textContent = (data.description && String(data.description).trim()) ? data.description : "—";
-
-  // Kosztorys
-  costsTextEl.textContent = (data.costs_text && String(data.costs_text).trim()) ? data.costs_text : "—";
-  bLabor.innerHTML = `<i class="fa-solid fa-person-digging"></i> Robocizna: ${esc(money(data.labor_cost))}`;
-  bParts.innerHTML = `<i class="fa-solid fa-gear"></i> Części: ${esc(money(data.parts_cost))}`;
-  bTotal.innerHTML = `<i class="fa-solid fa-sack-dollar"></i> Suma: ${esc(money(data.total_cost))}`;
-
-  await loadPhotos();
 }
 
-async function signedUrl(path){
-  const { data, error } = await supabaseClient.storage
-    .from(BUCKET)
-    .createSignedUrl(path, SIGN_TTL);
+function sendReminderSms(){
+  const text =
+`JL Pro Bike Serwis
 
-  if(error) return null;
-  return data?.signedUrl || null;
-}
+przypominamy o serwisie okresowym roweru. Umów dla siebie wygodny termin:
 
-async function loadPhotos(){
-  photoHint.textContent = "Pobieranie zdjęć…";
-  galleryEl.innerHTML = "";
+jlprobikeserwis.bike`;
 
-  const { data: rows, error } = await supabaseClient
-    .from("order_photos")
-    .select("id, path, created_at")
-    .eq("order_id", orderId)
-    .order("created_at", { ascending:false });
+  navigator.clipboard.writeText(text).catch(()=>{});
 
-  if(error){
-    photoHint.textContent = "Błąd pobierania zdjęć.";
-    showMsg("order_photos error: " + error.message);
-    return;
-  }
-
-  const count = rows ? rows.length : 0;
-  if(count === 0){
-    photoHint.textContent = "Brak zdjęć dla tego zlecenia.";
-    return;
-  }
-
-  photoHint.textContent = "Liczba zdjęć: " + count;
-
-  for(const r of rows){
-    const url = await signedUrl(r.path);
-    const created = r.created_at ? new Date(r.created_at).toLocaleString("pl-PL") : "";
-
-    const tile = document.createElement("div");
-    tile.className = "tile";
-
-    tile.innerHTML = `
-      ${url
-        ? `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="zdjęcie"></a>`
-        : `<img alt="brak dostępu">`
-      }
-      <div class="cap">
-        <span>${esc(created)}</span>
-        <span class="badge"><i class="fa-solid fa-image"></i> foto</span>
-      </div>
-    `;
-
-    galleryEl.appendChild(tile);
-  }
+  const phone = currentPhone.replace(/\s+/g,"");
+  location.href = `sms:${phone}?body=${encodeURIComponent(text)}`;
 }
 
 loadOrder();
