@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Panel serwisanta – Zakończone zlecenia</title>
+<title>Historia zleceń – JL Pro Bike Serwis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,26 +12,23 @@
 <style>
 :root{
   --accent:#2563eb;
-  --accentHover:#1d4ed8;
   --bg:#020617;
   --text:#e5e7eb;
+  --panel:rgba(255,255,255,.05);
+  --border:rgba(255,255,255,.1);
 
-  --panel: rgba(255,255,255,0.05);
-  --panelBorder: rgba(255,255,255,0.10);
-  --muted: rgba(229,231,235,0.7);
-
-  --danger:#ef4444;
-  --warn:#f59e0b;
   --ok:#22c55e;
+  --warn:#f59e0b;
+  --danger:#ef4444;
 }
 
-*{ box-sizing:border-box; }
+*{box-sizing:border-box}
 
 body{
   margin:0;
-  font-family: Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
 }
 
 /* ===== HEADER ===== */
@@ -44,225 +41,127 @@ header{
   justify-content:space-between;
   align-items:center;
   padding:14px 24px;
-  background:rgba(2,6,23,.7);
-  backdrop-filter: blur(6px);
-  border-bottom:1px solid rgba(255,255,255,0.06);
-  gap:14px;
-  flex-wrap:wrap;
+  background:rgba(2,6,23,.8);
+  backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--border);
 }
 
 header h1{
   margin:0;
   font-size:18px;
-  color: var(--accent);
+  color:var(--accent);
   display:flex;
-  align-items:center;
   gap:8px;
-  white-space:nowrap;
-}
-
-.header-right{
-  display:flex;
-  align-items:center;
-  gap:16px;
-  flex-wrap:wrap;
 }
 
 .toplink{
-  display:flex;
-  align-items:center;
-  gap:8px;
   color:#fff;
   text-decoration:none;
-  font-weight:800;
-  font-size:14px;
-  opacity:.92;
-  padding:6px 4px;
-  background:transparent;
-  border:none;
-  cursor:pointer;
-  white-space:nowrap;
+  font-weight:700;
 }
-.toplink:hover{ color: var(--accent); }
+.toplink:hover{color:var(--accent)}
 
 /* ===== MAIN ===== */
 main{
   max-width:1100px;
   margin:auto;
-  padding:120px 30px 80px;
+  padding:120px 24px 80px;
 }
 
 .box{
-  background: var(--panel);
-  border: 1px solid var(--panelBorder);
-  border-radius: 14px;
-  padding: 22px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px;
 }
 
 .page-title{
-  margin:0 0 6px;
-  font-size: 28px;
-  font-weight: 900;
+  font-size:28px;
+  font-weight:900;
 }
 
 .hint{
   font-size:13px;
-  color: var(--muted);
-  margin: 0 0 16px;
-  line-height:1.35;
+  opacity:.7;
+  margin-bottom:14px;
 }
 
 /* ===== TABLE ===== */
 .table-wrap{
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 14px;
-  overflow: auto;                /* ✅ NA TEL: poziomy scroll */
-  background: rgba(0,0,0,0.22);
-  -webkit-overflow-scrolling: touch;
+  overflow-x:auto;
+  border-radius:14px;
 }
 
 table{
   width:100%;
   border-collapse:collapse;
-  min-width: 920px;              /* ✅ minimalnie szerzej (dochodzi 🔔) */
+  min-width:900px;
 }
 
 th,td{
   padding:12px;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  text-align:left;
-  vertical-align:top;
+  border-bottom:1px solid rgba(255,255,255,.08);
   font-size:14px;
 }
 
 th{
+  font-size:12px;
   color:#93c5fd;
-  font-size:12px;
   text-transform:uppercase;
-  letter-spacing:.5px;
-  background: rgba(255,255,255,0.03);
 }
 
-tr:hover{ background: rgba(255,255,255,0.04); }
+tr:hover{background:rgba(255,255,255,.04)}
 
-.text{
-  white-space:pre-line;
-  font-size:13px;
-  color:#cbd5f5;
-}
-
-.date{
-  font-size:12px;
-  color:#94a3b8;
-  white-space:nowrap;
-}
-
-/* ✅ KAFELKI AKCJI (bez napisów) */
 .actions{
   display:flex;
   gap:10px;
-  align-items:center;
-  justify-content:flex-start;
 }
 
-.actionBtn{
+/* ===== ACTION BUTTONS ===== */
+.btnIcon{
   width:40px;
   height:40px;
   border-radius:12px;
-  border:1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.03);
-  display:inline-flex;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.05);
+  display:flex;
   align-items:center;
   justify-content:center;
-  color:#fff;
   cursor:pointer;
-  text-decoration:none;
-  user-select:none;
-  -webkit-tap-highlight-color: transparent;
+}
+.btnIcon:hover{
+  border-color:var(--accent);
+  background:rgba(37,99,235,.15);
 }
 
-.actionBtn:hover{
-  border-color: rgba(37,99,235,0.55);
-  background: rgba(37,99,235,0.14);
-}
+.btnInfo i{color:var(--danger)}
+.btnResume i{color:#fff}
 
-.actionBtn.info{
-  border-color: rgba(239,68,68,0.35);
-}
-.actionBtn.info i{
-  color: var(--danger);
-  font-size:18px;
-}
-.actionBtn.info:hover{
-  border-color: rgba(239,68,68,0.55);
-  background: rgba(239,68,68,0.10);
-}
-
-.actionBtn.resume i{
-  font-size:18px;
-}
-
-/* 🔔 PRZYPOMNIENIA – kafelek */
-.remCell{
-  width:1%;
-  white-space:nowrap;
-}
-
-.remBtn{
+/* ===== REMINDER ===== */
+.rem{
   width:40px;
   height:40px;
   border-radius:12px;
-  border:1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.03);
-  display:inline-flex;
+  border:1px solid rgba(255,255,255,.15);
+  display:flex;
   align-items:center;
   justify-content:center;
-  cursor:default;
-  user-select:none;
-  -webkit-tap-highlight-color: transparent;
 }
 
-.remBtn i{
-  font-size:18px;
-}
+.rem.ok{border-color:rgba(34,197,94,.4)}
+.rem.ok i{color:var(--ok)}
 
-.remBtn.ok{
-  border-color: rgba(34,197,94,0.35);
-}
-.remBtn.ok i{ color: var(--ok); }
-.remBtn.ok:hover{
-  border-color: rgba(34,197,94,0.55);
-  background: rgba(34,197,94,0.10);
-}
+.rem.warn{border-color:rgba(245,158,11,.4)}
+.rem.warn i{color:var(--warn)}
 
-.remBtn.warn{
-  border-color: rgba(245,158,11,0.35);
-}
-.remBtn.warn i{ color: var(--warn); }
-.remBtn.warn:hover{
-  border-color: rgba(245,158,11,0.55);
-  background: rgba(245,158,11,0.10);
-}
+.rem.danger{border-color:rgba(239,68,68,.4)}
+.rem.danger i{color:var(--danger)}
 
-.remBtn.danger{
-  border-color: rgba(239,68,68,0.35);
-}
-.remBtn.danger i{ color: var(--danger); }
-.remBtn.danger:hover{
-  border-color: rgba(239,68,68,0.55);
-  background: rgba(239,68,68,0.10);
-}
+.remDash{opacity:.6}
 
-.remDash{
-  opacity:.65;
-  font-size:14px;
-}
-
-/* tel – ciaśniej */
-@media(max-width:720px){
-  main{ padding:110px 16px 60px; }
-  .box{ padding:16px; }
-  th,td{ padding:10px; }
+/* MOBILE */
+@media(max-width:700px){
+  main{padding:110px 14px}
 }
 </style>
 </head>
@@ -271,18 +170,14 @@ tr:hover{ background: rgba(255,255,255,0.04); }
 
 <header>
   <h1><i class="fa-solid fa-box-archive"></i> Historia zleceń</h1>
-  <div class="header-right">
-    <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
-  </div>
+  <a class="toplink" href="orders.html"><i class="fa-solid fa-arrow-left"></i> Powrót</a>
 </header>
 
 <main>
   <div class="box">
     <div class="page-title">Zakończone zlecenia</div>
     <div class="hint">
-      <b>i</b> = szczegóły / historia • <i class="fa-solid fa-rotate-left"></i> = wznowienie z tym samym kodem QR (kontynuacja historii).
-      <br><i class="fa-solid fa-bell"></i> = przypomnienie (kolor zależy od % czasu do następnego serwisu).
-      <br>Na telefonie możesz przewijać tabelę w bok.
+      ℹ szczegóły • ↩ wznowienie • 🔔 przypomnienie
     </div>
 
     <div class="table-wrap">
@@ -292,229 +187,109 @@ tr:hover{ background: rgba(255,255,255,0.04); }
             <th>Klient</th>
             <th>Telefon</th>
             <th>Rower</th>
-            <th>Opis / wykonane czynności</th>
+            <th>Opis</th>
             <th>Akcje</th>
             <th>🔔</th>
             <th>Zakończone</th>
           </tr>
         </thead>
-        <tbody id="ordersTable"></tbody>
+        <tbody id="rows"></tbody>
       </table>
     </div>
   </div>
 </main>
 
 <script>
-function esc(str){
-  return (str ?? "")
-    .toString()
+function esc(t){
+  return (t??"").toString()
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+    .replaceAll(">","&gt;");
 }
 
-function safeDatePL(iso){
-  if(!iso) return "";
-  const d = new Date(iso);
-  return (String(d) === "Invalid Date") ? "" : d.toLocaleString("pl-PL");
+function formatDate(d){
+  return d ? new Date(d).toLocaleString("pl-PL") : "";
 }
 
-/* ======= PRZYPOMNIENIA (lekko, bez dodatkowych zapytań) =======
-   Obsługujemy różne nazwy pól, bo u Ciebie mogły być inaczej:
-   - reminder_due_at / reminder_due
-   - reminder_months / reminder_after_months
-   - reminder_done / reminder_done_at
-   - start: archived_at (jeśli jest) lub completed_at
-*/
-function getStartDate(o){
-  const s = o.archived_at || o.completed_at || null;
-  if(!s) return null;
-  const d = new Date(s);
-  return (String(d) === "Invalid Date") ? null : d;
-}
-
-function getDueDate(o){
-  // 1) jeśli jest gotowy termin
-  const dueIso = o.reminder_due_at || o.reminder_due || null;
-  if(dueIso){
-    const d = new Date(dueIso);
-    if(String(d) !== "Invalid Date") return d;
-  }
-
-  // 2) wyliczamy z miesięcy (jeśli są)
-  const months = o.reminder_months ?? o.reminder_after_months ?? null;
-  if(months == null) return null;
-
-  const start = getStartDate(o);
-  if(!start) return null;
-
-  const m = Number(months);
-  if(!Number.isFinite(m) || m <= 0) return null;
-
-  const due = new Date(start);
-  // dodanie miesięcy "po ludzku"
-  const day = due.getDate();
-  due.setMonth(due.getMonth() + m);
-
-  // korekta dla końców miesięcy (np. 31 → 30/28)
-  if(due.getDate() < day) due.setDate(0);
-
-  return due;
-}
-
-function isReminderDone(o){
-  return Boolean(o.reminder_done) || Boolean(o.reminder_done_at);
-}
-
-function reminderBadge(o){
-  const start = getStartDate(o);
-  const due = getDueDate(o);
-
-  if(!start || !due){
+/* ===== REMINDER LOGIC ===== */
+function reminderCell(o){
+  if(!o.reminder_months || !o.archived_at){
     return `<span class="remDash">—</span>`;
   }
 
-  // jeśli zrobione
-  if(isReminderDone(o)){
-    return `
-      <div class="remBtn ok" title="Przypomnienie: zrobione">
-        <i class="fa-solid fa-bell"></i>
-      </div>
-    `;
-  }
+  const start = new Date(o.archived_at);
+  const due = new Date(start);
+  due.setMonth(due.getMonth() + o.reminder_months);
 
-  const now = new Date();
-  const total = due.getTime() - start.getTime();
-  const elapsed = now.getTime() - start.getTime();
+  const total = due - start;
+  const now = Date.now();
+  const passed = now - start;
 
-  if(total <= 0){
-    return `
-      <div class="remBtn danger" title="Przypomnienie: termin niepoprawny">
-        <i class="fa-solid fa-bell"></i>
-      </div>
-    `;
-  }
+  if(passed <= 0) return `<div class="rem ok"><i class="fa-solid fa-bell"></i></div>`;
 
-  // progress 0..1 (może wyjść >1 jeśli po terminie)
-  const p = Math.min(Math.max(elapsed / total, 0), 1);
+  const percent = passed / total;
 
-  let cls = "ok";
-  let title = `Przypomnienie: ${Math.round(p*100)}% • termin: ${safeDatePL(due.toISOString())}`;
-
-  if(p >= 0.90){
-    cls = "danger";
-  }else if(p >= 0.50){
-    cls = "warn";
-  }else{
-    cls = "ok";
-  }
-
-  return `
-    <div class="remBtn ${cls}" title="${esc(title)}">
-      <i class="fa-solid fa-bell"></i>
-    </div>
-  `;
+  if(percent < .5) return `<div class="rem ok"><i class="fa-solid fa-bell"></i></div>`;
+  if(percent < .9) return `<div class="rem warn"><i class="fa-solid fa-bell"></i></div>`;
+  return `<div class="rem danger"><i class="fa-solid fa-bell"></i></div>`;
 }
 
-/* ✅ WZNÓW: tworzy nowe zlecenie z tym samym public_code */
-async function resumeOrder(o){
-  if(!o || !o.public_code){
-    alert("Brak public_code (kod QR) — nie mogę wznowić.");
-    return;
-  }
-
-  const ok = confirm("Wznowić jako NOWE zlecenie (kontynuacja historii pod tym samym kodem QR)?");
-  if(!ok) return;
-
-  // ✅ issue_description u Ciebie ma NOT NULL — więc zawsze ustawiamy
-  const issueDesc = (o.issue_description ?? o.description ?? "").toString();
-
-  const payload = {
-    status: "nowe",
-    customer_name: (o.customer_name ?? "").toString(),
-    phone: (o.phone ?? "").toString(),
-    bike_type: (o.bike_type ?? "").toString(),
-    description: (o.description ?? "").toString(),
-    issue_description: issueDesc,
-
-    public_code: (o.public_code ?? "").toString(),
-
-    archived_at: null,
-    completed_at: null
-  };
-
-  const { data, error } = await supabaseClient
-    .from("orders")
-    .insert(payload)
-    .select("id")
-    .single();
-
-  if(error){
-    alert("Błąd wznawiania: " + error.message);
-    return;
-  }
-
-  location.href = `edit-order.html?id=${encodeURIComponent(data.id)}`;
-}
-
-async function loadCompletedOrders(){
-  // ✅ select("*") – żeby nie wywalić błędu jeśli nazwy kolumn przypomnień są inne / jeszcze nie ma
+/* ===== LOAD ORDERS ===== */
+async function load(){
   const { data, error } = await supabaseClient
     .from("orders")
     .select("*")
-    .eq("status","wydano")
-    .order("completed_at",{ascending:false});
+    .not("archived_at","is",null)
+    .order("archived_at",{ascending:false});
 
   if(error){
-    alert("Błąd pobierania archiwum: " + error.message);
+    alert(error.message);
     return;
   }
 
-  const tbody = document.getElementById("ordersTable");
-  tbody.innerHTML = "";
-
-  if(!data || data.length === 0){
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="7">Brak zakończonych zleceń</td>
-      </tr>`;
-    return;
-  }
-
-  for(const o of data){
-    const link = o.id ? `order-history.html?id=${encodeURIComponent(o.id)}` : "#";
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${esc(o.customer_name ?? "")}</td>
-      <td>${esc(o.phone ?? "")}</td>
-      <td>${esc(o.bike_type ?? "")}</td>
-      <td class="text">${esc(o.description ?? "")}</td>
-
+  rows.innerHTML = data.map(o=>`
+    <tr>
+      <td>${esc(o.customer)}</td>
+      <td>${esc(o.phone)}</td>
+      <td>${esc(o.bike)}</td>
+      <td>${esc(o.note)}</td>
       <td>
         <div class="actions">
-          <a class="actionBtn info" href="${link}" title="Szczegóły / historia">
+          <a class="btnIcon btnInfo" href="order-history.html?id=${o.id}">
             <i class="fa-solid fa-circle-info"></i>
           </a>
-          <button class="actionBtn resume" type="button" title="Wznów">
+          <div class="btnIcon btnResume" onclick="resume('${o.id}')">
             <i class="fa-solid fa-rotate-left"></i>
-          </button>
+          </div>
         </div>
       </td>
-
-      <td class="remCell">${reminderBadge(o)}</td>
-
-      <td class="date">${safeDatePL(o.completed_at)}</td>
-    `;
-
-    tr.querySelector(".resume").addEventListener("click", () => resumeOrder(o));
-    tbody.appendChild(tr);
-  }
+      <td>${reminderCell(o)}</td>
+      <td>${formatDate(o.archived_at)}</td>
+    </tr>
+  `).join("");
 }
 
-loadCompletedOrders();
+/* ===== RESUME (NO DUPLICATE) ===== */
+async function resume(id){
+  if(!confirm("Wznowić to zlecenie?")) return;
+
+  const { error } = await supabaseClient
+    .from("orders")
+    .update({
+      archived_at: null,
+      status: "w trakcie"
+    })
+    .eq("id", id);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  window.location.href = "edit-order.html?id=" + id;
+}
+
+load();
 </script>
 
 </body>
