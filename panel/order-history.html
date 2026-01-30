@@ -451,13 +451,15 @@ async function requireLogin(){
 }
 
 function buildReminderSmsText(){
-  return `JL Pro Bike Serwis
-
-Przypominamy o serwisie okresowym roweru.
-Umów dla siebie wygodny termin:
-
-  const url = 
-  "https://jlprobikeserwis.bike";
+  const url = "https://jlprobikeserwis.bike";
+  return [
+    "JL Pro Bike Serwis",
+    "",
+    "Przypominamy o serwisie okresowym roweru.",
+    "Umów dla siebie wygodny termin:",
+    "",
+    url
+  ].join("\n");
 }
 
 async function sendReminderSms(){
@@ -618,6 +620,7 @@ loadOrder();
 
 </body>
 </html>
+
 
 
 
