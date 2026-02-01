@@ -400,7 +400,7 @@ textarea.noteInput{
         <pre class="note" id="costsText">—</pre>
         <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
           <span class="badge" id="bLabor"><i class="fa-solid fa-person-digging"></i> Robocizna: —</span>
-          <span class="badge" id="bParts"><i class="fa-solid fa-gear"></i> Części: —</span>
+          <!-- ✅ USUNIĘTO "Części" -->
           <span class="badge" id="bTotal"><i class="fa-solid fa-sack-dollar"></i> Suma: —</span>
         </div>
       </div>
@@ -412,6 +412,11 @@ textarea.noteInput{
         <div class="btnRow">
           <button class="btn danger" id="smsBtn" onclick="sendReminderSms()" disabled>
             <i class="fa-solid fa-bell"></i> SMS przypomnienie
+          </button>
+
+          <!-- ✅ NOWY: USUŃ ZLECENIE -->
+          <button class="btn danger" id="delBtn" onclick="deleteOrder()">
+            <i class="fa-solid fa-trash"></i> Usuń zlecenie
           </button>
 
           <span class="badgeInfo" id="reminderRange">
@@ -468,7 +473,6 @@ const kvEl = document.getElementById("kv");
 const descEl = document.getElementById("desc");
 const costsTextEl = document.getElementById("costsText");
 const bLabor = document.getElementById("bLabor");
-const bParts = document.getElementById("bParts");
 const bTotal = document.getElementById("bTotal");
 const galleryEl = document.getElementById("gallery");
 const photoHint = document.getElementById("photoHint");
@@ -612,6 +616,72 @@ async function sendReminderSms(){
   location.href = `sms:${phone}?body=${encodeURIComponent(text)}`;
 }
 
+// ✅ NOWE: USUWANIE ZLECENIA (bez psucia innych plików)
+async function deleteOrder(){
+  if(!orderId){
+    alert("Brak id zlecenia.");
+    return;
+  }
+
+  const okLogin = await requireLogin();
+  if(!okLogin) return;
+
+  const ok = confirm(
+    "Na pewno usunąć to zlecenie?\n\n" +
+    "Usuniemy też:\n" +
+    "• notatki serwisowe\n" +
+    "• historię statusów\n" +
+    "• wpisy zdjęć w bazie\n\n" +
+    "Uwaga: pliki zdjęć w Storage mogą zostać i zniknąć później przez auto-cleanup."
+  );
+  if(!ok) return;
+
+  try{
+    // 1) notatki serwisowe (Twoja tabela)
+    {
+      const { error } = await supabaseClient
+        .from(NOTES_TABLE)
+        .delete()
+        .eq("order_id", orderId);
+      if(error) throw error;
+    }
+
+    // 2) historia statusów (jeśli istnieje)
+    // Jeśli nie masz tej tabeli albo nie używasz, możesz to zostawić — wtedy błąd pokaże się w alert.
+    {
+      const { error } = await supabaseClient
+        .from("order_status_history")
+        .delete()
+        .eq("order_id", orderId);
+      if(error) throw error;
+    }
+
+    // 3) wpisy zdjęć w DB (same pliki w Storage zostaną do cleanup)
+    {
+      const { error } = await supabaseClient
+        .from("order_photos")
+        .delete()
+        .eq("order_id", orderId);
+      if(error) throw error;
+    }
+
+    // 4) zlecenie
+    {
+      const { error } = await supabaseClient
+        .from("orders")
+        .delete()
+        .eq("id", orderId);
+      if(error) throw error;
+    }
+
+    alert("Usunięto zlecenie ✅");
+    location.href = "orders-completed.html";
+  }catch(e){
+    console.warn("deleteOrder error:", e);
+    alert("Błąd usuwania: " + (e?.message || e));
+  }
+}
+
 function publicUrl(path){
   try{
     return supabaseClient.storage.from(BUCKET).getPublicUrl(path).data.publicUrl || null;
@@ -622,7 +692,6 @@ function publicUrl(path){
 
 /* =======================
    NOTATKI WEWNĘTRZNE
-   (widoczne tylko w order-history)
 ======================= */
 
 function renderNotes(rows){
@@ -822,7 +891,6 @@ async function loadOrder(){
 
   costsTextEl.textContent = (data.costs_text && String(data.costs_text).trim()) ? data.costs_text : "—";
   bLabor.innerHTML = `<i class="fa-solid fa-person-digging"></i> Robocizna: ${esc(money(data.labor_cost))}`;
-  bParts.innerHTML = `<i class="fa-solid fa-gear"></i> Części: ${esc(money(data.parts_cost))}`;
   bTotal.innerHTML = `<i class="fa-solid fa-sack-dollar"></i> Suma: ${esc(money(data.total_cost))}`;
 
   currentPhone = data.phone || "";
