@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Karta przyjęcia – JLProBike Serwis (offline)</title>
+
+  <style>
+    /* =========================================================
+       ✅ PANEL USTAWIEŃ (zmieniasz tylko tutaj)
+       ========================================================= */
+    :root{
+      /* Strona / druk */
+      --page-w: 210mm;
+      --page-h: 297mm;
+      --page-margin: 14mm;           /* @page margin */
+      --page-padding: 14mm;          /* padding w środku strony */
+
+      /* Typografia */
+      --font: Arial, Helvetica, sans-serif;
+      --title-size: 20pt;
+      --title-bottom: 14mm;
+
+      /* Linie zwykłe (Klient / Telefon / Rower / Data) */
+      --field-line-thickness: 2px;
+      --field-line-height: 8mm;
+      --row-gap: 10mm;               /* odstęp label -> linia */
+      --row-margin: 7mm;             /* odstęp między wierszami */
+
+      /* Sekcje */
+      --section-title-size: 13pt;
+      --section-title-top: 10mm;
+      --section-title-bottom: 5mm;
+
+      /* Linie kropkowane (Opis zgłoszenia) – REALNE kropki z kontrolą długości */
+      --desc-line-height: 9mm;
+      --desc-line-thickness: 3px;
+      --desc-dot: 1mm;               /* długość "kropki/kreseczki" */
+      --desc-gap: 1mm;               /* przerwa między kropkami */
+      --desc-line-margin: 4mm;       /* odstęp pionowy między liniami opisu */
+      --desc-lines-count: 4;         /* ile linii w opisie (zmieniaj w HTML też – szybka instrukcja poniżej) */
+
+      /* Podpisy / pieczątka */
+      --signatures-top: 18mm;
+      --signatures-bottom: 40mm;     /* ✅ PRZERWA OD PODPISÓW DO LINII CIĘCIA */
+      --sig-gap: 20mm;
+      --sig-line-height: 8mm;
+      --sig-line-thickness: 2px;
+      --sig-label-size: 10pt;
+      --sig-label-top: 3mm;
+
+      /* Linia cięcia */
+      --cut-thickness: 3px;
+      --cut-dot: 20mm;
+      --cut-gap: 8mm;
+      --cut-margin-top: 0mm;
+      --cut-margin-bottom: 10mm;
+
+      /* Zawieszka */
+      --tag-border: 2px;
+      --tag-height: 60mm;
+      --tag-padding: 8mm;
+      --tag-title-size: 11pt;
+      --tag-title-bottom: 20mm;
+      --tag-grid-gap: 10mm;
+      --tag-grid-top: 4mm;
+      --tag-field-label-size: 10pt;
+      --tag-field-label-bottom: 2mm;
+      --tag-field-line-height: 7mm;
+      --tag-field-line-thickness: 2px;
+
+      /* ✅ Obrót tekstu w zawieszce:
+         0deg  = normalnie poziomo
+         -90deg = pionowo w lewo (jak w Twoim wzorze z obrotem) */
+      --tag-rotate: -90deg;            /* <- ZMIEŃ NA -90deg jeśli chcesz obrót */
+      --tag-rotate-origin-x: 0%;      /* punkt obrotu */
+      --tag-rotate-origin-y: 0%;
+    }
+
+    /* =========================================================
+       BAZA / DRUK
+       ========================================================= */
+    @page { size: A4; margin: var(--page-margin); }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:#fff;
+      color:#000;
+      font-family: var(--font);
+    }
+    .page{
+      width: var(--page-w);
+      min-height: var(--page-h);
+      padding: var(--page-padding);
+      margin: 0 auto;
+    }
+
+    h1{
+      margin: 0 0 var(--title-bottom) 0;
+      text-align:center;
+      font-size: var(--title-size);
+      letter-spacing: .5px;
+      font-weight: 800;
+    }
+
+    /* =========================================================
+       POLA: Klient / Telefon / Rower / Data
+       ========================================================= */
+    .row{
+      display:flex;
+      align-items:flex-end;
+      gap: var(--row-gap);
+      margin: var(--row-margin) 0;
+    }
+    .label{
+      width: 22mm;
+      font-size: 11.5pt;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .line{
+      flex: 1;
+      height: var(--field-line-height);
+      border-bottom: var(--field-line-thickness) solid #000;
+    }
+
+    /* =========================================================
+       OPIS ZGŁOSZENIA
+       ========================================================= */
+    .section-title{
+      margin: var(--section-title-top) 0 var(--section-title-bottom) 0;
+      font-size: var(--section-title-size);
+      font-weight: 800;
+    }
+
+    /* ✅ kropka–przerwa–kropka z pełną kontrolą */
+     .dotline{
+       height: 9mm;
+       border-bottom: 2px solid #000;   /* ← ZWYKŁA LINIA */
+       margin: 4mm 0;
+   }
+    
+
+    /* =========================================================
+       PODPISY
+       ========================================================= */
+    .signatures{
+      display:flex;
+      justify-content: space-between;
+      gap: var(--sig-gap);
+      margin-top: var(--signatures-top);
+      margin-bottom: var(--signatures-bottom); /* ✅ tutaj sterujesz odstępem do linii cięcia */
+    }
+    .sig{
+      flex: 1;
+      text-align:center;
+      display:flex;
+      flex-direction: column; /* wyłącza margin-collapsing */
+    }
+    .sig .sigline{
+      height: var(--sig-line-height);
+      border-bottom: var(--sig-line-thickness) solid #000;
+    }
+    .sig .siglabel{
+      margin-top: var(--sig-label-top);
+      font-size: var(--sig-label-size);
+      color:#333;
+    }
+
+    /* =========================================================
+       Zawieszka
+       ========================================================= */
+
+.tag{
+  border: var(--tag-border) solid #000;
+  height: var(--tag-height);
+  padding: var(--tag-padding);
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* obrót całej zawartości */
+.tag-inner{
+  position: absolute;
+  top: var(--tag-padding);
+  left: var(--tag-padding);
+
+  transform-origin: top left;
+  transform: rotate(var(--tag-rotate)) translate(-100%, 0);
+}
+
+/* obszar roboczy PO obrocie */
+.tag-rot-box{
+  width: calc(var(--tag-height) - (var(--tag-padding) * 2));
+  max-width: calc(var(--tag-height) - (var(--tag-padding) * 2));
+}
+
+/* domyślne zawijanie – BEZ łamania liter */
+.tag-rot-box,
+.tag-rot-box *{
+  white-space: normal !important;
+  overflow-wrap: break-word;   /* NIE 'anywhere' */
+  word-break: normal;
+}
+
+/* tytuł zawieszki */
+.tag-title{
+  font-weight: 800;
+  font-size: calc(var(--tag-title-size) * 0.9); /* lekko mniejsza */
+  margin-top: 25mm; 
+  text-align: center;
+  white-space: nowrap;  /* NIE łamie */
+  margin-bottom: var(--tag-title-bottom);
+}
+
+/* siatka pól */
+.tag-grid{
+  display: grid;
+  grid-template-columns: 1fr ;
+  gap: 6mm ;               /* pion / poziom */
+  margin-top: var(--tag-grid-top);
+  
+}
+
+.tag-field{
+  min-width: 0;                /* KLUCZ: pozwala zawijać w grid */
+}
+
+/* etykiety pól */
+.tag-label{
+  font-size: var(--tag-field-label-size);
+  font-weight: 700;
+  margin-bottom: var(--tag-field-label-bottom);
+  white-space: nowrap;         /* etykiety nie łamią się literami */
+}
+
+/* linie do wpisywania */
+.tag-line{
+  height: var(--tag-field-line-height);
+  border-bottom: var(--tag-field-line-thickness) solid #000;
+}
+    /* Druk */
+    @media print{
+      body{ background:#fff; }
+      .page{ margin:0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <h1>KARTA PRZYJĘCIA – JLProbike Serwis </h1>
+
+    <div class="row">
+      <div class="label">Klient:</div>
+      <div class="line"></div>
+    </div>
+
+    <div class="row">
+      <div class="label">Telefon:</div>
+      <div class="line"></div>
+    </div>
+
+    <div class="row">
+      <div class="label">Rower:</div>
+      <div class="line"></div>
+    </div>
+
+    <div class="row">
+      <div class="label">Data:</div>
+      <div class="line"></div>
+    </div>
+
+    <div class="section-title">Opis zgłoszenia:</div>
+
+    <!-- Linie opisu (ile chcesz) -->
+    <div class="dotline"></div>
+    <div class="dotline"></div>
+    <div class="dotline"></div>
+    <div class="dotline"></div>
+    <!-- Dodaj/usuń linie przez kopiuj-wklej powyższej linijki -->
+
+    <div class="signatures">
+      <div class="sig">
+        <div class="sigline"></div>
+        <div class="siglabel">Podpis klienta</div>
+      </div>
+      <div class="sig">
+        <div class="sigline"></div>
+        <div class="siglabel">Pieczątka serwisu</div>
+      </div>
+    </div>
+
+    <div class="cut"></div>
+
+    <div class="tag">
+      <div class="tag-inner">
+       <div class="tag-rot-box">        
+        <div class="tag-title">ZAWIESZKA – SERWIS</div>
+        <div class="tag-grid">
+          <div class="tag-field">
+            <div class="tag-label">Klient</div>
+            <div class="tag-line"></div>
+          </div>
+          <div class="tag-field">
+            <div class="tag-label">Tel</div>
+            <div class="tag-line"></div>
+          </div>
+          <div class="tag-field">
+            <div class="tag-label">Rower</div>
+            <div class="tag-line"></div>
+          </div>
+          <div class="tag-field">
+            <div class="tag-label">Data</div>
+            <div class="tag-line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ✅ AUTO-PRINT: ustaw na false jeśli nie chcesz automatycznego okna druku
+    const AUTO_PRINT = true;
+
+    window.addEventListener("load", () => {
+      if(!AUTO_PRINT) return;
+      setTimeout(() => window.print(), 250);
+    });
+  </script>
+</body>
+</html>
